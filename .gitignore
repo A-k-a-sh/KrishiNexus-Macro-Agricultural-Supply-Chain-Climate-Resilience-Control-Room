@@ -7,13 +7,18 @@ dist
 
 build
 
-other/*
-./other/*
-/other/*
+others/*
+./others/*
+/others/*
 
 
-other
-./other
-/other
+others
+./others
+/others
+
+AGENTS.md
+
+package-lock.json
+
 
 
