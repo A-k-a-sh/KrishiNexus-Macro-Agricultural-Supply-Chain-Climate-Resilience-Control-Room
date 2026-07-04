@@ -3,9 +3,15 @@ const { MongoClient } = require('mongodb');
 let db = null;
 
 async function connectDb() {
-  const client = new MongoClient(process.env.MONGO_URI);
+  const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+
+  if (!mongoUri) {
+    throw new Error('MONGODB_URI is not set');
+  }
+
+  const client = new MongoClient(mongoUri);
   await client.connect();
-  db = client.db(); // uses the db name from the connection string
+  db = client.db();
   console.log('Connected to MongoDB Atlas:', db.databaseName);
 }
 

@@ -1,36 +1,13 @@
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 
 const { connectDb } = require('../db/connect');
 const { parseBulletins } = require('./parseBulletins');
 const { parseDiseases } = require('./parseDiseases');
 const { parseThresholds } = require('./parseThresholds');
 const { embedAll } = require('./embedAndStore');
-
-/**
- * BAMIS zilaId → bdapi district _id mapping.
- *
- * ⚠️ THIS MAP IS INCOMPLETE — YOU MUST VERIFY AND FILL IN ALL 64 ENTRIES.
- *
- * How to build this map:
- * 1. Fetch all 64 bulletins from raw_bulletins collection
- * 2. Each bulletin's rawText starts with "জেলা: {district name in Bengali}"
- * 3. Match that Bengali name against bdapi /district data (bnName field)
- * 4. Fill in the correct bdapi district _id for each bamisZilaId below
- *
- * Format: { "bamisZilaId": "bdapiDistrictId" }
- *
- * The entries below are EXAMPLES ONLY — the numeric IDs may not be correct.
- * Do not assume bamisZilaId === bdapiDistrictId. Verify each one.
- */
-const ZILA_ID_MAP = {
-  // "bamisZilaId": "bdapiDistrictId"
-  // Fill these in after running your mapping verification script
-  // Example entries (VERIFY BEFORE USE):
-  // "1":  "20",  // Dhaka
-  // "2":  "26",  // Faridpur
-  // "22": "4",   // Barisal
-  // ...add all 64
-};
+const { seedDistrictsFromBdapi } = require('../db/seeds/seedDistricts');
+const { seedDivisionsFromBdapi } = require('../db/seeds/seedDivisions');
+const zilaIdMap = require('./zilaIdMap.json');
 
 /**
  * Master ingestion pipeline. Run this once after scraping, then re-run
@@ -45,22 +22,26 @@ const ZILA_ID_MAP = {
  * Safe to re-run: parsers use upsert, embedAndStore skips already-embedded docs.
  *
  * Run with:
- *   node server/ingestion/runIngestion.js
+ *   node backend/ingestion/runIngestion.js
  */
 async function runIngestion() {
   console.log('=== KrishiNexus Ingestion Pipeline Starting ===\n');
 
   await connectDb();
 
+  console.log('--- Step 0: Seeding bdapi divisions and districts ---');
+  await seedDivisionsFromBdapi();
+  await seedDistrictsFromBdapi();
+
   // ── Step 1: Parse bulletins ───────────────────────────────────────────────
   console.log('--- Step 1: Parsing bulletins ---');
-  if (Object.keys(ZILA_ID_MAP).length === 0) {
+  if (Object.keys(zilaIdMap).length === 0) {
     console.warn(
-      '[runIngestion] WARNING: ZILA_ID_MAP is empty. Bulletin parsing will skip all documents.\n' +
-      'Fill in server/ingestion/runIngestion.js ZILA_ID_MAP before running.'
+      '[runIngestion] WARNING: zilaIdMap.json is empty. Bulletin parsing will skip all documents.\n' +
+      'Fill in backend/ingestion/zilaIdMap.json before running.'
     );
   }
-  await parseBulletins(ZILA_ID_MAP);
+  await parseBulletins(zilaIdMap);
 
   // ── Step 2: Parse diseases ────────────────────────────────────────────────
   console.log('\n--- Step 2: Parsing diseases ---');

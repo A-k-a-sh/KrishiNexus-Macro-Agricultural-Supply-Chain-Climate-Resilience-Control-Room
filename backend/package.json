@@ -5,12 +5,20 @@
   "type": "commonjs",
   "scripts": {
     "dev": "node server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "ingest": "node ingestion/runIngestion.js",
+    "seed:bdapi": "node db/seeds/seedDivisions.js && node db/seeds/seedDistricts.js",
+    "map:zila": "node ingestion/generateZilaIdMap.js",
+    "scrape:bulletins": "node ingestion/scrapeBulletins.js",
+    "scrape:diseases": "node ingestion/scrapeDiseases.js",
+    "scrape:thresholds": "node ingestion/scrapeThresholds.js",
+    "scrape:all": "node ingestion/scrapeBulletins.js && node ingestion/scrapeDiseases.js && node ingestion/scrapeThresholds.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "mongodb": "^6.8.0",
     "node-cron": "^3.0.3"
   }
 }
