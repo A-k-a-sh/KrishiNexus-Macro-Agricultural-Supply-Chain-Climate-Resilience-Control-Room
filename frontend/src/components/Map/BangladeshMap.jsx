@@ -8,36 +8,9 @@ import {
 import { useAppContext } from '../../context/AppContext';
 import DistrictTooltip from './DistrictTooltip';
 import RiskLegend from './RiskLegend';
+import SHAPE_NAME_TO_ID from '../../data/geoNameMap.json';
 
 const GEO_URL = '/bd-districts.geojson';
-
-// Map each GeoJSON shapeName to the bdapi district _id.
-// shapeName comes from the geoBoundaries file's properties.shapeName field.
-// Some names differ from bdapi — add aliases here as needed.
-// This is intentionally kept in the map component so it's easy to patch.
-const SHAPE_NAME_TO_ID = {
-  'Barguna': '47', 'Barisal': '4', 'Bhola': '49', 'Jhalokati': '50',
-  'Patuakhali': '51', 'Pirojpur': '52', 'Bandarban': '1', 'Brahmanbaria': '2',
-  'Chandpur': '3', 'Chattogram': '5', 'Chittagong': '5', 'Cox\'s Bazar': '6',
-  'Cox’s Bazar': '6',
-  'Comilla': '7', 'Cumilla': '7', 'Feni': '8', 'Khagrachhari': '9',
-  'Lakshmipur': '10', 'Noakhali': '11', 'Rangamati': '12',
-  'Brahamanbaria': '2',
-  'Dhaka': '26', 'Faridpur': '27', 'Gazipur': '28', 'Gopalganj': '29',
-  'Kishoreganj': '30', 'Madaripur': '31', 'Manikganj': '32', 'Munshiganj': '33',
-  'Narayanganj': '34', 'Narsingdi': '35', 'Rajbari': '36', 'Shariatpur': '37',
-  'Tangail': '38', 'Bagerhat': '13', 'Chuadanga': '14', 'Jessore': '15',
-  'Jashore': '15', 'Jhenaidah': '16', 'Jhenaidaha': '16', 'Khulna': '17',
-  'Kushtia': '18', 'Magura': '19', 'Meherpur': '20', 'Narail': '21',
-  'Satkhira': '22', 'Jamalpur': '39', 'Mymensingh': '40', 'Netrokona': '41',
-  'Netrakona': '41', 'Sherpur': '42', 'Bogura': '23', 'Bogra': '23',
-  'Chapai Nawabganj': '24', 'Joypurhat': '25', 'Naogaon': '43', 'Natore': '44',
-  'Nawabganj': '24', 'Pabna': '45', 'Rajshahi': '46', 'Sirajganj': '48',
-  'Dinajpur': '53', 'Gaibandha': '54', 'Kurigram': '55', 'Lalmonirhat': '56',
-  'Nilphamari': '57', 'Panchagarh': '58', 'Rangpur': '59', 'Thakurgaon': '60',
-  'Habiganj': '61', 'Maulvibazar': '62', 'Moulvibazar': '62',
-  'Sunamganj': '63', 'Sylhet': '64',
-};
 
 // Risk status → SVG fill / stroke colors from the design system
 const RISK_STYLE = {
