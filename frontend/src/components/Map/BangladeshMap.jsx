@@ -62,7 +62,7 @@ export default function BangladeshMap() {
 
   const [tooltip, setTooltip] = useState({ visible: false, district: null, x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [center, setCenter] = useState([90.35, 23.68]); // Bangladesh centroid
+  const [center, setCenter] = useState([90.35, 23.68]); // Bangladesh centroid — ZoomableGroup pans here
 
   const zoomIn = useCallback(() => {
     setZoom((current) => Math.min(8, +(current + 0.75).toFixed(2)));
@@ -170,11 +170,10 @@ export default function BangladeshMap() {
       <ComposableMap
         projection="geoMercator"
         projectionConfig={{
-          center: [90.35, 23.6],
-          scale: 5500,
+          scale: 3200,
         }}
-        width={500}
-        height={600}
+        width={800}
+        height={700}
         style={{ width: '100%', height: '100%' }}
       >
         <ZoomableGroup
