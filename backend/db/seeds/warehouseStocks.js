@@ -1,4 +1,4 @@
-require('dotenv').config({ path: '../../.env' });
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 const { connectDb, getDb } = require('../connect');
 
 // Realistic-looking grain reserve figures based on Bangladesh Food Directorate
