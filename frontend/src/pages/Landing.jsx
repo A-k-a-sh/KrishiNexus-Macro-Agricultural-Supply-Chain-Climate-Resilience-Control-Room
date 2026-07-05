@@ -18,7 +18,7 @@ const PIPELINE_NODES = [
   { category: 'DATA SOURCE', label: 'BAMIS Bulletins', icon: '📄', details: 'District advisories parsed & split by crop sections' },
   { category: 'DATA SOURCE', label: 'Open-Meteo API', icon: '📡', details: 'Live 7-day temp, humidity, & rain parameters' },
   { category: 'DATA SOURCE', label: 'BBS Statistics', icon: '📊', details: 'Historical production records & baseline yields' },
-  { category: 'AI EMBEDDING', label: 'Gemini Vector Engine', icon: '🧠', details: '768-dimension coordinate generation' },
+  { category: 'AI EMBEDDING', label: 'Gemini Vector Engine', icon: '🧠', details: '3072-dimension coordinate generation' },
   { category: 'DATABASE', label: 'MongoDB Atlas', icon: '💾', details: '$vectorSearch matching + deterministic rules' },
   { category: 'RESPONSE', label: 'Gemini 2.5 Flash', icon: '⚡', details: 'Precise, context-grounded district advisories' }
 ];
@@ -62,7 +62,7 @@ export default function Landing() {
   // Live typing effect strings for the demo console
   const consoleDialogue = [
     { text: "> SELECT * FROM regional_advisories WHERE district='Mymensingh';", type: 'input' },
-    { text: "[SYSTEM]: Running $vectorSearch on 768-float query embedding...", type: 'system' },
+    { text: "[SYSTEM]: Running $vectorSearch on 3072-float query embedding...", type: 'system' },
     { text: "[DATABASE]: Matches found: 3 advisories (Cosine Similarity >= 0.88)", type: 'system' },
     { text: "> GENERATE ADVISORY --context --weather --temp=30.6°C --humidity=96%", type: 'input' },
     { text: "[AI ADVISORY]: Aman Rice in Mymensingh is currently at high risk for Blast disease due to elevated humidity (96%) at 30°C. Actions recommended: Maintain a 5cm water level, spray urea at 9kg/bigha, and apply fungicide if spots appear.", type: 'response' }
