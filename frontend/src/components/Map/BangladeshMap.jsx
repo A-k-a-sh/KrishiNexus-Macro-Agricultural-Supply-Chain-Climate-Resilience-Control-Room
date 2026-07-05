@@ -19,8 +19,10 @@ const SHAPE_NAME_TO_ID = {
   'Barguna': '47', 'Barisal': '4', 'Bhola': '49', 'Jhalokati': '50',
   'Patuakhali': '51', 'Pirojpur': '52', 'Bandarban': '1', 'Brahmanbaria': '2',
   'Chandpur': '3', 'Chattogram': '5', 'Chittagong': '5', 'Cox\'s Bazar': '6',
+  'Cox’s Bazar': '6',
   'Comilla': '7', 'Cumilla': '7', 'Feni': '8', 'Khagrachhari': '9',
   'Lakshmipur': '10', 'Noakhali': '11', 'Rangamati': '12',
+  'Brahamanbaria': '2',
   'Dhaka': '26', 'Faridpur': '27', 'Gazipur': '28', 'Gopalganj': '29',
   'Kishoreganj': '30', 'Madaripur': '31', 'Manikganj': '32', 'Munshiganj': '33',
   'Narayanganj': '34', 'Narsingdi': '35', 'Rajbari': '36', 'Shariatpur': '37',
@@ -39,10 +41,10 @@ const SHAPE_NAME_TO_ID = {
 
 // Risk status → SVG fill / stroke colors from the design system
 const RISK_STYLE = {
-  red:    { fill: '#450a0a', stroke: '#ef4444', strokeWidth: 0.8 },
+  red: { fill: '#450a0a', stroke: '#ef4444', strokeWidth: 0.8 },
   yellow: { fill: '#451a03', stroke: '#f59e0b', strokeWidth: 0.6 },
-  green:  { fill: '#052e16', stroke: '#00ff88', strokeWidth: 0.5 },
-  default:{ fill: '#111827', stroke: '#1e3a5f', strokeWidth: 0.4 },
+  green: { fill: '#052e16', stroke: '#00ff88', strokeWidth: 0.5 },
+  default: { fill: '#111827', stroke: '#1e3a5f', strokeWidth: 0.4 },
 };
 
 const SELECTED_STYLE = { fill: '#1e3a5f', stroke: '#3b82f6', strokeWidth: 1.5 };
@@ -58,9 +60,23 @@ export default function BangladeshMap() {
     setDistrictById(map);
   }, [allDistricts]);
 
-  const [tooltip, setTooltip]   = useState({ visible: false, district: null, x: 0, y: 0 });
-  const [zoom, setZoom]         = useState(1);
-  const [center, setCenter]     = useState([90.35, 23.68]); // Bangladesh centroid
+  const [tooltip, setTooltip] = useState({ visible: false, district: null, x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [center, setCenter] = useState([90.35, 23.68]); // Bangladesh centroid
+
+  const zoomIn = useCallback(() => {
+    setZoom((current) => Math.min(8, +(current + 0.75).toFixed(2)));
+  }, []);
+
+  const zoomOut = useCallback(() => {
+    setZoom((current) => Math.max(1, +(current - 0.75).toFixed(2)));
+  }, []);
+
+  const resetView = useCallback(() => {
+    setZoom(1);
+    setCenter([90.35, 23.68]);
+    selectDistrict(null);
+  }, [selectDistrict]);
 
   const handleDistrictClick = useCallback((geo) => {
     const shapeName = geo.properties.shapeName;
@@ -98,30 +114,50 @@ export default function BangladeshMap() {
     // Selected district overrides risk color
     if (selectedDistrict && district && district._id === selectedDistrict._id) {
       return {
-        default:  { ...SELECTED_STYLE, outline: 'none' },
-        hover:    { ...SELECTED_STYLE, outline: 'none' },
-        pressed:  { ...SELECTED_STYLE, outline: 'none' },
+        default: { ...SELECTED_STYLE, outline: 'none' },
+        hover: { ...SELECTED_STYLE, outline: 'none' },
+        pressed: { ...SELECTED_STYLE, outline: 'none' },
       };
     }
 
     const risk = district?.riskStatus || 'default';
     const s = RISK_STYLE[risk] || RISK_STYLE.default;
     return {
-      default:  { fill: s.fill, stroke: s.stroke, strokeWidth: s.strokeWidth, outline: 'none' },
-      hover:    { fill: '#1e2a42', stroke: '#3b82f6', strokeWidth: 1, outline: 'none', cursor: 'pointer' },
-      pressed:  { fill: '#1e2a42', outline: 'none' },
+      default: { fill: s.fill, stroke: s.stroke, strokeWidth: s.strokeWidth, outline: 'none' },
+      hover: { fill: '#1e2a42', stroke: '#3b82f6', strokeWidth: 1, outline: 'none', cursor: 'pointer' },
+      pressed: { fill: '#1e2a42', outline: 'none' },
     };
   }
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      {/* Reset zoom button */}
-      {zoom > 1 && (
+    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: '100%' }}>
+      <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 10, display: 'flex', gap: 8 }}>
         <button
-          onClick={() => { setZoom(1); setCenter([90.35, 23.68]); }}
+          onClick={zoomOut}
           style={{
-            position: 'absolute', top: 12, right: 12, zIndex: 10,
-            background: 'var(--bg-card)', border: '1px solid var(--border)',
+            background: 'var(--bg-surface)', border: '1px solid var(--border)',
+            color: 'var(--text-secondary)', padding: '4px 10px',
+            borderRadius: 'var(--radius-sm)', fontSize: 11,
+            fontFamily: 'var(--font-mono)', cursor: 'pointer',
+          }}
+        >
+          − Zoom
+        </button>
+        <button
+          onClick={zoomIn}
+          style={{
+            background: 'var(--bg-surface)', border: '1px solid var(--border)',
+            color: 'var(--text-secondary)', padding: '4px 10px',
+            borderRadius: 'var(--radius-sm)', fontSize: 11,
+            fontFamily: 'var(--font-mono)', cursor: 'pointer',
+          }}
+        >
+          + Zoom
+        </button>
+        <button
+          onClick={resetView}
+          style={{
+            background: 'var(--bg-surface)', border: '1px solid var(--border)',
             color: 'var(--text-secondary)', padding: '4px 10px',
             borderRadius: 'var(--radius-sm)', fontSize: 11,
             fontFamily: 'var(--font-mono)', cursor: 'pointer',
@@ -129,11 +165,16 @@ export default function BangladeshMap() {
         >
           ↩ Reset
         </button>
-      )}
+      </div>
 
       <ComposableMap
         projection="geoMercator"
-        projectionConfig={{ center: [90.35, 23.68], scale: 3400 }}
+        projectionConfig={{
+          center: [90.35, 23.6],
+          scale: 5500,
+        }}
+        width={500}
+        height={600}
         style={{ width: '100%', height: '100%' }}
       >
         <ZoomableGroup
