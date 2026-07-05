@@ -4,7 +4,7 @@ const EMBEDDING_URL = `https://generativelanguage.googleapis.com/v1beta/models/$
 
 /**
  * Embed a single string via Gemini embedding API.
- * Returns an array of floats (768 dimensions for gemini-embedding-001).
+ * Returns an array of floats (3072 dimensions for gemini-embedding-001).
  * @param {string} text
  * @returns {Promise<number[]>}
  */

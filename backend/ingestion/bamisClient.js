@@ -37,8 +37,11 @@ function unwrapPayload(payload) {
 
 function normalizeBanglaName(value) {
   return String(value || '')
+    .normalize('NFKC')
     .trim()
     .replace(/[\u200c\u200d]/g, '')
+    .replace(/[\s\u00a0]+/g, ' ')
+    .replace(/[()\[\]{}.,;:!?'"“”‘’`~\-–—/\\]/g, '')
     .replace(/\s+/g, ' ');
 }
 
