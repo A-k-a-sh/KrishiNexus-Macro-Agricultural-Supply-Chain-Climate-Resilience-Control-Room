@@ -8,49 +8,32 @@ const STATS = [
   { value: 2900, suffix: '+', label: 'Advisory Vectors Indexed' },
 ];
 
-const METRICS = [
-  { value: 18, suffix: 'M Hectares', label: 'Cropland at Climate Risk', desc: 'BBS estimates 64% of GDP exposure linked to season-specific climate shocks.', status: 'critical' },
-  { value: 12000, suffix: ' Crore ৳', label: 'Annual Average Flood Damage', desc: 'Sudden flash floods in north-eastern and central wetlands disrupt grain storage.', status: 'warning' },
-  { value: 98, suffix: '% Humidity', label: 'Pest Outbreak Threshold', desc: 'Blast disease & beetle surges triggered automatically when temperatures exceed 28°C.', status: 'info' }
+const COMPARISONS = [
+  {
+    feature: 'Target Audience',
+    apps: 'Micro-scale tips for individual retail farmers.',
+    nexus: 'Institutional control panel for DAE offices, policymakers, and logistics managers.',
+    highlight: true
+  },
+  {
+    feature: 'Salinity & Soil Dynamics',
+    apps: 'None. Only generic static regional weather summaries.',
+    nexus: 'Deterministic soil chemistry mapping (pH, NPK saturation) and coastal salinity intrusion alerts.',
+    highlight: false
+  },
+  {
+    feature: 'Supply Chain Defense',
+    apps: 'Simple listing of local stores or input retailers.',
+    nexus: 'Interactive Haversine-based yield deficit solver with regional warehouse stock dispatch routing.',
+    highlight: false
+  },
+  {
+    feature: 'AI Advisory Grounding',
+    apps: 'Basic rule-based logic or generic LLM prompts prone to hallucination.',
+    nexus: 'District-scoped multi-vector RAG indexing official government bulletins and disease matrices.',
+    highlight: true
+  }
 ];
-
-const PIPELINE_NODES = [
-  { category: 'DATA SOURCE', label: 'BAMIS Bulletins', icon: '📄', details: 'District advisories parsed & split by crop sections' },
-  { category: 'DATA SOURCE', label: 'Open-Meteo API', icon: '📡', details: 'Live 7-day temp, humidity, & rain parameters' },
-  { category: 'DATA SOURCE', label: 'BBS Statistics', icon: '📊', details: 'Historical production records & baseline yields' },
-  { category: 'AI EMBEDDING', label: 'Gemini Vector Engine', icon: '🧠', details: '3072-dimension coordinate generation' },
-  { category: 'DATABASE', label: 'MongoDB Atlas', icon: '💾', details: '$vectorSearch matching + deterministic rules' },
-  { category: 'RESPONSE', label: 'Gemini 2.5 Flash', icon: '⚡', details: 'Precise, context-grounded district advisories' }
-];
-
-function useCountUp(target, duration = 1800, start = false) {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    if (!start) return;
-    let startTime = null;
-    function step(ts) {
-      if (!startTime) startTime = ts;
-      const progress = Math.min((ts - startTime) / duration, 1);
-      setCount(Math.floor(progress * target));
-      if (progress < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-  }, [start, target, duration]);
-  return count;
-}
-
-function StatCard({ value, suffix, label, animate }) {
-  const count = useCountUp(value, 1600, animate);
-  return (
-    <div className="card" style={{ border: '1px solid var(--border)', background: 'var(--bg-surface)', padding: '24px 32px', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: 0, left: 0, width: 2, height: '100%', background: 'var(--accent-green)' }} />
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 40, fontWeight: 700, color: 'var(--accent-green)', lineHeight: 1 }}>
-        {animate ? count.toLocaleString() : value}{suffix}
-      </div>
-      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-    </div>
-  );
-}
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -85,8 +68,8 @@ export default function Landing() {
 
     // Console animation loop
     const consoleInterval = setInterval(() => {
-      setActiveConsoleStep((s) => (s + 1) % (consoleDialogue.length + 1));
-    }, 4500);
+      setActiveConsoleStep((s) => (s + 1) % consoleDialogue.length);
+    }, 3500);
 
     return () => {
       obs.disconnect();
@@ -97,7 +80,7 @@ export default function Landing() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', overflowX: 'hidden', background: 'var(--bg-primary)' }}>
-
+      
       {/* Top Banner: Status Bar */}
       <div style={{
         background: '#070a13', borderBottom: '1px solid var(--border)', padding: '6px 20px',
@@ -124,9 +107,9 @@ export default function Landing() {
           <span className="topbar-brand" style={{ fontSize: 14 }}>[ KRISHINEXUS CONTROL ]</span>
         </div>
         <nav className="topbar-nav" style={{ display: 'flex', gap: 8 }}>
+          <a href="#comparison" style={{ textDecoration: 'none' }}>WHY KRISHINEXUS</a>
           <a href="#pipeline" style={{ textDecoration: 'none' }}>PIPELINE</a>
-          <a href="#stats" style={{ textDecoration: 'none' }}>CLIMATE RISK</a>
-          <a href="#features" style={{ textDecoration: 'none' }}>FEATURES</a>
+          <a href="#stats" style={{ textDecoration: 'none' }}>RISK MATRIX</a>
         </nav>
         <button className="btn btn-primary" style={{ padding: '6px 16px', fontSize: 11, fontFamily: 'var(--font-mono)' }} onClick={() => navigate('/dashboard')}>
           LAUNCH MISSION DASHBOARD →
@@ -223,7 +206,7 @@ export default function Landing() {
             {/* Terminal Body */}
             <div style={{ padding: 24, minHeight: 220, fontFamily: 'var(--font-mono)', fontSize: 12, lineHeight: 1.8, background: '#080d17', textAlign: 'left' }}>
               <AnimatePresence mode="popLayout">
-                {consoleDialogue.slice(0, activeConsoleStep === 0 ? 1 : activeConsoleStep).map((line, idx) => (
+                {consoleDialogue.slice(0, activeConsoleStep + 1).map((line, idx) => (
                   <motion.div
                     key={idx}
                     initial={{ opacity: 0, x: -10 }}
@@ -246,114 +229,114 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* STRATEGIC CAPABILITIES */}
-      <section style={{ padding: '80px 24px', background: 'var(--bg-surface)', borderTop: '1px solid var(--border)' }}>
+      {/* WHY KRISHINEXUS IS DIFFERENT (COMPARISON TABLE) */}
+      <section id="comparison" style={{ padding: '80px 24px', background: 'var(--bg-surface)', borderTop: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
-          <div style={{ textAlign: 'center', marginBottom: 50 }}>
-            <div className="panel-label">ENTERPRISE CORE CAPABILITIES</div>
-            <h2 style={{ fontSize: 28, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>Macro-Level Agricultural Control Center</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 8 }}>Centralized intelligence tracking systems designed to move past generic mobile solutions</p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
             
-            {/* Pillar 1 */}
-            <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', padding: 28, position: 'relative' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-green)', marginBottom: 12 }}>[ PILLAR 01 ]</div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>Soil Chemistry & Salinity Dynamics</h3>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 16 }}>
-                Predicts and maps soil composition dynamics (pH, N-P-K nutrient saturation) and salinity intrusion. Crucial for southern delta districts like Satkhira and Barguna where rising sea levels threaten cropland.
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-                <span style={{ color: 'var(--accent-green)' }}>✓</span> SALINITY INTRUSION TRACKER
-                <span>·</span>
-                <span style={{ color: 'var(--accent-green)' }}>✓</span> NPK SATURATION INDEX
-              </div>
-            </div>
-
-            {/* Pillar 2 */}
-            <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', padding: 28, position: 'relative' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-blue)', marginBottom: 12 }}>[ PILLAR 02 ]</div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>Climate Threat Telemetry</h3>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 16 }}>
-                Aggregates real-time weather alerts using Open-Meteo forecasts. Runs automated rule comparisons against official government BAMIS crop tolerance thresholds to alert extension officers of impending pest or moisture shocks.
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-                <span style={{ color: 'var(--accent-blue)' }}>✓</span> 7-DAY FORECAST INTEGRATION
-                <span>·</span>
-                <span style={{ color: 'var(--accent-blue)' }}>✓</span> BAMIS THRESHOLD SCORER
-              </div>
-            </div>
-
-            {/* Pillar 3 */}
-            <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', padding: 28, position: 'relative' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-red)', marginBottom: 12 }}>[ PILLAR 03 ]</div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>Macro Supply Chain Simulator</h3>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 16 }}>
-                Allows supply chain managers and policymakers to model climate shocks, calculate crop yield shortfalls based on BBS baselines, and initiate grain/food dispatches from regional surplus reserves using Haversine centroid routing.
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-                <span style={{ color: 'var(--accent-red)' }}>✓</span> BBS YIELD DEFICIT MODELING
-                <span>·</span>
-                <span style={{ color: 'var(--accent-red)' }}>✓</span> SILO DISPATCH SIMULATOR
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* RAG Pipeline Grid */}
-      <section id="pipeline" style={{ padding: '80px 24px', background: '#080d16', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
-          <div style={{ textAlign: 'center', marginBottom: 50 }}>
-            <div className="panel-label">INTEGRATED RAG PIPELINE</div>
-            <h2 style={{ fontSize: 28, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>Vectorized Agricultural Knowledge Flow</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 8 }}>How KrishiNexus ingests, parses, embeds, indexes and queries data dynamically</p>
+            <h2 style={{ fontSize: 28, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>How We Differ From Consumer Apps</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 8 }}>Moving past static micro-tips into centralized macro supply chain intelligence</p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
-            {PIPELINE_NODES.map((node, i) => (
-              <div key={i} className="card" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', padding: 24, position: 'relative' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--accent-blue)', letterSpacing: '0.1em' }}>{node.category}</span>
-                  <span style={{ fontSize: 20 }}>{node.icon}</span>
-                </div>
-                <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>{node.label}</h3>
-                <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{node.details}</p>
-                <div style={{
-                  position: 'absolute', bottom: 12, right: 16,
-                  fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)'
-                }}>
-                  NODE_0{i + 1}
-                </div>
+          <div style={{
+            background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
+            overflow: 'hidden', boxShadow: 'var(--shadow-card)'
+          }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.4fr 1.8fr', background: '#0c111e', borderBottom: '1px solid var(--border)', padding: '14px 20px', fontSize: 11, fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text-muted)' }}>
+              <span>CAPABILITY</span>
+              <span>TRADITIONAL AGRI APPS</span>
+              <span style={{ color: 'var(--accent-green)' }}>KRISHINEXUS CONTROL ROOM</span>
+            </div>
+
+            {COMPARISONS.map((row, i) => (
+              <div
+                key={i}
+                style={{
+                  display: 'grid', gridTemplateColumns: '1.2fr 1.4fr 1.8fr',
+                  padding: '18px 20px', borderBottom: i < COMPARISONS.length - 1 ? '1px solid var(--border)' : 'none',
+                  fontSize: 12, lineHeight: 1.6,
+                  background: row.highlight ? '#0a1420' : 'transparent'
+                }}
+              >
+                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: row.highlight ? 'var(--accent-blue)' : 'var(--text-primary)' }}>{row.feature}</span>
+                <span style={{ color: 'var(--text-muted)', paddingRight: 15 }}>{row.apps}</span>
+                <span style={{ color: 'var(--text-primary)', borderLeft: '1px dashed var(--border)', paddingLeft: 20 }}>{row.nexus}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Metrics / Risk Stats */}
+      {/* RAG PIPELINE TIMELINE TRACE */}
+      <section id="pipeline" style={{ padding: '80px 24px', background: '#080d16', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <div className="panel-label">INTEGRATED RAG PIPELINE FLOW</div>
+            <h2 style={{ fontSize: 28, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>Automated Knowledge Aggregation Trace</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 8 }}>Vector ingestion pipeline converting raw government data to structured intelligence</p>
+          </div>
+
+          <div style={{
+            display: 'flex', flexDirection: 'column', gap: 0,
+            background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
+            fontFamily: 'var(--font-mono)'
+          }}>
+            {[
+              { step: '01', title: 'RAW DATA INGESTION', detail: 'Scrapes BAMIS district bulletins, Open-Meteo forecasts, and BBS yields.', badge: 'SOURCE' },
+              { step: '02', title: 'VECTOR EMBEDDING', detail: 'Calls gemini-embedding-001 to generate 3072-dimensional semantic indices.', badge: 'AI MODEL' },
+              { step: '03', title: 'ATLAS STORAGE', detail: 'Stores vectorized document chunks and configures $vectorSearch index fields.', badge: 'DATABASE' },
+              { step: '04', title: 'CONTEXT RETRIEVAL', detail: 'Runs parallel vector queries to retrieve district advisories & disease thresholds.', badge: 'RAG STACK' },
+              { step: '05', title: 'GROUNDED RESPONSE', detail: 'Feeds live telemetry + matched database records to Gemini 2.5 Flash for final advisory.', badge: 'SYNTHESIS' }
+            ].map((node, i) => (
+              <div
+                key={i}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 20, padding: '20px 24px',
+                  borderBottom: i < 4 ? '1px solid var(--border)' : 'none',
+                  position: 'relative'
+                }}
+              >
+                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--accent-blue)' }}>{node.step}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>{node.title}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)' }}>{node.detail}</div>
+                </div>
+                <span className="badge badge-blue" style={{ fontSize: 8 }}>{node.badge}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CLIMATE RISK MATRIX TELEMETRY LIST */}
       <section id="stats" ref={statsRef} style={{ padding: '80px 24px', maxWidth: 1100, margin: '0 auto', width: '100%' }}>
-        <div style={{ textAlign: 'center', marginBottom: 50 }}>
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <div className="panel-label">BANGLADESH CLIMATE RISK MATRIX</div>
           <h2 style={{ fontSize: 28, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>Macro Yield Vulnerability Indices</h2>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, marginBottom: 40 }}>
-          {METRICS.map((metric, i) => (
-            <div key={i} className="card" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', padding: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className={`badge ${metric.status === 'critical' ? 'badge-red' : metric.status === 'warning' ? 'badge-yellow' : 'badge-blue'}`}>
-                  {metric.status.toUpperCase()}
-                </span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)' }}>SOURCE: BBS</span>
-              </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 32, fontWeight: 700, color: metric.status === 'critical' ? 'var(--accent-red)' : metric.status === 'warning' ? 'var(--accent-yellow)' : 'var(--accent-blue)' }}>
-                {metric.value.toLocaleString()}{metric.suffix}
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{metric.label}</div>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{metric.desc}</p>
+        <div style={{
+          display: 'flex', flexDirection: 'column', gap: 12,
+          background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
+          padding: 24, marginBottom: 40, fontFamily: 'var(--font-mono)'
+        }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr 2fr', borderBottom: '1px dashed var(--border)', paddingBottom: 10, fontSize: 10, color: 'var(--text-muted)' }}>
+            <span>VULNERABILITY PARAMETER</span>
+            <span>CRITICAL VALUE</span>
+            <span>BBS CRITICAL DETAILS</span>
+          </div>
+
+          {[
+            { label: 'Cropland Exposed to Climate Shock', value: '18,000,000 Hectares', desc: 'BBS estimates 64% of agricultural GDP exposure linked to season-specific flooding/droughts.', status: 'red' },
+            { label: 'Annual Average Flood Asset Loss', value: '৳ 12,000 Crore', desc: 'Sudden flash floods in north-eastern haor and central delta wash away local reserve reserves.', status: 'yellow' },
+            { label: 'Pest Fungal Outbreak Window', value: 'Humidity >= 96% @ 28°C', desc: 'Blast disease & Red-Pumpkin Beetle spreads exponentially when humidity triggers exceed thresholds.', status: 'blue' }
+          ].map((item, idx) => (
+            <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr 2fr', fontSize: 12, alignItems: 'center', padding: '6px 0' }}>
+              <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{item.label}</span>
+              <span style={{ color: item.status === 'red' ? 'var(--accent-red)' : item.status === 'yellow' ? 'var(--accent-yellow)' : 'var(--accent-blue)', fontWeight: 700 }}>
+                {item.value}
+              </span>
+              <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', fontSize: 11 }}>{item.desc}</span>
             </div>
           ))}
         </div>
@@ -363,56 +346,62 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Feature cards */}
+      {/* FULL-WIDTH FEATURE LAUNCH TRACKS */}
       <section id="features" style={{ padding: '80px 24px', background: '#080d16', borderTop: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
-          <div style={{ textAlign: 'center', marginBottom: 50 }}>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <div className="panel-label">OPERATIONS SUITE</div>
             <h2 style={{ fontSize: 28, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>Control Room Dashboards</h2>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
-            <div className="card" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 24 }}>🗺️</span>
-                <span className="badge badge-green">LIVE STATUS</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {[
+              {
+                num: '01',
+                title: 'District Operations Center',
+                desc: 'Full-scale interactive coordinate map of all 64 districts. Hover to inspect alert statuses, live open-meteo temperatures, salinity values, and crop stage arrays. Zoom and sync coordinates in real time.',
+                badge: 'LIVE MAP STATUS',
+                badgeColor: 'badge-green',
+                action: () => navigate('/dashboard')
+              },
+              {
+                num: '02',
+                title: 'Supply Chain Routing & Silo Dispatch Optimizer',
+                desc: 'Simulate weather catastrophes by shifting severity parameters. Calculate projected yield shortfalls based on district baselines, identify the closest surplus silo, and generate AI dispatch manifests.',
+                badge: 'SIMULATOR ACTIVE',
+                badgeColor: 'badge-yellow',
+                action: () => navigate('/logistics')
+              },
+              {
+                num: '03',
+                title: 'RAG Knowledge Base & Contextual Interrogator',
+                desc: 'Vector-search district bulletins, crop disease libraries, and weather projections to feed the Gemini API for highly localized crop and disaster advisory suggestions.',
+                badge: 'RAG PIPELINE ONLINE',
+                badgeColor: 'badge-blue',
+                action: () => navigate('/dashboard')
+              }
+            ].map((feat, i) => (
+              <div
+                key={i}
+                className="card"
+                style={{
+                  background: 'var(--bg-surface)', border: '1px solid var(--border)', padding: 28,
+                  display: 'flex', alignItems: 'center', gap: 30, flexWrap: 'wrap'
+                }}
+              >
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 32, fontWeight: 700, color: 'var(--border-light)' }}>{feat.num}</div>
+                <div style={{ flex: 1, minWidth: 260 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{feat.title}</h3>
+                    <span className={`badge ${feat.badgeColor}`} style={{ fontSize: 8 }}>{feat.badge}</span>
+                  </div>
+                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7 }}>{feat.desc}</p>
+                </div>
+                <button className="btn btn-outline" style={{ fontFamily: 'var(--font-mono)', padding: '10px 20px', fontSize: 12 }} onClick={feat.action}>
+                  LAUNCH RUNTIME →
+                </button>
               </div>
-              <h3 style={{ fontSize: 16, fontWeight: 700 }}>1. District Operations Center</h3>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                Full-scale SVG coordinate map of all 64 districts. Hover to inspect district alert states, live temperatures, and humidity percentages. Click to zoom and synchronize panels.
-              </p>
-              <button className="btn btn-outline" style={{ marginTop: 'auto', alignSelf: 'flex-start', fontSize: 11, padding: '6px 14px' }} onClick={() => navigate('/dashboard')}>
-                Open Dashboard →
-              </button>
-            </div>
-
-            <div className="card" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 24 }}>🚚</span>
-                <span className="badge badge-yellow">SIMULATOR ACTIVE</span>
-              </div>
-              <h3 style={{ fontSize: 16, fontWeight: 700 }}>2. Supply Chain Optimizer</h3>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                Simulate weather catastrophes by moving the severity slider. Instantly calculate projected yield deficits, identify the closest surplus reserve division, and generate AI dispatch orders.
-              </p>
-              <button className="btn btn-outline" style={{ marginTop: 'auto', alignSelf: 'flex-start', fontSize: 11, padding: '6px 14px' }} onClick={() => navigate('/logistics')}>
-                Open Logistics →
-              </button>
-            </div>
-
-            <div className="card" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 24 }}>🤖</span>
-                <span className="badge badge-blue">RAG MATCHING</span>
-              </div>
-              <h3 style={{ fontSize: 16, fontWeight: 700 }}>3. Contextual Interrogator</h3>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                Query-time vector search retrieves district-specific advisories from the database, combined with 7-day weather forecasts and disease patterns, passing them directly to Gemini for grounded advisories.
-              </p>
-              <button className="btn btn-outline" style={{ marginTop: 'auto', alignSelf: 'flex-start', fontSize: 11, padding: '6px 14px' }} onClick={() => navigate('/dashboard')}>
-                Try RAG Chat →
-              </button>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -428,4 +417,34 @@ export default function Landing() {
     </div>
   );
 }
+
+function StatCard({ value, suffix, label, animate }) {
+  const count = useCountUp(value, 1600, animate);
+  return (
+    <div className="card" style={{ border: '1px solid var(--border)', background: 'var(--bg-surface)', padding: '24px 32px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, width: 2, height: '100%', background: 'var(--accent-green)' }} />
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 40, fontWeight: 700, color: 'var(--accent-green)', lineHeight: 1 }}>
+        {animate ? count.toLocaleString() : value}{suffix}
+      </div>
+      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+    </div>
+  );
+}
+
+function useCountUp(target, duration = 1800, start = false) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!start) return;
+    let startTime = null;
+    function step(ts) {
+      if (!startTime) startTime = ts;
+      const progress = Math.min((ts - startTime) / duration, 1);
+      setCount(Math.floor(progress * target));
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }, [start, target, duration]);
+  return count;
+}
+
 

@@ -143,10 +143,10 @@ export default function BangladeshMap() {
       <ComposableMap
         projection="geoMercator"
         projectionConfig={{
-          scale: 3200,
+          scale: 5500,
         }}
-        width={800}
-        height={700}
+        width={900}
+        height={800}
         style={{ width: '100%', height: '100%' }}
       >
         <ZoomableGroup
