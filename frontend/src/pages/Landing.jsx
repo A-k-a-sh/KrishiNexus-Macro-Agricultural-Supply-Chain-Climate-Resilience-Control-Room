@@ -243,7 +243,63 @@ export default function Landing() {
               <span className="cursor" />
             </div>
           </motion.div>
+        </div>
+      </section>
 
+      {/* STRATEGIC CAPABILITIES */}
+      <section style={{ padding: '80px 24px', background: 'var(--bg-surface)', borderTop: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
+          <div style={{ textAlign: 'center', marginBottom: 50 }}>
+            <div className="panel-label">ENTERPRISE CORE CAPABILITIES</div>
+            <h2 style={{ fontSize: 28, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>Macro-Level Agricultural Control Center</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 8 }}>Centralized intelligence tracking systems designed to move past generic mobile solutions</p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+            
+            {/* Pillar 1 */}
+            <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', padding: 28, position: 'relative' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-green)', marginBottom: 12 }}>[ PILLAR 01 ]</div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>Soil Chemistry & Salinity Dynamics</h3>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 16 }}>
+                Predicts and maps soil composition dynamics (pH, N-P-K nutrient saturation) and salinity intrusion. Crucial for southern delta districts like Satkhira and Barguna where rising sea levels threaten cropland.
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
+                <span style={{ color: 'var(--accent-green)' }}>✓</span> SALINITY INTRUSION TRACKER
+                <span>·</span>
+                <span style={{ color: 'var(--accent-green)' }}>✓</span> NPK SATURATION INDEX
+              </div>
+            </div>
+
+            {/* Pillar 2 */}
+            <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', padding: 28, position: 'relative' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-blue)', marginBottom: 12 }}>[ PILLAR 02 ]</div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>Climate Threat Telemetry</h3>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 16 }}>
+                Aggregates real-time weather alerts using Open-Meteo forecasts. Runs automated rule comparisons against official government BAMIS crop tolerance thresholds to alert extension officers of impending pest or moisture shocks.
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
+                <span style={{ color: 'var(--accent-blue)' }}>✓</span> 7-DAY FORECAST INTEGRATION
+                <span>·</span>
+                <span style={{ color: 'var(--accent-blue)' }}>✓</span> BAMIS THRESHOLD SCORER
+              </div>
+            </div>
+
+            {/* Pillar 3 */}
+            <div className="card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', padding: 28, position: 'relative' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-red)', marginBottom: 12 }}>[ PILLAR 03 ]</div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>Macro Supply Chain Simulator</h3>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 16 }}>
+                Allows supply chain managers and policymakers to model climate shocks, calculate crop yield shortfalls based on BBS baselines, and initiate grain/food dispatches from regional surplus reserves using Haversine centroid routing.
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
+                <span style={{ color: 'var(--accent-red)' }}>✓</span> BBS YIELD DEFICIT MODELING
+                <span>·</span>
+                <span style={{ color: 'var(--accent-red)' }}>✓</span> SILO DISPATCH SIMULATOR
+              </div>
+            </div>
+
+          </div>
         </div>
       </section>
 
