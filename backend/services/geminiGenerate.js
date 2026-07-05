@@ -29,8 +29,21 @@ async function generateText(systemPrompt, userPrompt) {
   });
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Gemini generate failed (${res.status}): ${err}`);
+    const errText = await res.text();
+    let cleanMessage = `Gemini generation failed (${res.status})`;
+    try {
+      const errJson = JSON.parse(errText);
+      if (errJson.error) {
+        if (res.status === 429) {
+          cleanMessage = `Gemini Quota Exceeded (429): You exceeded the free tier rate limit (20 requests/minute). Please wait 45-60 seconds and retry.`;
+        } else {
+          cleanMessage = `Gemini error (${res.status}): ${errJson.error.message}`;
+        }
+      }
+    } catch (e) {
+      cleanMessage = `Gemini generation failed (${res.status}): ${errText}`;
+    }
+    throw new Error(cleanMessage);
   }
 
   const data = await res.json();

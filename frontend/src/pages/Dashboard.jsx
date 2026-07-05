@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useLocation, NavLink } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import LeftNav       from '../components/Dashboard/LeftNav';
@@ -8,6 +9,7 @@ import ChatTerminal  from '../components/Dashboard/ChatTerminal';
 
 export default function Dashboard() {
   const { selectedDistrict } = useAppContext();
+  const [activeTab, setActiveTab] = useState('telemetry'); // 'telemetry' | 'advisory' | 'chat'
   const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
   return (
@@ -46,7 +48,7 @@ export default function Dashboard() {
 
         {/* RIGHT — Telemetry + AI advisory + chat */}
         <div style={{
-          width: 360, flexShrink: 0,
+          width: 400, flexShrink: 0,
           borderLeft: '1px solid var(--border)',
           background: 'var(--bg-surface)',
           display: 'flex', flexDirection: 'column',
@@ -58,35 +60,73 @@ export default function Dashboard() {
             borderBottom: '1px solid var(--border)',
             fontFamily: 'var(--font-mono)', fontSize: 10,
             color: 'var(--text-muted)', letterSpacing: '0.1em',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center'
           }}>
-            INTELLIGENCE PANEL
+            <span>INTELLIGENCE PANEL</span>
             {selectedDistrict && (
-              <span style={{ color: 'var(--accent-blue)', marginLeft: 8 }}>
-                · {selectedDistrict.name}
+              <span style={{ color: 'var(--accent-blue)', fontWeight: 600 }}>
+                {selectedDistrict.name.toUpperCase()}
               </span>
             )}
           </div>
 
-          {/* Scrollable right panel */}
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 0 }}>
+          {/* Tab Navigation */}
+          <div style={{
+            display: 'flex',
+            background: '#0c111d',
+            borderBottom: '1px solid var(--border)',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+          }}>
+            {[
+              { id: 'telemetry', label: 'TELEMETRY' },
+              { id: 'advisory', label: 'AI ADVISORY' },
+              { id: 'chat', label: 'INTERROGATOR' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  flex: 1,
+                  padding: '10px 0',
+                  background: activeTab === tab.id ? 'var(--bg-surface)' : 'transparent',
+                  color: activeTab === tab.id ? 'var(--accent-blue)' : 'var(--text-muted)',
+                  borderRight: '1px solid var(--border)',
+                  fontWeight: 600,
+                  fontSize: 10,
+                  letterSpacing: '0.05em',
+                  transition: 'all 0.2s',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-            {/* A: Telemetry */}
-            <div style={{ borderBottom: '1px solid var(--border)' }}>
-              <TelemetryPanel district={selectedDistrict} />
-            </div>
-
-            {/* B: RAG Advisory */}
-            <div style={{ borderBottom: '1px solid var(--border)' }}>
-              <div style={{ padding: '10px 14px 0' }}>
-                <div className="panel-label">AI CRISIS ADVISORY · SECTION B</div>
+          {/* Active Tab Panel Content */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {activeTab === 'telemetry' && (
+              <div style={{ flex: 1, overflowY: 'auto' }}>
+                <TelemetryPanel district={selectedDistrict} />
               </div>
-              <RagAdvisory district={selectedDistrict} />
-            </div>
+            )}
 
-            {/* C: Chat Terminal */}
-            <div>
-              <ChatTerminal district={selectedDistrict} />
-            </div>
+            {activeTab === 'advisory' && (
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '14px 14px 0' }}>
+                  <div className="panel-label">AI CRISIS ADVISORY</div>
+                </div>
+                <RagAdvisory district={selectedDistrict} />
+              </div>
+            )}
+
+            {activeTab === 'chat' && (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <ChatTerminal district={selectedDistrict} />
+              </div>
+            )}
           </div>
         </div>
       </div>

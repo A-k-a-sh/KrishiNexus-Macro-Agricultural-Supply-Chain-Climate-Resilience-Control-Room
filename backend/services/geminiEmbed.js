@@ -18,8 +18,21 @@ async function embedText(text) {
   });
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Gemini embed failed (${res.status}): ${err}`);
+    const errText = await res.text();
+    let cleanMessage = `Gemini embedding failed (${res.status})`;
+    try {
+      const errJson = JSON.parse(errText);
+      if (errJson.error) {
+        if (res.status === 429) {
+          cleanMessage = `Gemini Quota Exceeded (429): You exceeded the free tier embedding rate limit (1500 requests/minute). Please wait 30 seconds and retry.`;
+        } else {
+          cleanMessage = `Gemini embedding error (${res.status}): ${errJson.error.message}`;
+        }
+      }
+    } catch (e) {
+      cleanMessage = `Gemini embedding failed (${res.status}): ${errText}`;
+    }
+    throw new Error(cleanMessage);
   }
 
   const data = await res.json();
