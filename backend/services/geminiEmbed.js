@@ -55,4 +55,4 @@ async function embedBatch(texts) {
   return results;
 }
 
-module.exports = { embedText, embedBatch };
+module.exports = { embedText, embedBatch };``

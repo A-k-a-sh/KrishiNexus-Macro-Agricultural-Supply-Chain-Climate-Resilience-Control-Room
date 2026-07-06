@@ -13,7 +13,8 @@
     "scrape:bulletins": "node ingestion/scrapeBulletins.js",
     "scrape:diseases": "node ingestion/scrapeDiseases.js",
     "scrape:thresholds": "node ingestion/scrapeThresholds.js",
-    "scrape:all": "node ingestion/scrapeBulletins.js && node ingestion/scrapeDiseases.js && node ingestion/scrapeThresholds.js"
+    "scrape:all": "node ingestion/scrapeBulletins.js && node ingestion/scrapeDiseases.js && node ingestion/scrapeThresholds.js",
+    "rebuild:chunks": "node ingestion/rebuildChunks.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
