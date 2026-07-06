@@ -411,7 +411,7 @@ export default function Landing() {
         Data Pipeline Ingestions: BAMIS Weather Portal · BBS Production Archive · Open-Meteo API · bdapi Admin Coordinates
         <br />
         <span style={{ marginTop: 8, display: 'block', opacity: 0.6 }}>
-          KrishiNexus — Built for SIC-Blitz CUET (Track B: Environment & Sustainability)
+          @All Rights Reserved | Developed By <span > <a href='https://www.github.com/A-k-a-sh' target='__blank' style={{ textDecoration: 'none', color: 'var(--accent-green)' }}>Akash</a> </span>
         </span>
       </footer>
     </div>
