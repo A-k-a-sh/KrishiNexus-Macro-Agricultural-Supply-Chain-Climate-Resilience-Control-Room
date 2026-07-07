@@ -116,7 +116,7 @@ export default function Dashboard() {
             {activeTab === 'advisory' && (
               <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ padding: '14px 14px 0' }}>
-                  <div className="panel-label">AI CRISIS ADVISORY</div>
+                  {/* <div className="panel-label">AI CRISIS ADVISORY</div> */}
                 </div>
                 <RagAdvisory district={selectedDistrict} />
               </div>
