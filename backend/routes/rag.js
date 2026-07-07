@@ -46,14 +46,14 @@ router.post('/query', async (req, res, next) => {
       vectorSearch(
         'regional_advisories',
         queryVector,
-        'advisory_vector_index',
+        'embedding',
         { districtId },   // pre-filter: only this district's advisories
         3
       ),
       // Disease info — not district-specific, search all
-      vectorSearch('crop_pathology', queryVector, 'pathology_vector_index', null, 2),
+      vectorSearch('crop_pathology', queryVector, 'embedding', null, 2),
       // Crop thresholds — not district-specific, search all
-      vectorSearch('crop_thresholds', queryVector, 'threshold_vector_index', null, 2),
+      vectorSearch('crop_thresholds', queryVector, 'embedding', null, 2),
     ]);
 
     // ── 3. Fetch district's current weather + alert state ─────────────────────
