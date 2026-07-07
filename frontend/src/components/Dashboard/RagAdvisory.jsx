@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { postRagQuery } from '../../api';
 
-const AUTO_QUERY = 'Summarize the current agricultural risk situation and key advisories for this district based on current weather conditions.';
+const AUTO_QUERY = 'Summarize the current agricultural risk situation and key advisories for this district based on current weather conditions. and বর্তমান আবহাওয়ায় কোন ফসলে কোন রোগ বা পোকার আক্রমণ হতে পারে এবং তার প্রতিকার কী? কোন ফসল চাষ করা যাবে?';
 
 export default function RagAdvisory({ district }) {
   const [text, setText]       = useState('');
