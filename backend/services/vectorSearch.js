@@ -4,7 +4,7 @@ const { getDb } = require('../db/connect');
  * Run a $vectorSearch aggregation against a MongoDB Atlas collection.
  *
  * @param {string}   collectionName  - e.g. 'regional_advisories'
- * @param {number[]} queryVector     - 768-float embedding of the user's question
+ * @param {number[]} queryVector     - 3072-float embedding of the user's question
  * @param {string}   indexName       - Atlas vector index name on that collection
  * @param {object}   [filter]        - Optional MQL filter applied before vector search
  *                                     e.g. { districtId: "22" }
