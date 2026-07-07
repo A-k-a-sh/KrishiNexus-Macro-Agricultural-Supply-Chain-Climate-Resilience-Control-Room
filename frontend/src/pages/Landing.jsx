@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import '../styles/globals.css'
 
 const STATS = [
   { value: 64, suffix: '', label: 'Districts Monitored' },
@@ -80,7 +81,7 @@ export default function Landing() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', overflowX: 'hidden', background: 'var(--bg-primary)' }}>
-      
+
       {/* Top Banner: Status Bar */}
       <div style={{
         background: '#070a13', borderBottom: '1px solid var(--border)', padding: '6px 20px',
@@ -150,8 +151,13 @@ export default function Landing() {
               transition={{ duration: 0.6, delay: 0.1 }}
               style={{ fontSize: 'clamp(36px, 6vw, 64px)', fontWeight: 800, lineHeight: 1.1, marginBottom: 20, fontFamily: 'var(--font-mono)', letterSpacing: '-0.02em' }}
             >
-              Control Room for <br />
-              <span style={{ color: 'var(--accent-green)', textShadow: '0 0 20px rgba(0,255,136,0.15)' }}>Resilient Supply Chains</span>
+
+              <div className="krishi-titleee">
+                <span>KrishiNexus</span>
+                <br /><br />
+                Control Room for <br />
+                <span className='highlight'>Resilient Supply Chains</span>
+              </div>
             </motion.h1>
 
             <motion.p
@@ -233,7 +239,7 @@ export default function Landing() {
       <section id="comparison" style={{ padding: '80px 24px', background: 'var(--bg-surface)', borderTop: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            
+
             <h2 style={{ fontSize: 28, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>How We Differ From Consumer Apps</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 8 }}>Moving past static micro-tips into centralized macro supply chain intelligence</p>
           </div>
