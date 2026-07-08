@@ -383,14 +383,14 @@ One document per crop-section per bulletin. Contains embedding. This is what `$v
   "stage": "Seedbed",
   "guidelineText": "আমন ধানের জমি তৈরির শেষ পর্যায়ে বিঘাপ্রতি ৯ কেজি ইউরিয়া প্রয়োগ করুন...",
   "ragContextChunk": "জেলা কোড: 22। ফসল: Aman Rice। পর্যায়: Seedbed। পরামর্শ: আমন ধানের জমি তৈরির...",
-  "embedding": [ 0.012, -0.045, 0.781, "... 768 floats total ..." ]
+  "embedding": [ 0.012, -0.045, 0.781, "... 3072 floats total ..." ]
 }
 ```
 
 **Atlas Vector Index required on this collection:**
 - Index name: `advisory_vector_index`
 - Field: `embedding`
-- Dimensions: `768`
+- Dimensions: `3072`
 - Similarity: `cosine`
 
 ### 5.7 `crop_pathology` collection — RAG-ready
@@ -406,7 +406,7 @@ One document per disease section that has substantive text (skip stub entries wh
   "images": [ "https://www.bamis.gov.bd/res/public/crops/2019/04/14/89.jpg" ],
   "fullText": "ক্যাঙ্কার রোগ — অনুকূল আবহাওয়া: তাপমাত্রা ২৮-৩০° সে...",
   "ragContextChunk": "রোগের নাম: ক্যাঙ্কার রোগ। ফসল: পেয়ারা। অনুকূল আবহাওয়া: তাপমাত্রা...",
-  "embedding": [ "... 768 floats ..." ],
+  "embedding": [ "... 3072 floats ..." ],
   "sourceUrl": "https://www.bamis.gov.bd/diseases/1/all/71"
 }
 ```
@@ -414,7 +414,7 @@ One document per disease section that has substantive text (skip stub entries wh
 **Atlas Vector Index required:**
 - Index name: `pathology_vector_index`
 - Field: `embedding`
-- Dimensions: `768`
+- Dimensions: `3072`
 - Similarity: `cosine`
 
 ### 5.8 `crop_thresholds` collection — RAG-ready + rule engine
@@ -426,7 +426,7 @@ One document per disease section that has substantive text (skip stub entries wh
   "cropName": "মসুর",
   "heading": "ফসল আবহাওয়া তথ্য - মসুর",
   "ragContextChunk": "ফসল: মসুর। তথ্য: মশুর উৎপাদনের জন্য ঠান্ডা আবহাওয়া উপযোগী...",
-  "embedding": [ "... 768 floats ..." ],
+  "embedding": [ "... 3072 floats ..." ],
   "sourceUrl": "https://www.bamis.gov.bd/thresholds/1/all/58",
 
   "parsedRules": {
@@ -448,7 +448,7 @@ One document per disease section that has substantive text (skip stub entries wh
 **Atlas Vector Index required:**
 - Index name: `threshold_vector_index`
 - Field: `embedding`
-- Dimensions: `768`
+- Dimensions: `3072`
 - Similarity: `cosine`
 
 ### 5.9 `market_production_baselines` collection
@@ -665,7 +665,7 @@ async function embedText(text) {
     body: JSON.stringify({ content: { parts: [{ text }] } })
   });
   const data = await res.json();
-  return data.embedding.values; // 768 floats
+  return data.embedding.values; // 3072 floats
 }
 
 module.exports = { embedText };
@@ -699,7 +699,7 @@ module.exports = { generateText };
 
 ```js
 // Runs $vectorSearch aggregation against a named collection.
-// Input: collection name, query embedding (768 floats), optional filter, k (number of results)
+// Input: collection name, query embedding (3072 floats), optional filter, k (number of results)
 // Output: array of matched documents
 
 async function vectorSearch(db, collectionName, queryEmbedding, indexName, filter, k = 3) {
@@ -787,7 +787,7 @@ Free tier: 1,500 embedding requests/minute. Add a 50ms delay between embedding c
 User sends: POST /api/rag/query
   { question: "...", districtId: "22", language: "en" }
 
-1. embedText(question) → queryVector (768 floats)
+1. embedText(question) → queryVector (3072 floats)
 
 2. Parallel $vectorSearch calls:
    a. regional_advisories, index: advisory_vector_index,
@@ -1152,7 +1152,7 @@ For each of the three RAG-ready collections (`regional_advisories`, `crop_pathol
     {
       "type": "vector",
       "path": "embedding",
-      "numDimensions": 768,
+      "numDimensions": 3072,
       "similarity": "cosine"
     },
     {
@@ -1224,7 +1224,7 @@ Follow this exact sequence. Do not skip steps — each depends on the previous.
 
 **Step 6:** Run `parseBBS.js` to load the BBS Kaggle CSV into `market_production_baselines`.
 
-**Step 7:** Run `runIngestion.js` to parse raw collections into RAG-ready collections and call Gemini embedding API. This is the longest step (~1 minute). Verify `regional_advisories`, `crop_pathology`, `crop_thresholds` documents have `embedding` arrays of length 768.
+**Step 7:** Run `runIngestion.js` to parse raw collections into RAG-ready collections and call Gemini embedding API. This is the longest step (~1 minute). Verify `regional_advisories`, `crop_pathology`, `crop_thresholds` documents have `embedding` arrays of length 3072.
 
 **Step 8:** Create the three Atlas Vector Search indexes (§10.1). Wait for them to be in "Ready" state (usually 1–2 minutes).
 
