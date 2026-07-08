@@ -1,6 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { postRagQuery } from '../../api';
 
+const SAMPLE_QUESTIONS = [
+  'কী কী ফসল চাষ করা যাবে?',
+  'কী কী রোগ-বালাই আছে?',
+  'কৃষি পরামর্শ দাও',
+  'What crops can be cultivated?',
+  'What are the current pest risks?',
+];
+
 export default function ChatTerminal({ district }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput]       = useState('');
@@ -22,8 +30,8 @@ export default function ChatTerminal({ district }) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  async function handleSubmit() {
-    const q = input.trim();
+  async function handleSubmit(overrideQuestion) {
+    const q = (typeof overrideQuestion === 'string' ? overrideQuestion : input).trim();
     if (!q || !district || loading) return;
 
     setInput('');
@@ -150,6 +158,40 @@ export default function ChatTerminal({ district }) {
       {district && (
         <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
           Context: {district.name} · Press Enter to send · Shift+Enter for newline
+        </div>
+      )}
+
+      {/* Sample question chips */}
+      {district && !loading && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 2 }}>
+          {SAMPLE_QUESTIONS.map((q) => (
+            <button
+              key={q}
+              onClick={() => handleSubmit(q)}
+              style={{
+                padding: '3px 8px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 9,
+                background: 'transparent',
+                border: '1px solid var(--border)',
+                borderRadius: 3,
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+                letterSpacing: '0.03em',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--accent-blue)';
+                e.currentTarget.style.color = 'var(--accent-blue)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.color = 'var(--text-muted)';
+              }}
+            >
+              {q}
+            </button>
+          ))}
         </div>
       )}
     </div>
