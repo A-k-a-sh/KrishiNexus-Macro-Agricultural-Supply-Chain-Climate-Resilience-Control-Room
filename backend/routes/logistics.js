@@ -75,11 +75,11 @@ router.post('/calculate', async (req, res, next) => {
 
     const projectedDeficit = +(baselineMtons * severityFactor).toFixed(2);
 
-    // ── Find best surplus division (highest stock, excluding district's own division) ──
+    // ── Find best surplus division — score by efficiency (stock / distance) ─────
+    // Fetch all divisions that have stock for this crop, excluding the district's own division
     const stocks = await db
       .collection('warehouse_stocks')
       .find({ crop, divisionId: { $ne: district.divisionId } })
-      .sort({ reserveMtons: -1 })
       .toArray();
 
     if (stocks.length === 0) {
@@ -98,13 +98,21 @@ router.post('/calculate', async (req, res, next) => {
       });
     }
 
-    const bestStock = stocks[0];
-    const surplusCentroid = DIVISION_CENTROIDS[bestStock.divisionId];
+    // Score each division: efficiency = reserveMtons / distanceKm
+    // (high stock + short distance = best supplier for this specific district)
+    const scoredStocks = stocks.map((s) => {
+      const centroid = DIVISION_CENTROIDS[s.divisionId];
+      const dist = centroid && district.lat && district.lon
+        ? Math.round(haversineKm(district.lat, district.lon, centroid.lat, centroid.lon))
+        : 9999; // unknown distance → penalise
+      const efficiency = s.reserveMtons / Math.max(dist, 1);
+      return { ...s, _distKm: dist, _efficiency: efficiency };
+    });
 
-    // Distance from surplus division centroid to the deficit district
-    const distanceKm = surplusCentroid
-      ? Math.round(haversineKm(district.lat, district.lon, surplusCentroid.lat, surplusCentroid.lon))
-      : null;
+    // Pick the most efficient supplier
+    scoredStocks.sort((a, b) => b._efficiency - a._efficiency);
+    const bestStock = scoredStocks[0];
+    const distanceKm = bestStock._distKm < 9999 ? bestStock._distKm : null;
 
     // Recommended cargo: cover the deficit + 5% buffer, but cap at 30% of the surplus reserve
     const rawRecommended = projectedDeficit * 1.05;
