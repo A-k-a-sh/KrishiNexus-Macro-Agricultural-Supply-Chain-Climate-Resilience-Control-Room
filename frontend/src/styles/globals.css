@@ -396,7 +396,7 @@ textarea:focus {
   left: -8px;
   width: calc(100% + 16px);
   height: 32px;
-  background: url('../public/bg_title_stroke.png') no-repeat center bottom;
+  background: url('../../public/bg_title_stroke.png') no-repeat center bottom;
   background-size: 100% 100%;
   transform: rotate(-4deg);
   opacity: 0.92;
