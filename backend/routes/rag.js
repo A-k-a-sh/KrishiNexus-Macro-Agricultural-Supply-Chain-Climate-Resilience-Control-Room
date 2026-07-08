@@ -9,7 +9,7 @@ const router = Router();
 
 // ── zilaIdMap: zilaId (BAMIS 1-66) → districtId (app ID) ────────────────────
 // We need the reverse: districtId → zilaId, so we flip it at startup.
-const zilaIdMap = require(path.join(__dirname, '../../others/data, chunk, embeed/data/zilaIdMap.json'));
+const zilaIdMap = require(path.join(__dirname, '../ingestion/zilaIdMap.json'));
 // districtIdToZilaId: { "12": "1", "36": "50", ... }
 const districtIdToZilaId = Object.fromEntries(
   Object.entries(zilaIdMap).map(([zilaId, districtId]) => [districtId, zilaId])
