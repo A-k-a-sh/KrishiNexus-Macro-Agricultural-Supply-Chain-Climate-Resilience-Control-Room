@@ -166,7 +166,8 @@ export default function Landing() {
               transition={{ duration: 0.6, delay: 0.2 }}
               style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 36, maxWidth: 680, margin: '0 auto 36px' }}
             >
-              Grounded, Gemini-powered RAG models mapping real-time Open-Meteo forecasts, BBS historical baselines, and official BAMIS crop thresholds. Developed for extension offices, policymakers, and logistics handlers.
+              A Gemini-powered RAG advisory system grounded in real-time Open-Meteo forecasts, BBS historical baselines, and official BAMIS crop thresholds. Built for extension offices, policymakers, and logistics managers.
+
             </motion.p>
 
             <motion.div
