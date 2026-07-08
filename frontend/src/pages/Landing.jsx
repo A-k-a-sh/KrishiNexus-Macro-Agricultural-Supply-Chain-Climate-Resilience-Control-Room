@@ -288,8 +288,8 @@ export default function Landing() {
             fontFamily: 'var(--font-mono)'
           }}>
             {[
-              { step: '01', title: 'RAW DATA INGESTION', detail: 'Scrapes BAMIS district bulletins, Open-Meteo forecasts, and BBS yields.', badge: 'SOURCE' },
-              { step: '02', title: 'VECTOR EMBEDDING', detail: 'Calls gemini-embedding-001 to generate 3072-dimensional semantic indices.', badge: 'AI MODEL' },
+              { step: '01', title: 'RAW DATA INGESTION', detail: 'Scrapes BAMIS district bulletins, Open-Meteo forecasts, and BBS yields.', badge: <a href='https://www.bamis.gov.bd/bulletin/district/current/0' target='__blank'>SOURCE</a> },
+              { step: '02', title: 'VECTOR EMBEDDING', detail: 'Calls gemini-embedding-001 to generate 3072-dimensional semantic indices.', badge: <a href='https://ai.google.dev/gemini-api/docs/embeddings' target='__blank'>AI MODEL</a>  },
               { step: '03', title: 'ATLAS STORAGE', detail: 'Stores vectorized document chunks and configures $vectorSearch index fields.', badge: 'DATABASE' },
               { step: '04', title: 'CONTEXT RETRIEVAL', detail: 'Runs parallel vector queries to retrieve district advisories & disease thresholds.', badge: 'RAG STACK' },
               { step: '05', title: 'GROUNDED RESPONSE', detail: 'Feeds live telemetry + matched database records to Gemini 2.5 Flash for final advisory.', badge: 'SYNTHESIS' }
