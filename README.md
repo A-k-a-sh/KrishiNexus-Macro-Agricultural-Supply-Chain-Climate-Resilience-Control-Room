@@ -79,7 +79,7 @@ This is a defensible supply-chain optimization model based on transport cost min
 
 ### 3. Deterministic Risk Scoring + Live Weather = Automated Alert Engine
 
-Every 6 hours (updated 24h for vercel requirement), a cron job:
+Every 6 hours, a cron job:
 1. Pulls Open-Meteo 7-day forecasts for all **64 districts** (256 API calls/day — fits the free tier)
 2. Compares live weather against `parsedRules` extracted from BAMIS crop threshold documents
 3. Applies rule logic: temp > floweringDisruptAbove → RED; humidity > 90% & temp > 28°C → YELLOW (blast/pest); 3-day precipitation sum > 50mm → RED (flood)
