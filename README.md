@@ -2,7 +2,7 @@
 ### Macro-Agricultural Supply Chain & Climate Resilience Control Room
 
 > **Competition Track:** Track B — Environment & Sustainability  
-> **Team:** SICBlitz, CUET
+> **Team Name:** Zer0_Requiem
 
 Bangladesh's 64 districts produce food for ~170 million people. When a flood hits Sunamganj or a pest outbreak sweeps Tangail, institutional decision-makers — extension officers, supply chain managers, food security officials — have no unified, real-time system to see what's happening, what the official advisory says, and how to route relief supplies. **KrishiNexus is that system.**
 
