@@ -24,35 +24,45 @@ async function runWeatherRefresh() {
   let successCount = 0;
   let failCount = 0;
 
-  for (const district of districts) {
-    try {
-      // Fetch live weather from Open-Meteo
-      const liveWeather = await fetchWeather(district.lat, district.lon);
+  // Run in chunks/concurrency-limited batches to prevent timeouts in serverless execution environments (e.g. Vercel)
+  const CONCURRENCY_LIMIT = 4;
+  const chunks = [];
+  for (let i = 0; i < districts.length; i += CONCURRENCY_LIMIT) {
+    chunks.push(districts.slice(i, i + CONCURRENCY_LIMIT));
+  }
 
-      // Score risk using fresh weather + existing activeCrops
-      const districtWithWeather = { ...district, liveWeather };
-      const { riskStatus, activeAlerts } = await scoreDistrict(districtWithWeather);
+  for (const chunk of chunks) {
+    await Promise.all(
+      chunk.map(async (district) => {
+        try {
+          // Fetch live weather from Open-Meteo
+          const liveWeather = await fetchWeather(district.lat, district.lon);
 
-      // Write everything back in one update
-      await db.collection('districts').updateOne(
-        { _id: district._id },
-        {
-          $set: {
-            liveWeather,
-            riskStatus,
-            activeAlerts,
-          },
+          // Score risk using fresh weather + existing activeCrops
+          const districtWithWeather = { ...district, liveWeather };
+          const { riskStatus, activeAlerts } = await scoreDistrict(districtWithWeather);
+
+          // Write everything back in one update
+          await db.collection('districts').updateOne(
+            { _id: district._id },
+            {
+              $set: {
+                liveWeather,
+                riskStatus,
+                activeAlerts,
+              },
+            }
+          );
+
+          successCount++;
+        } catch (err) {
+          failCount++;
+          console.error(`[weatherRefresh] Failed for district ${district._id}:`, err.message);
         }
-      );
-
-      successCount++;
-    } catch (err) {
-      failCount++;
-      console.error(`[weatherRefresh] Failed for district ${district._id}:`, err.message);
-    }
-
-    // 100ms gap between Open-Meteo calls — polite rate limiting
-    await new Promise((r) => setTimeout(r, 100));
+      })
+    );
+    // 150ms gap between batches to be polite to Open-Meteo API
+    await new Promise((r) => setTimeout(r, 150));
   }
 
   console.log(

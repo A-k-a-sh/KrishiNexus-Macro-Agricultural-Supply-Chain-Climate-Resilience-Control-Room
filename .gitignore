@@ -26,5 +26,9 @@ frontend/package-lock.json
 
 backend/package-lock.json
 
+# Local archive assets
+others.zip
+*.zip
+
 
 
