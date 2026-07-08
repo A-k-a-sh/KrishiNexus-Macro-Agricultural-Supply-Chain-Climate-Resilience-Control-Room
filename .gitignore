@@ -10,13 +10,8 @@ dist
 build
 
 others/*
-./others/*
-/others/*
-
-
-others
-./others
-/others
+!others/
+!others/krishinexus_specs.md
 
 AGENTS.md
 
