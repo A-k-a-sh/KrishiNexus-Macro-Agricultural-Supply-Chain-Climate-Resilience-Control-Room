@@ -192,6 +192,8 @@ Before running ingestion, you must build a mapping table. Steps:
 
 Until this map is verified, `districtId` on advisory documents may point to the wrong district.
 
+**Update: BAMIS zilaId vs bdapi district id mapping is verified. It is in backend/ingestion/zilaIdMap.json
+
 ### 4.2 bdapi — Bangladesh Administrative Data
 
 **Base URL:** `https://bdapi.vercel.app/api/v.1`
