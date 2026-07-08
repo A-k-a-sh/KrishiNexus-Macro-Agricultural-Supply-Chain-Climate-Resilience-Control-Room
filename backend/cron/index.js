@@ -17,8 +17,8 @@ function startCronJobs() {
     console.error('[cron] Initial weather refresh failed:', err.message)
   );
 
-  // Then schedule every 6 hours
-  cron.schedule('0 */6 * * *', () => {
+  // Then schedule every 24 hours
+  cron.schedule('0 */24 * * *', () => {
     console.log('[cron] Running scheduled weather refresh...');
     runWeatherRefresh().catch((err) =>
       console.error('[cron] Scheduled weather refresh failed:', err.message)
