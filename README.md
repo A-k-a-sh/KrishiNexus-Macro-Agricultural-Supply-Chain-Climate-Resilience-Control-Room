@@ -38,7 +38,7 @@ Most hackathon RAG systems do one `$vectorSearch` and call Gemini. KrishiNexus r
 ```
 User Query (Bengali/English)
        │
-       ▼ embed (gemini-embedding-001, 768-dim)
+       ▼ embed (gemini-embedding-001, 3072-dim)
        │
   ┌────┴─────────────────────────────────────────────────┐
   │   PARALLEL $vectorSearch (MongoDB Atlas)              │
@@ -153,7 +153,7 @@ The BAMIS zilaId ↔ bdapi district ID mapping is non-trivial (they use differen
 | **Styling** | Vanilla CSS (CSS custom properties) | Full design control, dark command-room theme |
 | **Backend** | Node.js + Express | REST API, cron scheduling |
 | **Database** | MongoDB Atlas (M0 free tier) | Vector Search + document model |
-| **AI — Embedding** | `gemini-embedding-001` (768 dimensions) | Government text embedding |
+| **AI — Embedding** | `gemini-embedding-001` (3072 dimensions) | Government text embedding |
 | **AI — Generation** | `gemini-2.5-flash` (maxOutputTokens: 8192) | Bengali + English advisory generation |
 | **Weather** | Open-Meteo API (free, no key) | Daily forecasts for all 64 districts |
 | **Deployment** | Vercel (frontend) + Render (backend) | Standard hackathon stack |
@@ -183,7 +183,7 @@ krishinexus/
 │   │   ├── parseBulletins.js     # raw → crop-section chunks → regional_advisories
 │   │   ├── parseDiseases.js      # raw → section chunks → crop_pathology
 │   │   ├── parseThresholds.js    # raw → chunks + numeric rule extraction → crop_thresholds
-│   │   ├── embedAndStore.js      # Calls Gemini embedding API, writes 768-dim vectors
+│   │   ├── embedAndStore.js      # Calls Gemini embedding API, writes 3072-dim vectors
 │   │   ├── syncRegionalAdvisoryDistrictIds.js  # zilaId → districtId repair script
 │   │   └── runIngestion.js       # Master ingestion orchestrator
 │   ├── cron/
@@ -282,9 +282,9 @@ npm run dev    # nodemon server.js on port 5001
 ```
 
 After ingestion, create **three Atlas Vector Search indexes** (JSON mode) on:
-- `regional_advisories` (field: `embedding`, dims: 768, similarity: cosine, filter: `districtId`)
-- `crop_pathology` (field: `embedding`, dims: 768, similarity: cosine)
-- `crop_thresholds` (field: `embedding`, dims: 768, similarity: cosine)
+- `regional_advisories` (field: `embedding`, dims: 3072, similarity: cosine, filter: `districtId`)
+- `crop_pathology` (field: `embedding`, dims: 3072, similarity: cosine)
+- `crop_thresholds` (field: `embedding`, dims: 3072, similarity: cosine)
 
 ### Frontend
 
@@ -327,7 +327,7 @@ VITE_API_URL=http://localhost:5001
 | `raw_bulletins` | 64 | Full BAMIS bulletin text per district |
 | `raw_diseases` | 150+ | BAMIS disease page raw text |
 | `raw_thresholds` | 100+ | BAMIS crop threshold raw text |
-| `regional_advisories` | ~384 | Chunked bulletin sections + 768-dim embeddings |
+| `regional_advisories` | ~384 | Chunked bulletin sections + 3072-dim embeddings |
 | `crop_pathology` | ~150 | Chunked disease sections + embeddings |
 | `crop_thresholds` | ~100 | Chunked thresholds + embeddings + parsed numeric rules |
 | `market_production_baselines` | 64×crop | BBS yield data per district per crop |
@@ -352,7 +352,7 @@ Step 2: Parallel DB fetch
   ])
 
 Step 3: Embed the question
-  gemini-embedding-001 → 768-float vector
+  gemini-embedding-001 → 3072-float vector
 
 Step 4: Parallel $vectorSearch
   regional_advisories { districtId: "36" }  k=5  → crop-specific advice chunks
