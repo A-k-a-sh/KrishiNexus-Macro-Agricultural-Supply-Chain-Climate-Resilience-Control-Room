@@ -23,7 +23,7 @@ async function generateText(systemPrompt, userPrompt) {
       ],
       generationConfig: {
         temperature: 0.3,      // lower = more factual, less creative
-        maxOutputTokens: 1024,
+        maxOutputTokens: 8192, // max for gemini-2.5-flash; Bengali text is ~3-5 tokens/word
       },
     }),
   });
@@ -53,7 +53,14 @@ async function generateText(systemPrompt, userPrompt) {
     throw new Error('Gemini returned no candidates. Possible safety block.');
   }
 
-  return data.candidates[0].content.parts[0].text;
+  const candidate = data.candidates[0];
+
+  // Warn if the response was cut short by the token limit
+  if (candidate.finishReason === 'MAX_TOKENS') {
+    console.warn('[geminiGenerate] Response truncated: hit maxOutputTokens limit. Consider raising it or reducing prompt size.');
+  }
+
+  return candidate.content.parts[0].text;
 }
 
 module.exports = { generateText };
