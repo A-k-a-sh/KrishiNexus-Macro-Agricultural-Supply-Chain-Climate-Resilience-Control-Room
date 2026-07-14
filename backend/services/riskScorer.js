@@ -25,23 +25,38 @@ async function scoreDistrict(district) {
 
   // ── Rule 1: Universal weather-based checks (no crop threshold needed) ──────
 
-  if (precip3Day >= 50) {
+  // Flood alert: ≥120mm in 3 days is a genuine flood/waterlogging event for Bangladesh.
+  // 50mm over 3 days is normal monsoon rain (avg July daily = 15-25mm).
+  // Threshold raised from 50→120mm to avoid marking ALL districts RED every July day.
+  if (precip3Day >= 120) {
     alerts.push({
       type: 'flood',
       label: 'Flood / Waterlogging Risk',
       cropAffected: 'All Crops',
       severity: 'high',
-      triggerReason: `3-day cumulative precipitation ${precip3Day.toFixed(1)}mm ≥ 50mm threshold`,
+      triggerReason: `3-day cumulative precipitation ${precip3Day.toFixed(1)}mm ≥ 120mm threshold`,
+    });
+  } else if (precip3Day >= 60) {
+    // Moderate: 60-119mm → warning, not severe
+    alerts.push({
+      type: 'flood',
+      label: 'Heavy Rain / Waterlogging Watch',
+      cropAffected: 'All Crops',
+      severity: 'medium',
+      triggerReason: `3-day cumulative precipitation ${precip3Day.toFixed(1)}mm ≥ 60mm threshold`,
     });
   }
 
-  if (humidityMaxToday >= 90 && tempMaxToday >= 28) {
+  // Pest/blast alert: ≥95% humidity at ≥30°C sustained = real epidemic window.
+  // 90% humidity at 28°C is typical ALL of June-Sep in Bangladesh — not an alert condition.
+  // Threshold raised from 90%/28°C → 95%/30°C.
+  if (humidityMaxToday >= 95 && tempMaxToday >= 30) {
     alerts.push({
       type: 'pest',
       label: 'General Pest & Fungal Outbreak Risk',
       cropAffected: 'All Crops',
       severity: 'medium',
-      triggerReason: `Humidity ${humidityMaxToday}% ≥ 90% at temp ${tempMaxToday}°C — favourable for blast, blight, and beetle outbreaks`,
+      triggerReason: `Humidity ${humidityMaxToday}% ≥ 95% at temp ${tempMaxToday}°C — favourable for blast, blight, and beetle outbreaks`,
     });
   }
 
