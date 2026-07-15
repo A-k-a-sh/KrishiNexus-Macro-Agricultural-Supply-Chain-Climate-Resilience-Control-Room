@@ -1,63 +1,64 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 const { connectDb, getDb } = require('../connect');
 
-// Realistic-looking grain reserve figures based on Bangladesh Food Directorate
-// public reports. These are SIMULATED — clearly marked in the UI.
-const WAREHOUSE_STOCKS = [
-  // Dhaka
-  { divisionId: '6', divisionName: 'Dhaka',      crop: 'Rice',  reserveMtons: 45000 },
-  { divisionId: '6', divisionName: 'Dhaka',      crop: 'Wheat', reserveMtons: 12000 },
-  { divisionId: '6', divisionName: 'Dhaka',      crop: 'Onion', reserveMtons: 8500  },
-  // Chattagram
-  { divisionId: '1', divisionName: 'Chattagram', crop: 'Rice',  reserveMtons: 38000 },
-  { divisionId: '1', divisionName: 'Chattagram', crop: 'Wheat', reserveMtons: 9500  },
-  { divisionId: '1', divisionName: 'Chattagram', crop: 'Onion', reserveMtons: 6200  },
-  // Rajshahi
-  { divisionId: '2', divisionName: 'Rajshahi',   crop: 'Rice',  reserveMtons: 52000 },
-  { divisionId: '2', divisionName: 'Rajshahi',   crop: 'Wheat', reserveMtons: 18000 },
-  { divisionId: '2', divisionName: 'Rajshahi',   crop: 'Onion', reserveMtons: 14000 },
-  // Khulna
-  { divisionId: '3', divisionName: 'Khulna',     crop: 'Rice',  reserveMtons: 41000 },
-  { divisionId: '3', divisionName: 'Khulna',     crop: 'Wheat', reserveMtons: 11000 },
-  { divisionId: '3', divisionName: 'Khulna',     crop: 'Onion', reserveMtons: 7800  },
-  // Barishal
-  { divisionId: '4', divisionName: 'Barishal',   crop: 'Rice',  reserveMtons: 29000 },
-  { divisionId: '4', divisionName: 'Barishal',   crop: 'Wheat', reserveMtons: 6500  },
-  { divisionId: '4', divisionName: 'Barishal',   crop: 'Onion', reserveMtons: 4100  },
-  // Sylhet
-  { divisionId: '5', divisionName: 'Sylhet',     crop: 'Rice',  reserveMtons: 24000 },
-  { divisionId: '5', divisionName: 'Sylhet',     crop: 'Wheat', reserveMtons: 5000  },
-  { divisionId: '5', divisionName: 'Sylhet',     crop: 'Onion', reserveMtons: 3800  },
-  // Rangpur
-  { divisionId: '7', divisionName: 'Rangpur',    crop: 'Rice',  reserveMtons: 48000 },
-  { divisionId: '7', divisionName: 'Rangpur',    crop: 'Wheat', reserveMtons: 16000 },
-  { divisionId: '7', divisionName: 'Rangpur',    crop: 'Onion', reserveMtons: 12500 },
-  // Mymensingh
-  { divisionId: '8', divisionName: 'Mymensingh', crop: 'Rice',  reserveMtons: 33000 },
-  { divisionId: '8', divisionName: 'Mymensingh', crop: 'Wheat', reserveMtons: 8500  },
-  { divisionId: '8', divisionName: 'Mymensingh', crop: 'Onion', reserveMtons: 5900  },
+const DIVISIONS = [
+  { divisionId: '6', divisionName: 'Dhaka' },
+  { divisionId: '1', divisionName: 'Chattagram' },
+  { divisionId: '2', divisionName: 'Rajshahi' },
+  { divisionId: '3', divisionName: 'Khulna' },
+  { divisionId: '4', divisionName: 'Barishal' },
+  { divisionId: '5', divisionName: 'Sylhet' },
+  { divisionId: '7', divisionName: 'Rangpur' },
+  { divisionId: '8', divisionName: 'Mymensingh' }
 ];
+
+const CROP_BASE_RESERVES = {
+  Rice: { base: 22000, multiplier: 3500 },
+  Wheat: { base: 5000, multiplier: 1400 },
+  Onion: { base: 3500, multiplier: 1100 },
+  Garlic: { base: 2000, multiplier: 800 },
+  Tomato: { base: 1500, multiplier: 650 },
+  Cabbage: { base: 1200, multiplier: 500 },
+  Cauliflower: { base: 1000, multiplier: 450 },
+  Beans: { base: 800, multiplier: 400 },
+  Radish: { base: 600, multiplier: 350 },
+  Laushak: { base: 400, multiplier: 200 }
+};
 
 async function seedWarehouseStocks() {
   await connectDb();
   const db = getDb();
   const col = db.collection('warehouse_stocks');
 
-  // Add metadata before inserting
+  console.log('Generating warehouse stocks for all crops...');
   const now = new Date().toISOString();
-  const docs = WAREHOUSE_STOCKS.map((s, i) => ({
-    _id: `stock_${s.divisionName.toLowerCase()}_${s.crop.toLowerCase()}`,
-    ...s,
-    isSimulated: true,
-    lastUpdated: now,
-  }));
+  const docs = [];
 
-  // Upsert so re-running the seed doesn't duplicate
-  for (const doc of docs) {
-    await col.replaceOne({ _id: doc._id }, doc, { upsert: true });
+  for (const div of DIVISIONS) {
+    const idNum = parseInt(div.divisionId) || 1;
+    for (const [crop, config] of Object.entries(CROP_BASE_RESERVES)) {
+      // Deterministic but varied reserve numbers for each division and crop
+      const reserveMtons = config.base + ((idNum * 7 + crop.length * 3) % 10) * config.multiplier;
+      
+      docs.push({
+        _id: `stock_${div.divisionName.toLowerCase()}_${crop.toLowerCase()}`,
+        divisionId: div.divisionId,
+        divisionName: div.divisionName,
+        crop,
+        reserveMtons,
+        isSimulated: true,
+        lastUpdated: now
+      });
+    }
   }
 
-  console.log(`Seeded ${docs.length} warehouse stock documents.`);
+  // Clear existing stocks first to avoid leftover stubs
+  await col.deleteMany({});
+  
+  // Insert new stocks
+  await col.insertMany(docs);
+
+  console.log(`Successfully seeded ${docs.length} warehouse stock documents across 10 crops.`);
   process.exit(0);
 }
 

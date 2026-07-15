@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { calcLogistics, dispatchCargo, genManifest, getWarehouseStocks, getDispatchRecords } from '../api';
 
-const CROPS = ['Rice', 'Wheat', 'Onion'];
+const CROPS = ['Rice', 'Wheat', 'Onion', 'Beans', 'Cabbage', 'Cauliflower', 'Garlic', 'Laushak', 'Radish', 'Tomato'];
 
 export default function Logistics() {
   const { allDistricts, selectedDistrict, selectDistrict } = useAppContext();
