@@ -485,18 +485,8 @@ No embedding. Queried by district + crop for logistics calculations.
 
 Seeded once from `server/db/seeds/warehouseStocks.js`. UI displays a "SIMULATED DATA" badge on the warehouse table. Values are realistic-looking based on Bangladesh Food Directorate public reports.
 
-Seed values (8 divisions × 3 crops = 24 documents):
-
-| Division | Rice (M.Ton) | Wheat (M.Ton) | Onion (M.Ton) |
-|---|---|---|---|
-| Dhaka | 45,000 | 12,000 | 8,500 |
-| Chattagram | 38,000 | 9,500 | 6,200 |
-| Rajshahi | 52,000 | 18,000 | 14,000 |
-| Khulna | 41,000 | 11,000 | 7,800 |
-| Barishal | 29,000 | 6,500 | 4,100 |
-| Sylhet | 24,000 | 5,000 | 3,800 |
-| Rangpur | 48,000 | 16,000 | 12,500 |
-| Mymensingh | 33,000 | 8,500 | 5,900 |
+Seed values (8 divisions × 10 crops = 80 documents including Rice, Wheat, Onion, Beans, Cabbage, Cauliflower, Garlic, Laushak, Radish, and Tomato):
+reserves are programmatically seeded using base values per crop to ensure realistic quantities.
 
 ### 5.11 `dispatch_records` collection
 
@@ -601,7 +591,7 @@ Request body:
 Logic:
 1. Fetch `market_production_baselines` for district 22 + crop Rice → `baselineMtons`.
 2. `projectedDeficit = baselineMtons × severityFactor`
-3. Find nearest division with surplus: query `warehouse_stocks`, exclude district's own division, find the one with highest `reserveMtons` for that crop.
+3. Find best surplus division: query `warehouse_stocks`, exclude district's own division, calculate distance for each option, and score them using an efficiency ratio: `reserveMtons / distanceKm` (highest efficiency ratio wins).
 4. Distance calculation: Haversine formula using lat/lon from `districts` and the surplus division's centroid (hardcode division centroids — 8 values, see §13 assumptions).
 5. Return: `{ baselineMtons, projectedDeficit, surplusDivision, surplusDivisionReserve, distanceKm, recommendedCargo }`
 
@@ -734,8 +724,9 @@ for each crop in district.activeCrops:
   find matching threshold doc from crop_thresholds by cropName
   if threshold doc has parsedRules:
     if liveWeather.tempMaxToday > parsedRules.floweringDisruptAbove → RED alert
-    if liveWeather.humidityMaxToday > 90 AND liveWeather.tempMaxToday > 28 → YELLOW alert (blast/pest risk)
-    if precipitation 3-day sum > 50mm → RED alert (flood/waterlogging risk)
+    if liveWeather.humidityMaxToday > 95 AND liveWeather.tempMaxToday > 30 → YELLOW alert (blast/pest risk)
+    if precipitation 3-day sum > 120mm → RED alert (flood/waterlogging risk)
+    if precipitation 3-day sum between 60mm and 119mm → YELLOW alert (Heavy Rain / Waterlogging Watch)
   collect all alerts
 
 if any RED alerts → riskStatus = "red"
