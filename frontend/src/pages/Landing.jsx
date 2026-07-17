@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAppContext } from '../context/AppContext';
 import '../styles/globals.css'
 
 const STATS = [
@@ -38,6 +39,7 @@ const COMPARISONS = [
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { alertCounts } = useAppContext();
   const statsRef = useRef(null);
   const [statsVisible, setStatsVisible] = useState(false);
   const [activeConsoleStep, setActiveConsoleStep] = useState(0);
@@ -98,7 +100,9 @@ export default function Landing() {
         </div>
         <div style={{ display: 'flex', gap: 16 }}>
           <span>DHAKA BST: <span style={{ color: 'var(--text-primary)' }}>{currentTime || 'Loading...'}</span></span>
-          <span style={{ color: 'var(--accent-red)' }}>[ 14 REGIONS UNDER WEATHER ALERT ]</span>
+          <span style={{ color: alertCounts.red > 0 ? 'var(--accent-red)' : 'var(--accent-yellow)' }}>
+            [ {alertCounts.red + alertCounts.yellow} REGIONS UNDER WEATHER ALERT ]
+          </span>
         </div>
       </div>
 
