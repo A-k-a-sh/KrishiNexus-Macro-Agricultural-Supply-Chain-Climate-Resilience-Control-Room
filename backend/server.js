@@ -2,13 +2,10 @@ require('dotenv').config();
 
 const app = require('./app');
 const { connectDb } = require('./db/connect');
-const { startCronJobs } = require('./cron');
-
 const port = process.env.PORT || 5001;
 
 async function startServer() {
   await connectDb();
-  startCronJobs();
 
   app.listen(port, () => {
     console.log(`KrishiNexus backend listening on ${port}`);
