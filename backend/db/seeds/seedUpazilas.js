@@ -41,11 +41,19 @@ async function seedUpazilas() {
     console.log(`Fetching upazilas for district ${district.name} (ID: ${districtId})...`);
     
     try {
-      await new Promise(r => setTimeout(r, 600)); // Delay to prevent 429 Too Many Requests
+      let response = null;
+      let retries = 3;
+      while (retries > 0) {
+        await new Promise(r => setTimeout(r, 1500));
+        response = await fetch(`https://bdapis.pro.bd/geo/v2.0/upazilas/${districtId}`);
+        if (response.ok) break;
+        console.warn(`Got ${response.status} for district ${districtId}. Retrying...`);
+        retries--;
+        await new Promise(r => setTimeout(r, 5000)); // Wait 5s before retry
+      }
 
-      const response = await fetch(`https://bdapis.pro.bd/geo/v2.0/upazilas/${districtId}`);
-      if (!response.ok) {
-        console.warn(`Failed to fetch API for district ${districtId}: ${response.status}`);
+      if (!response || !response.ok) {
+        console.warn(`Failed to fetch API for district ${districtId} after retries.`);
         continue;
       }
 
