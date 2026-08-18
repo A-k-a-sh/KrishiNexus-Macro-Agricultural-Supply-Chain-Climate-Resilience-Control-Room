@@ -1,8 +1,28 @@
 import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const AUTH_URL = import.meta.env.VITE_AUTH_URL || 'http://localhost:5002';
 
 const api = axios.create({ baseURL: BASE_URL });
+
+// Inject token into all API requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('accessToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+export const login = (email, password) => 
+  axios.post(`${AUTH_URL}/auth/login`, { email, password }).then(res => res.data);
+
+export const getMe = (token) => 
+  axios.get(`${AUTH_URL}/auth/me`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.data);
+
+export const refreshToken = (token) => 
+  axios.post(`${AUTH_URL}/auth/refresh`, { refreshToken: token }).then(res => res.data);
 
 // ── Districts ─────────────────────────────────────────────────────────────────
 export const getDistricts  = ()   => api.get('/api/districts');

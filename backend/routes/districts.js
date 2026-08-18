@@ -25,6 +25,12 @@ const PUBLIC_PROJECTION = {
 router.get('/', async (req, res, next) => {
   try {
     const db = getDb();
+
+    if (req.user && req.user.role === 'field_officer' && req.user.assignedRegion && req.user.assignedRegion.type === 'district') {
+      const district = await db.collection('districts').findOne({ _id: req.user.assignedRegion.id }, { projection: PUBLIC_PROJECTION });
+      return res.json({ ok: true, data: district ? [district] : [] });
+    }
+
     const districts = await db
       .collection('districts')
       .find({}, { projection: PUBLIC_PROJECTION })
