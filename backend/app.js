@@ -8,7 +8,11 @@ const ragRouter       = require('./routes/rag');
 const logisticsRouter = require('./routes/logistics');
 const manifestRouter  = require('./routes/manifest');
 const cronRouter      = require('./routes/cron');
-
+const upazilasRouter  = require('./routes/upazilas');
+const marketRouter    = require('./routes/market');
+const alertsRouter    = require('./routes/alerts');
+const analyticsRouter = require('./routes/analytics');
+const reportsRouter   = require('./routes/reports');
 const app = express();
 
 // Middleware to ensure DB connection is established (crucial for serverless environments like Vercel)
@@ -33,7 +37,11 @@ app.use('/api/rag',       ragRouter);
 app.use('/api/logistics', logisticsRouter);
 app.use('/api/manifest',  manifestRouter);
 app.use('/api/cron',      cronRouter);
-
+app.use('/api/upazilas',  upazilasRouter);
+app.use('/api/market',    marketRouter);
+app.use('/api/alerts',    alertsRouter);
+app.use('/api/analytics', analyticsRouter);
+app.use('/api/reports',   reportsRouter);
 // Must be mounted LAST — catches any error passed to next(err) from routes
 app.use(errorHandler);
 

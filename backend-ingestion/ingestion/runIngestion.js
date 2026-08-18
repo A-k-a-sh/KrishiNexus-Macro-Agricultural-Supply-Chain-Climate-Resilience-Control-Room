@@ -5,8 +5,8 @@ const { parseBulletins } = require('./parseBulletins');
 const { parseDiseases } = require('./parseDiseases');
 const { parseThresholds } = require('./parseThresholds');
 const { embedAll } = require('./embedAndStore');
-const { seedDistrictsFromBdapi } = require('../db/seeds/seedDistricts');
-const { seedDivisionsFromBdapi } = require('../db/seeds/seedDivisions');
+const { seedDistrictsFromBdapi } = require('../../backend/db/seeds/seedDistricts');
+const { seedDivisionsFromBdapi } = require('../../backend/db/seeds/seedDivisions');
 const zilaIdMap = require('./zilaIdMap.json');
 
 /**
