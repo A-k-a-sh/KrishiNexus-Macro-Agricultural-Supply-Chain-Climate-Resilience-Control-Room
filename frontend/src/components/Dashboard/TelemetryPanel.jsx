@@ -2,23 +2,25 @@ import WeatherChart from './WeatherChart';
 
 const RISK_COLOR = { red: '#ef4444', yellow: '#f59e0b', green: '#00ff88' };
 
-export default function TelemetryPanel({ district }) {
-  if (!district) {
+export default function TelemetryPanel({ district, upazila }) {
+  const target = upazila || district;
+  
+  if (!target) {
     return (
       <div style={{ padding: 16, color: 'var(--text-muted)', fontSize: 12, fontFamily: 'var(--font-mono)', textAlign: 'center', paddingTop: 32 }}>
-        ← Select a district on the map
+        ← Select a region on the map
       </div>
     );
   }
 
-  const w = district.liveWeather || {};
-  const riskColor = RISK_COLOR[district.riskStatus] || '#94a3b8';
-  const idNum = parseInt(district._id) || 1;
+  const w = target.liveWeather || {};
+  const riskColor = RISK_COLOR[target.riskStatus] || '#94a3b8';
+  const idNum = parseInt(target._id) || 1;
 
   // ── Deterministic Soil Dynamics ──────────────────────────────────────────
   const soilPh = +(5.6 + (idNum % 7) * 0.2).toFixed(1); // Realistic soil pH (5.6 - 6.8)
   // Higher salinity (EC) for coastal divisions (division 1 & 4)
-  const isCoastal = district.divisionId === '1' || district.divisionId === '4';
+  const isCoastal = district && (district.divisionId === '1' || district.divisionId === '4');
   const soilSalinity = isCoastal 
     ? +(3.2 + (idNum % 6) * 0.9).toFixed(1) // High salinity: 3.2 - 7.7 dS/m
     : +(0.6 + (idNum % 4) * 0.3).toFixed(1); // Low salinity: 0.6 - 1.5 dS/m
@@ -40,13 +42,13 @@ export default function TelemetryPanel({ district }) {
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: riskColor, boxShadow: `0 0 6px ${riskColor}`, flexShrink: 0 }} />
-          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{district.name}</span>
-          <span className={`badge badge-${district.riskStatus || 'green'}`} style={{ fontSize: 9 }}>
-            {(district.riskStatus || 'stable').toUpperCase()}
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{target.name} {upazila && <span style={{fontSize: 10, color: 'var(--text-muted)'}}>(Upazila)</span>}</span>
+          <span className={`badge badge-${target.riskStatus || 'green'}`} style={{ fontSize: 9 }}>
+            {(target.riskStatus || 'stable').toUpperCase()}
           </span>
         </div>
         <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', paddingLeft: 16 }}>
-          {district.bnName} · Division {district.divisionId}
+          {target.bnName} {district && !upazila && `· Division ${district.divisionId}`}
         </div>
       </div>
 
@@ -120,11 +122,11 @@ export default function TelemetryPanel({ district }) {
       </div>
 
       {/* Active alerts */}
-      {district.activeAlerts?.length > 0 && (
+      {target.activeAlerts?.length > 0 && (
         <div>
           <div className="panel-label">ACTIVE ECO-HAZARD ALERTS</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            {district.activeAlerts.map((alert, i) => (
+            {target.activeAlerts.map((alert, i) => (
               <div
                 key={i}
                 style={{
@@ -153,11 +155,11 @@ export default function TelemetryPanel({ district }) {
       )}
 
       {/* Active crops */}
-      {district.activeCrops?.length > 0 && (
+      {target.activeCrops?.length > 0 && (
         <div>
           <div className="panel-label">ACTIVE CROPS</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-            {district.activeCrops.map((c, i) => (
+            {target.activeCrops.map((c, i) => (
               <span key={i} className="badge badge-blue" style={{ fontSize: 10 }}>
                 {c.crop}{c.stage ? ` · ${c.stage}` : ''}
               </span>

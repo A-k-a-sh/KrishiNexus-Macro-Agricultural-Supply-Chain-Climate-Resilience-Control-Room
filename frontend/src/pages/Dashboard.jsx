@@ -8,7 +8,7 @@ import RagAdvisory   from '../components/Dashboard/RagAdvisory';
 import ChatTerminal  from '../components/Dashboard/ChatTerminal';
 
 export default function Dashboard() {
-  const { selectedDistrict } = useAppContext();
+  const { selectedDistrict, selectedUpazila, isDrilledIn } = useAppContext();
   const [activeTab, setActiveTab] = useState('telemetry'); // 'telemetry' | 'advisory' | 'chat'
   const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
@@ -65,7 +65,7 @@ export default function Dashboard() {
             <span>INTELLIGENCE PANEL</span>
             {selectedDistrict && (
               <span style={{ color: 'var(--accent-blue)', fontWeight: 600 }}>
-                {selectedDistrict.name.toUpperCase()}
+                {selectedUpazila ? selectedUpazila.name.toUpperCase() : selectedDistrict.name.toUpperCase()}
               </span>
             )}
           </div>
@@ -109,7 +109,7 @@ export default function Dashboard() {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             {activeTab === 'telemetry' && (
               <div style={{ flex: 1, overflowY: 'auto' }}>
-                <TelemetryPanel district={selectedDistrict} />
+                <TelemetryPanel district={selectedDistrict} upazila={selectedUpazila} />
               </div>
             )}
 

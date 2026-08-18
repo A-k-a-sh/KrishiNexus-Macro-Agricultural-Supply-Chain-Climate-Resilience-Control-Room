@@ -25,7 +25,11 @@ const DIVISION_NAMES = {
 };
 
 export default function LeftNav() {
-  const { allDistricts, selectedDistrict, selectDistrict, districtsLoading } = useAppContext();
+  const { 
+    allDistricts, selectedDistrict, selectDistrict, districtsLoading,
+    isDrilledIn, setIsDrilledIn,
+    upazilasByDistrict, selectedUpazila, setSelectedUpazila
+  } = useAppContext();
   const [search, setSearch]       = useState('');
   const [openDivisions, setOpenDivisions] = useState({ '6': true }); // Dhaka open by default
 
@@ -50,6 +54,81 @@ export default function LeftNav() {
         {[...Array(6)].map((_, i) => (
           <div key={i} className="skeleton" style={{ height: 28, borderRadius: 4 }} />
         ))}
+      </div>
+    );
+  }
+
+  if (isDrilledIn && selectedDistrict) {
+    const upazilas = upazilasByDistrict[selectedDistrict._id] || [];
+    const filteredUpazilas = search.trim() ? upazilas.filter(u => u.name.toLowerCase().includes(search.toLowerCase()) || (u.bnName && u.bnName.includes(search))) : upazilas;
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+        <div style={{ padding: '12px 12px 8px' }}>
+          <button 
+            onClick={() => setIsDrilledIn(false)} 
+            style={{ background: 'transparent', border: 'none', color: 'var(--accent-blue)', cursor: 'pointer', fontSize: 12, marginBottom: 8, padding: 0 }}
+          >
+            ← Back to Districts
+          </button>
+          <div className="panel-label">{selectedDistrict.name.toUpperCase()} UPAZILAS</div>
+          <input
+            type="text"
+            placeholder="Search upazila..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: '100%', fontSize: 12 }}
+          />
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px' }}>
+          {filteredUpazilas.length === 0 ? (
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', padding: '4px 8px' }}>No matches</div>
+          ) : (
+            filteredUpazilas.map((upazila) => {
+              const isSelected = selectedUpazila?._id === upazila._id;
+              const dot = RISK_DOT[upazila.riskStatus] || RISK_DOT.green;
+              const alertCount = upazila.activeAlerts?.length ?? 0;
+
+              return (
+                <button
+                  key={upazila._id}
+                  onClick={() => setSelectedUpazila(upazila)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '5px 8px', borderRadius: 'var(--radius-sm)',
+                    background: isSelected ? 'var(--accent-blue-bg)' : 'transparent',
+                    border: isSelected ? '1px solid var(--accent-blue)' : '1px solid transparent',
+                    color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    fontSize: 12, cursor: 'pointer',
+                    transition: 'all 0.15s', marginBottom: 1,
+                  }}
+                  onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-card)'; }}
+                  onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <span style={{
+                      width: 6, height: 6, borderRadius: '50%',
+                      background: dot.bg, boxShadow: `0 0 4px ${dot.shadow}`,
+                      flexShrink: 0,
+                    }} />
+                    {upazila.name}
+                  </span>
+                  {alertCount > 0 && (
+                    <span style={{ fontSize: 10, color: 'var(--accent-yellow)', fontFamily: 'var(--font-mono)' }}>
+                      {alertCount}⚠
+                    </span>
+                  )}
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        <div style={{ padding: 12, borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+          <AlertBadges />
+        </div>
       </div>
     );
   }

@@ -9,8 +9,10 @@ import { useAppContext } from '../../context/AppContext';
 import DistrictTooltip from './DistrictTooltip';
 import RiskLegend from './RiskLegend';
 import SHAPE_NAME_TO_ID from '../../data/geoNameMap.json';
+import UPAZILA_SHAPE_NAME_TO_ID from '../../data/upazilaGeoNameMap.json';
 
 const GEO_URL = '/bd-districts.geojson';
+const UPAZILA_GEO_URL = '/bd-upazilas.geojson';
 
 // Risk status → SVG fill / stroke colors from the design system
 const RISK_STYLE = {
@@ -23,7 +25,12 @@ const RISK_STYLE = {
 const SELECTED_STYLE = { fill: '#1e3a5f', stroke: '#3b82f6', strokeWidth: 1.5 };
 
 export default function BangladeshMap() {
-  const { allDistricts, selectedDistrict, selectDistrict } = useAppContext();
+  const { 
+    allDistricts, selectedDistrict, selectDistrict,
+    isDrilledIn, setIsDrilledIn,
+    selectedUpazila, setSelectedUpazila,
+    upazilasByDistrict, setUpazilasByDistrict
+  } = useAppContext();
 
   // Build a lookup: bdapi district _id → district object (for fast access on hover/click)
   const [districtById, setDistrictById] = useState({});
@@ -33,7 +40,17 @@ export default function BangladeshMap() {
     setDistrictById(map);
   }, [allDistricts]);
 
-  const [tooltip, setTooltip] = useState({ visible: false, district: null, x: 0, y: 0 });
+  useEffect(() => {
+    if (isDrilledIn && selectedDistrict && !upazilasByDistrict[selectedDistrict._id]) {
+      import('../../api').then(({ getUpazilas }) => {
+        getUpazilas(selectedDistrict._id).then(res => {
+          setUpazilasByDistrict(prev => ({ ...prev, [selectedDistrict._id]: res.data.data }));
+        }).catch(console.error);
+      });
+    }
+  }, [isDrilledIn, selectedDistrict, upazilasByDistrict, setUpazilasByDistrict]);
+
+  const [tooltip, setTooltip] = useState({ visible: false, district: null, upazila: null, x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [center, setCenter] = useState([90.35, 23.68]); // Bangladesh centroid — ZoomableGroup pans here
 
@@ -49,9 +66,11 @@ export default function BangladeshMap() {
     setZoom(1);
     setCenter([90.35, 23.68]);
     selectDistrict(null);
-  }, [selectDistrict]);
+    setIsDrilledIn(false);
+  }, [selectDistrict, setIsDrilledIn]);
 
   const handleDistrictClick = useCallback((geo) => {
+    if (isDrilledIn) return;
     const shapeName = geo.properties.shapeName;
     const id = SHAPE_NAME_TO_ID[shapeName];
     if (!id) return;
@@ -59,32 +78,72 @@ export default function BangladeshMap() {
     if (!district) return;
 
     selectDistrict(district);
-    // Zoom into the clicked district
     setCenter([parseFloat(district.lon), parseFloat(district.lat)]);
-    setZoom(4);
-  }, [districtById, selectDistrict]);
+    setZoom(4.5);
+    setIsDrilledIn(true);
+  }, [isDrilledIn, districtById, selectDistrict, setIsDrilledIn]);
+
+  const handleUpazilaClick = useCallback((geo) => {
+    const shapeName = geo.properties.shapeName;
+    const id = UPAZILA_SHAPE_NAME_TO_ID[shapeName];
+    if (!id || !selectedDistrict) return;
+    const upzList = upazilasByDistrict[selectedDistrict._id] || [];
+    const upz = upzList.find(u => u._id === id);
+    if (upz) {
+      setSelectedUpazila(upz);
+    }
+  }, [selectedDistrict, upazilasByDistrict, setSelectedUpazila]);
 
   const handleMouseEnter = useCallback((geo, evt) => {
-    const shapeName = geo.properties.shapeName;
-    const id = SHAPE_NAME_TO_ID[shapeName];
-    const district = id ? districtById[id] : null;
-    setTooltip({ visible: true, district, shapeName, x: evt.clientX, y: evt.clientY });
-  }, [districtById]);
+    if (isDrilledIn) {
+      const shapeName = geo.properties.shapeName;
+      const id = UPAZILA_SHAPE_NAME_TO_ID[shapeName];
+      const upzList = selectedDistrict ? (upazilasByDistrict[selectedDistrict._id] || []) : [];
+      const upazila = upzList.find(u => u._id === id);
+      setTooltip({ visible: true, district: selectedDistrict, upazila, shapeName, x: evt.clientX, y: evt.clientY });
+    } else {
+      const shapeName = geo.properties.shapeName;
+      const id = SHAPE_NAME_TO_ID[shapeName];
+      const district = id ? districtById[id] : null;
+      setTooltip({ visible: true, district, upazila: null, shapeName, x: evt.clientX, y: evt.clientY });
+    }
+  }, [isDrilledIn, districtById, selectedDistrict, upazilasByDistrict]);
 
   const handleMouseMove = useCallback((evt) => {
     setTooltip((t) => ({ ...t, x: evt.clientX, y: evt.clientY }));
   }, []);
 
   const handleMouseLeave = useCallback(() => {
-    setTooltip({ visible: false, district: null, x: 0, y: 0 });
+    setTooltip({ visible: false, district: null, upazila: null, x: 0, y: 0 });
   }, []);
 
   function getGeoStyle(geo) {
+    if (isDrilledIn) {
+      const shapeName = geo.properties.shapeName;
+      const id = UPAZILA_SHAPE_NAME_TO_ID[shapeName];
+      const upzList = selectedDistrict ? (upazilasByDistrict[selectedDistrict._id] || []) : [];
+      const upazila = upzList.find(u => u._id === id);
+      
+      if (selectedUpazila && upazila && upazila._id === selectedUpazila._id) {
+        return {
+          default: { ...SELECTED_STYLE, outline: 'none' },
+          hover: { ...SELECTED_STYLE, outline: 'none' },
+          pressed: { ...SELECTED_STYLE, outline: 'none' },
+        };
+      }
+      const risk = upazila?.riskStatus || 'default';
+      const s = RISK_STYLE[risk] || RISK_STYLE.default;
+      return {
+        default: { fill: s.fill, stroke: s.stroke, strokeWidth: s.strokeWidth, outline: 'none' },
+        hover: { fill: '#1e2a42', stroke: '#3b82f6', strokeWidth: 0.5, outline: 'none', cursor: 'pointer' },
+        pressed: { fill: '#1e2a42', outline: 'none' },
+      };
+    }
+
     const shapeName = geo.properties.shapeName;
     const id = SHAPE_NAME_TO_ID[shapeName];
     const district = id ? districtById[id] : null;
 
-    // Selected district overrides risk color
     if (selectedDistrict && district && district._id === selectedDistrict._id) {
       return {
         default: { ...SELECTED_STYLE, outline: 'none' },
@@ -105,6 +164,23 @@ export default function BangladeshMap() {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: '100%' }}>
       <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 10, display: 'flex', gap: 8 }}>
+        {isDrilledIn && (
+          <button
+            onClick={() => {
+              setIsDrilledIn(false);
+              setZoom(1);
+              setCenter([90.35, 23.68]);
+            }}
+            style={{
+              background: 'var(--bg-surface)', border: '1px solid var(--border)',
+              color: 'var(--text-secondary)', padding: '4px 10px',
+              borderRadius: 'var(--radius-sm)', fontSize: 11,
+              fontFamily: 'var(--font-mono)', cursor: 'pointer',
+            }}
+          >
+            ← Back to Districts
+          </button>
+        )}
         <button
           onClick={zoomOut}
           style={{
@@ -157,21 +233,44 @@ export default function BangladeshMap() {
             setCenter(coordinates);
           }}
         >
-          <Geographies geography={GEO_URL}>
-            {({ geographies }) =>
-              geographies.map((geo) => (
-                <Geography
-                  key={geo.rsmKey}
-                  geography={geo}
-                  onClick={() => handleDistrictClick(geo)}
-                  onMouseEnter={(evt) => handleMouseEnter(geo, evt)}
-                  onMouseMove={handleMouseMove}
-                  onMouseLeave={handleMouseLeave}
-                  style={getGeoStyle(geo)}
-                />
-              ))
-            }
-          </Geographies>
+          {!isDrilledIn ? (
+            <Geographies geography={GEO_URL}>
+              {({ geographies }) =>
+                geographies.map((geo) => (
+                  <Geography
+                    key={geo.rsmKey}
+                    geography={geo}
+                    onClick={() => handleDistrictClick(geo)}
+                    onMouseEnter={(evt) => handleMouseEnter(geo, evt)}
+                    onMouseMove={handleMouseMove}
+                    onMouseLeave={handleMouseLeave}
+                    style={getGeoStyle(geo)}
+                  />
+                ))
+              }
+            </Geographies>
+          ) : (
+            <Geographies geography={UPAZILA_GEO_URL}>
+              {({ geographies }) => {
+                // Filter features belonging to the selected district
+                const upzList = selectedDistrict ? (upazilasByDistrict[selectedDistrict._id] || []) : [];
+                const validIds = new Set(upzList.map(u => u._id));
+                const filteredGeos = geographies.filter(geo => validIds.has(UPAZILA_SHAPE_NAME_TO_ID[geo.properties.shapeName]));
+                
+                return filteredGeos.map((geo) => (
+                  <Geography
+                    key={geo.rsmKey}
+                    geography={geo}
+                    onClick={() => handleUpazilaClick(geo)}
+                    onMouseEnter={(evt) => handleMouseEnter(geo, evt)}
+                    onMouseMove={handleMouseMove}
+                    onMouseLeave={handleMouseLeave}
+                    style={getGeoStyle(geo)}
+                  />
+                ));
+              }}
+            </Geographies>
+          )}
         </ZoomableGroup>
       </ComposableMap>
 
@@ -180,6 +279,7 @@ export default function BangladeshMap() {
       {tooltip.visible && (
         <DistrictTooltip
           district={tooltip.district}
+          upazila={tooltip.upazila}
           shapeName={tooltip.shapeName}
           x={tooltip.x}
           y={tooltip.y}

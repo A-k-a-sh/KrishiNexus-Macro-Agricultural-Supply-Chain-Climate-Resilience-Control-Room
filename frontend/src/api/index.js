@@ -24,9 +24,11 @@ export const getMe = (token) =>
 export const refreshToken = (token) => 
   axios.post(`${AUTH_URL}/auth/refresh`, { refreshToken: token }).then(res => res.data);
 
-// ── Districts ─────────────────────────────────────────────────────────────────
+// ── Districts & Upazilas ──────────────────────────────────────────────────────
 export const getDistricts  = ()   => api.get('/api/districts');
 export const getDistrict   = (id) => api.get(`/api/districts/${id}`);
+export const getUpazilas   = (districtId) => api.get(`/api/upazilas${districtId ? `?districtId=${districtId}` : ''}`);
+export const getUpazila    = (id) => api.get(`/api/upazilas/${id}`);
 
 // ── RAG ───────────────────────────────────────────────────────────────────────
 export const postRagQuery  = (body) => api.post('/api/rag/query', body);
