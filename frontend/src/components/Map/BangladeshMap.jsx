@@ -99,7 +99,7 @@ export default function BangladeshMap() {
       const shapeName = geo.properties.shapeName;
       const id = UPAZILA_SHAPE_NAME_TO_ID[shapeName];
       const upzList = selectedDistrict ? (upazilasByDistrict[selectedDistrict._id] || []) : [];
-      const upazila = upzList.find(u => u._id === id);
+      const upazila = upzList.find(u => String(u._id) === String(id));
       setTooltip({ visible: true, district: selectedDistrict, upazila, shapeName, x: evt.clientX, y: evt.clientY });
     } else {
       const shapeName = geo.properties.shapeName;
@@ -122,9 +122,9 @@ export default function BangladeshMap() {
       const shapeName = geo.properties.shapeName;
       const id = UPAZILA_SHAPE_NAME_TO_ID[shapeName];
       const upzList = selectedDistrict ? (upazilasByDistrict[selectedDistrict._id] || []) : [];
-      const upazila = upzList.find(u => u._id === id);
+      const upazila = upzList.find(u => String(u._id) === String(id));
       
-      if (selectedUpazila && upazila && upazila._id === selectedUpazila._id) {
+      if (selectedUpazila && upazila && String(upazila._id) === String(selectedUpazila._id)) {
         return {
           default: { ...SELECTED_STYLE, outline: 'none' },
           hover: { ...SELECTED_STYLE, outline: 'none' },
@@ -254,8 +254,12 @@ export default function BangladeshMap() {
               {({ geographies }) => {
                 // Filter features belonging to the selected district
                 const upzList = selectedDistrict ? (upazilasByDistrict[selectedDistrict._id] || []) : [];
-                const validIds = new Set(upzList.map(u => u._id));
-                const filteredGeos = geographies.filter(geo => validIds.has(UPAZILA_SHAPE_NAME_TO_ID[geo.properties.shapeName]));
+                const validIds = new Set(upzList.map(u => String(u._id)));
+                
+                const filteredGeos = geographies.filter(geo => {
+                  const mappedId = UPAZILA_SHAPE_NAME_TO_ID[geo.properties.shapeName];
+                  return mappedId && validIds.has(String(mappedId));
+                });
                 
                 return filteredGeos.map((geo) => (
                   <Geography
