@@ -128,79 +128,82 @@ export default function Market() {
 
         <PriceAlerts data={prices} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Chart Area */}
-          <div className="lg:col-span-2 space-y-8">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 }}
-              className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 backdrop-blur-sm"
-            >
-              <h2 className="text-xl font-bold text-white mb-6 flex items-center">
-                <span className="w-2 h-6 bg-emerald-500 rounded-full mr-3"></span>
-                Top Commodities Overview
-              </h2>
-              
-              {loading ? (
-                <div className="h-[400px] flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
-                </div>
-              ) : (
-                <PriceChart data={prices} />
-              )}
-            </motion.div>
-
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.15 }}
-              className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 backdrop-blur-sm"
-            >
-              <h2 className="text-xl font-bold text-white mb-6 flex items-center">
-                <span className="w-2 h-6 bg-teal-500 rounded-full mr-3"></span>
-                DAM vs WFP Source Comparison
-              </h2>
-              
-              {loading ? (
-                <div className="h-[400px] flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500"></div>
-                </div>
-              ) : (
-                <ComparisonChart data={prices} />
-              )}
-            </motion.div>
-          </div>
-
-          {/* Stats Sidebar */}
+        {/* Stats Row - Side by side above charts */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex flex-col gap-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-gradient-to-br from-emerald-900/40 to-teal-900/20 border border-emerald-500/20 rounded-3xl p-6 relative overflow-hidden group"
           >
-            <div className="bg-gradient-to-br from-emerald-900/40 to-teal-900/20 border border-emerald-500/20 rounded-3xl p-6 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl"></div>
-              <h3 className="text-emerald-400 text-sm font-semibold uppercase tracking-wider mb-2">Total Commodities</h3>
-              <p className="text-5xl font-extrabold text-white">{prices.length}</p>
-              <div className="mt-4 flex items-center text-sm text-emerald-200/70">
-                <span>Updated today</span>
-              </div>
+            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl"></div>
+            <h3 className="text-emerald-400 text-sm font-semibold uppercase tracking-wider mb-2">Total Commodities</h3>
+            <p className="text-5xl font-extrabold text-white">{prices.length}</p>
+            <div className="mt-4 flex items-center text-sm text-emerald-200/70">
+              <span>Updated today</span>
             </div>
+          </motion.div>
 
-            <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6">
-              <h3 className="text-slate-400 text-sm font-semibold uppercase tracking-wider mb-4">Data Sources</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center pb-4 border-b border-slate-800">
-                  <span className="text-slate-300 font-medium">DAM Average</span>
-                  <span className="bg-teal-500/20 text-teal-400 py-1 px-3 rounded-full text-xs font-bold">{damPrices.length} Items</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-300 font-medium">WFP Market</span>
-                  <span className="bg-blue-500/20 text-blue-400 py-1 px-3 rounded-full text-xs font-bold">{wfpPrices.length} Items</span>
-                </div>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6"
+          >
+            <h3 className="text-slate-400 text-sm font-semibold uppercase tracking-wider mb-4">Data Sources</h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center pb-4 border-b border-slate-800">
+                <span className="text-slate-300 font-medium">DAM Average</span>
+                <span className="bg-teal-500/20 text-teal-400 py-1 px-3 rounded-full text-xs font-bold">{damPrices.length} Items</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-300 font-medium">WFP Market</span>
+                <span className="bg-blue-500/20 text-blue-400 py-1 px-3 rounded-full text-xs font-bold">{wfpPrices.length} Items</span>
               </div>
             </div>
+          </motion.div>
+        </div>
+
+        {/* Charts Area - Full Width */}
+        <div className="space-y-8">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 }}
+            className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 backdrop-blur-sm"
+          >
+            <h2 className="text-xl font-bold text-white mb-6 flex items-center">
+              <span className="w-2 h-6 bg-emerald-500 rounded-full mr-3"></span>
+              Top Commodities Overview
+            </h2>
+            
+            {loading ? (
+              <div className="h-[400px] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+              </div>
+            ) : (
+              <PriceChart data={prices} />
+            )}
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4 }}
+            className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 backdrop-blur-sm"
+          >
+            <h2 className="text-xl font-bold text-white mb-6 flex items-center">
+              <span className="w-2 h-6 bg-teal-500 rounded-full mr-3"></span>
+              DAM vs WFP Source Comparison
+            </h2>
+            
+            {loading ? (
+              <div className="h-[400px] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500"></div>
+              </div>
+            ) : (
+              <ComparisonChart data={prices} />
+            )}
           </motion.div>
         </div>
 
