@@ -41,3 +41,14 @@ export const getDispatchRecords = ()     => api.get('/api/logistics/dispatch-rec
 
 // ── Manifest ──────────────────────────────────────────────────────────────────
 export const genManifest = (body) => api.post('/api/manifest', body);
+
+// ── Market ────────────────────────────────────────────────────────────────────
+export const getMarketPrices = (districtId, date, source) => {
+  let query = [];
+  if (date) query.push(`date=${date}`);
+  if (source) query.push(`source=${source}`);
+  const qString = query.length > 0 ? `?${query.join('&')}` : '';
+  return api.get(`/api/market/${districtId}${qString}`);
+};
+
+export const getLatestMarketPrices = (districtId) => api.get(`/api/market/${districtId}/latest`);
