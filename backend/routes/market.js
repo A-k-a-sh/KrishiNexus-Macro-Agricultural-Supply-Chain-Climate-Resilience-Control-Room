@@ -37,31 +37,25 @@ router.get('/:districtId', async (req, res, next) => {
 
 /**
  * GET /api/market/:districtId/latest
- * Convenience endpoint to fetch only the most recent date's prices for a district.
+ * Convenience endpoint to fetch the most recent prices for a district.
+ * It aggregates the latest available date per commodity and source, 
+ * so WFP (which might be weeks old) and DAM (which is daily) both appear.
  */
 router.get('/:districtId/latest', async (req, res, next) => {
   try {
     const { districtId } = req.params;
     const db = getDb();
     
-    // Find the most recent date for this district
-    const latestDoc = await db.collection('market_prices')
-      .find({ districtId })
-      .sort({ date: -1 })
-      .limit(1)
-      .toArray();
-
-    if (latestDoc.length === 0) {
-      return res.json([]);
-    }
-
-    const latestDate = latestDoc[0].date;
-
-    // Fetch all prices for that specific latest date
-    const prices = await db.collection('market_prices')
-      .find({ districtId, date: latestDate })
-      .sort({ commodity: 1 })
-      .toArray();
+    const prices = await db.collection('market_prices').aggregate([
+      { $match: { districtId } },
+      { $sort: { date: -1 } }, // Sort by date descending so the first document is the newest
+      { $group: {
+          _id: { commodity: "$commodity", source: "$source" },
+          doc: { $first: "$$ROOT" } // Keep only the newest document per commodity/source
+      }},
+      { $replaceRoot: { newRoot: "$doc" } },
+      { $sort: { commodity: 1 } } // Sort final output alphabetically
+    ]).toArray();
 
     res.json(prices);
   } catch (error) {
