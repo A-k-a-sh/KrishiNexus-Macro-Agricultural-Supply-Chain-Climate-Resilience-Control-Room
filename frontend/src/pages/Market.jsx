@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getDistricts, getLatestMarketPrices } from '../api';
 import PriceChart from '../components/Market/PriceChart';
+import ComparisonChart from '../components/Market/ComparisonChart';
 
 export default function Market() {
   const [districts, setDistricts] = useState([]);
@@ -93,25 +94,47 @@ export default function Market() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Chart Area */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 }}
-            className="lg:col-span-2 bg-slate-900/50 border border-slate-800 rounded-3xl p-6 backdrop-blur-sm"
-          >
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center">
-              <span className="w-2 h-6 bg-emerald-500 rounded-full mr-3"></span>
-              Top Commodities Overview
-            </h2>
-            
-            {loading ? (
-              <div className="h-[400px] flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
-              </div>
-            ) : (
-              <PriceChart data={prices} />
-            )}
-          </motion.div>
+          <div className="lg:col-span-2 space-y-8">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 backdrop-blur-sm"
+            >
+              <h2 className="text-xl font-bold text-white mb-6 flex items-center">
+                <span className="w-2 h-6 bg-emerald-500 rounded-full mr-3"></span>
+                Top Commodities Overview
+              </h2>
+              
+              {loading ? (
+                <div className="h-[400px] flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+                </div>
+              ) : (
+                <PriceChart data={prices} />
+              )}
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.15 }}
+              className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 backdrop-blur-sm"
+            >
+              <h2 className="text-xl font-bold text-white mb-6 flex items-center">
+                <span className="w-2 h-6 bg-teal-500 rounded-full mr-3"></span>
+                DAM vs WFP Source Comparison
+              </h2>
+              
+              {loading ? (
+                <div className="h-[400px] flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500"></div>
+                </div>
+              ) : (
+                <ComparisonChart data={prices} />
+              )}
+            </motion.div>
+          </div>
 
           {/* Stats Sidebar */}
           <motion.div 
