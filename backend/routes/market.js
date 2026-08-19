@@ -37,9 +37,7 @@ router.get('/:districtId', async (req, res, next) => {
 
 /**
  * GET /api/market/:districtId/latest
- * Convenience endpoint to fetch the most recent prices for a district.
- * It aggregates the latest available date per commodity and source, 
- * so WFP (which might be weeks old) and DAM (which is daily) both appear.
+ * Convenience endpoint to fetch only the most recent date's prices for a district.
  */
 router.get('/:districtId/latest', async (req, res, next) => {
   try {

@@ -37,37 +37,7 @@ const USER_AGENT = 'Mozilla/5.0 (compatible; KrishiNexusBot/1.0; +https://krishi
  * Values should match your districts collection _id / districtId strings.
  * Extend this after MANUAL STEP 3 review.
  */
-const WFP_MARKET_MAP = {
-  // Major cities / sadar
-  'Dhaka': '26',
-  'Dhaka Sadar': '26',
-  'Kawran Bazar Dhaka': '26',
-  'Mirpur 1 no.': '26',
-  'Chittagong Sadar': '15',
-  'Chittagong Division': '15',
-  'Comilla Sadar': '7',
-  'Sylhet Sadar': '61',
-  'Sylhet Division': '61',
-  'Rajshahi Sadar': '54',
-  'Rajshahi Division': '54',
-  'Khulna Sadar': '38',
-  'Khulna Division': '38',
-  'Barisal Sadar': '4',
-  'Barisal Division': '4',
-  'Rangpur Sadar': '55',
-  'Rangpur Division': '55',
-  'Rangpur Municipality Market': '55',
-  'Mymensing Sadar': '48',
-  'Gazipur Sadar': '27',
-  'Narayanganj Sadar': '50',
-  'Bogra Sadar': '8',
-  'Jessore Sadar': '33',
-  'Dinajpur Sadar': '22',
-  'Cox`s Bazar Sadar': '16',
-  'Teknaf Market': '16',
-  'Ukhia Market': '16',
-  // add more as needed...
-};
+const WFP_MARKET_MAP = require('./wfpMarketMap.json');
 
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
