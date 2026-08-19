@@ -1,4 +1,4 @@
-const db = require('../db/connect');
+const { getDb } = require('../db/connect');
 
 /**
  * Aggregates active alerts from districts and upazilas into the alert_records collection.
@@ -9,6 +9,7 @@ async function runAlertAggregation() {
   let documentsProcessed = 0;
   let documentsEmbedded = 0; // Not applicable here, but keeping for log consistency
   const errors = [];
+  const db = getDb();
 
   try {
     const districts = await db.collection('districts').find({}).toArray();
