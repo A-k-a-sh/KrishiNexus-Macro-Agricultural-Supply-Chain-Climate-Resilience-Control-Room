@@ -31,7 +31,8 @@ from pathlib import Path
 import pdfplumber
 from bs4 import BeautifulSoup
 
-LISTING_URL = "https://dam.gov.bd/pages/static-pages/6922e0d1933eb65569e28b21"
+import os
+LISTING_URL = os.environ.get("DAM_MARKET_URL", "https://dam.gov.bd/pages/static-pages/6922e0d1933eb65569e28b21")
 OUTPUT_DIR = Path(__file__).parent / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 USER_AGENT = "Mozilla/5.0 (compatible; KrishiNexusBot/1.0; +https://krishinexus.gov.bd)"
