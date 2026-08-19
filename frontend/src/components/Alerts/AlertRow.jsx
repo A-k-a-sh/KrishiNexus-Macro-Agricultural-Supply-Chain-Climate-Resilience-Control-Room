@@ -24,25 +24,25 @@ export default function AlertRow({ alert, onAcknowledge }) {
 
   return (
     <tr className="border-b border-slate-700/50 hover:bg-slate-800/30 transition-colors">
-      <td className="p-4">
+      <td className="px-6 py-5">
         <div className="font-medium text-slate-200">{alert.sourceName}</div>
         <div className="text-xs text-slate-400 capitalize">{alert.sourceType}</div>
       </td>
-      <td className="p-4">
+      <td className="px-6 py-5">
         <div className="text-sm text-slate-200">{alert.label}</div>
         <div className="text-xs text-slate-400">{alert.alertType}</div>
       </td>
-      <td className="p-4 text-sm text-slate-300">{alert.cropAffected}</td>
-      <td className="p-4">{getSeverityBadge(alert.severity)}</td>
-      <td className="p-4 text-sm text-slate-300">
+      <td className="px-6 py-5 text-sm text-slate-300">{alert.cropAffected}</td>
+      <td className="px-6 py-5">{getSeverityBadge(alert.severity)}</td>
+      <td className="px-6 py-5 text-sm text-slate-300">
         {new Date(alert.raisedAt).toLocaleDateString()}
       </td>
-      <td className="p-4">
+      <td className="px-6 py-5">
         <span className={`px-2 py-1 text-xs font-medium rounded-full border ${alert.status === 'active' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' : 'bg-slate-500/20 text-slate-400 border-slate-500/50'}`}>
           {alert.status}
         </span>
       </td>
-      <td className="p-4">
+      <td className="px-6 py-5">
         {alert.status === 'active' && (
           isAcknowledging ? (
             <div className="flex items-center gap-2">
