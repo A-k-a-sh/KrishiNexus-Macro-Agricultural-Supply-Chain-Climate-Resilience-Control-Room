@@ -233,64 +233,56 @@ export default function BangladeshMap() {
             setCenter(coordinates);
           }}
         >
-          {!isDrilledIn ? (
-            <Geographies geography={GEO_URL}>
-              {({ geographies }) =>
-                geographies.map((geo) => (
+          <Geographies geography={GEO_URL}>
+            {({ geographies }) =>
+              geographies.map((geo) => {
+                const isBg = isDrilledIn;
+                const style = isBg ? {
+                  default: { fill: '#0c1524', stroke: '#1e293b', strokeWidth: 0.4, outline: 'none' },
+                  hover: { fill: '#0c1524', stroke: '#1e293b', strokeWidth: 0.4, outline: 'none' },
+                  pressed: { fill: '#0c1524', stroke: '#1e293b', strokeWidth: 0.4, outline: 'none' },
+                } : getGeoStyle(geo);
+
+                return (
                   <Geography
-                    key={geo.rsmKey}
+                    key={`district-${geo.rsmKey}`}
                     geography={geo}
-                    onClick={() => handleDistrictClick(geo)}
+                    onClick={isBg ? undefined : () => handleDistrictClick(geo)}
+                    onMouseEnter={isBg ? undefined : (evt) => handleMouseEnter(geo, evt)}
+                    onMouseMove={isBg ? undefined : handleMouseMove}
+                    onMouseLeave={isBg ? undefined : handleMouseLeave}
+                    style={style}
+                  />
+                );
+              })
+            }
+          </Geographies>
+
+          {isDrilledIn && (
+            <Geographies geography={UPAZILA_GEO_URL}>
+              {({ geographies }) => {
+                // Filter features belonging to the selected district
+                const upzList = selectedDistrict ? (upazilasByDistrict[selectedDistrict._id] || []) : [];
+                const validIds = new Set(upzList.map(u => String(u._id)));
+                
+                const filteredGeos = geographies.filter(geo => {
+                  const mappedId = UPAZILA_SHAPE_NAME_TO_ID[geo.properties.shapeName];
+                  return mappedId && validIds.has(String(mappedId));
+                });
+                
+                return filteredGeos.map((geo) => (
+                  <Geography
+                    key={`upazila-${geo.rsmKey}`}
+                    geography={geo}
+                    onClick={() => handleUpazilaClick(geo)}
                     onMouseEnter={(evt) => handleMouseEnter(geo, evt)}
                     onMouseMove={handleMouseMove}
                     onMouseLeave={handleMouseLeave}
                     style={getGeoStyle(geo)}
                   />
-                ))
-              }
+                ));
+              }}
             </Geographies>
-          ) : (
-            <>
-              <Geographies geography={GEO_URL}>
-                {({ geographies }) =>
-                  geographies.map((geo) => (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      style={{
-                        default: { fill: '#111827', stroke: '#1e3a5f', strokeWidth: 0.2, outline: 'none' },
-                        hover: { fill: '#111827', stroke: '#1e3a5f', strokeWidth: 0.2, outline: 'none' },
-                        pressed: { fill: '#111827', stroke: '#1e3a5f', strokeWidth: 0.2, outline: 'none' },
-                      }}
-                    />
-                  ))
-                }
-              </Geographies>
-              <Geographies geography={UPAZILA_GEO_URL}>
-                {({ geographies }) => {
-                  // Filter features belonging to the selected district
-                  const upzList = selectedDistrict ? (upazilasByDistrict[selectedDistrict._id] || []) : [];
-                  const validIds = new Set(upzList.map(u => String(u._id)));
-                  
-                  const filteredGeos = geographies.filter(geo => {
-                    const mappedId = UPAZILA_SHAPE_NAME_TO_ID[geo.properties.shapeName];
-                    return mappedId && validIds.has(String(mappedId));
-                  });
-                  
-                  return filteredGeos.map((geo) => (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      onClick={() => handleUpazilaClick(geo)}
-                      onMouseEnter={(evt) => handleMouseEnter(geo, evt)}
-                      onMouseMove={handleMouseMove}
-                      onMouseLeave={handleMouseLeave}
-                      style={getGeoStyle(geo)}
-                    />
-                  ));
-                }}
-              </Geographies>
-            </>
           )}
         </ZoomableGroup>
       </ComposableMap>
