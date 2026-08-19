@@ -52,3 +52,12 @@ export const getMarketPrices = (districtId, date, source) => {
 };
 
 export const getLatestMarketPrices = (districtId) => api.get(`/api/market/${districtId}/latest`);
+
+// ── Alerts ────────────────────────────────────────────────────────────────────
+export const getAlerts = (status = 'active', filters = {}) => {
+  const params = new URLSearchParams({ status, ...filters });
+  return api.get(`/api/alerts?${params}`).then(res => res.data);
+};
+
+export const acknowledgeAlert = (alertId, notes = '') =>
+  api.patch(`/api/alerts/${alertId}/acknowledge`, { notes }).then(res => res.data);
