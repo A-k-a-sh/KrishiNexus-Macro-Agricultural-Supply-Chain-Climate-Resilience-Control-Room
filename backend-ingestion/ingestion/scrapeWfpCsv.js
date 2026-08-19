@@ -25,7 +25,7 @@ const https = require('https');
 const http = require('http');
 // csv-parse is optional – we fall back to a minimal parser if not installed
 
-const CSV_URL =
+const CSV_URL = process.env.WFP_CSV_URL ||
   'https://data.humdata.org/dataset/c76eabb7-fdb5-43b7-a5c4-09091bb8acde/resource/966ab7ac-56d6-4dac-8eba-dfe815d59a52/download/wfp_food_prices_bgd.csv';
 
 const OUTPUT_DIR = path.join(__dirname, 'output');
@@ -242,11 +242,52 @@ async function scrapeWfpCsv(options = {}) {
   );
   console.log(`[WFP] Wrote summary → ${outJson}`);
 
+  // DB Upsert
+  const { connectDb } = require('../db/connect');
+  const db = await connectDb();
+  const bulkOps = [];
+  
+  for (const r of records) {
+    if (!r.districtId) continue;
+    
+    const commoditySlug = r.commodity.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    const docId = `price_${r.districtId}_${commoditySlug}_${r.date.replace(/-/g, '')}`;
+    
+    const doc = {
+      districtId: r.districtId,
+      marketName: r.market,
+      commodity: r.commodity,
+      pricePerKg: r.price,
+      currency: r.currency,
+      date: r.date,
+      source: 'WFP',
+      fetchedAt: new Date()
+    };
+    
+    bulkOps.push({
+      updateOne: {
+        filter: { _id: docId },
+        update: { $set: doc },
+        upsert: true
+      }
+    });
+  }
+  
+  if (bulkOps.length > 0) {
+    console.log(`[WFP] Upserting ${bulkOps.length} records to DB...`);
+    const result = await db.collection('market_prices').bulkWrite(bulkOps, { ordered: false });
+    console.log(`[WFP] Upsert complete. Matched: ${result.matchedCount}, Modified: ${result.modifiedCount}, Upserted: ${result.upsertedCount}`);
+  } else {
+    console.log(`[WFP] No records with districtId to upsert.`);
+  }
+
   return records;
 }
 
 // CLI
 if (require.main === module) {
+  require('dotenv').config({ path: path.join(__dirname, '../../backend/.env') });
+  
   const daysArg = process.argv.includes('--days')
     ? parseInt(process.argv[process.argv.indexOf('--days') + 1], 10) || 90
     : 90;
