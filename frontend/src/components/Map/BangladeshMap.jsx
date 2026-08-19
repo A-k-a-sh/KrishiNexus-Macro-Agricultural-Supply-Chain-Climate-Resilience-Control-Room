@@ -79,7 +79,7 @@ export default function BangladeshMap() {
 
     selectDistrict(district);
     setCenter([parseFloat(district.lon), parseFloat(district.lat)]);
-    setZoom(4.5);
+    setZoom(2.2);
     setIsDrilledIn(true);
   }, [isDrilledIn, districtById, selectDistrict, setIsDrilledIn]);
 
@@ -236,22 +236,41 @@ export default function BangladeshMap() {
           <Geographies geography={GEO_URL}>
             {({ geographies }) =>
               geographies.map((geo) => {
-                const isBg = isDrilledIn;
-                const style = isBg ? {
-                  default: { fill: '#0c1524', stroke: '#1e293b', strokeWidth: 0.4, outline: 'none' },
-                  hover: { fill: '#0c1524', stroke: '#1e293b', strokeWidth: 0.4, outline: 'none' },
-                  pressed: { fill: '#0c1524', stroke: '#1e293b', strokeWidth: 0.4, outline: 'none' },
-                } : getGeoStyle(geo);
+                const shapeName = geo.properties.shapeName;
+                const id = SHAPE_NAME_TO_ID[shapeName];
+                const isSelected = selectedDistrict && id && String(districtById[id]?._id) === String(selectedDistrict._id);
+
+                if (isDrilledIn) {
+                  const style = isSelected
+                    ? {
+                        default: { fill: '#052e16', stroke: '#3b82f6', strokeWidth: 1.2, outline: 'none' },
+                        hover: { fill: '#052e16', stroke: '#3b82f6', strokeWidth: 1.2, outline: 'none' },
+                        pressed: { fill: '#052e16', stroke: '#3b82f6', strokeWidth: 1.2, outline: 'none' },
+                      }
+                    : {
+                        default: { fill: '#111827', stroke: '#1f293d', strokeWidth: 0.5, outline: 'none' },
+                        hover: { fill: '#111827', stroke: '#1f293d', strokeWidth: 0.5, outline: 'none' },
+                        pressed: { fill: '#111827', stroke: '#1f293d', strokeWidth: 0.5, outline: 'none' },
+                      };
+
+                  return (
+                    <Geography
+                      key={`district-${geo.rsmKey}`}
+                      geography={geo}
+                      style={style}
+                    />
+                  );
+                }
 
                 return (
                   <Geography
                     key={`district-${geo.rsmKey}`}
                     geography={geo}
-                    onClick={isBg ? undefined : () => handleDistrictClick(geo)}
-                    onMouseEnter={isBg ? undefined : (evt) => handleMouseEnter(geo, evt)}
-                    onMouseMove={isBg ? undefined : handleMouseMove}
-                    onMouseLeave={isBg ? undefined : handleMouseLeave}
-                    style={style}
+                    onClick={() => handleDistrictClick(geo)}
+                    onMouseEnter={(evt) => handleMouseEnter(geo, evt)}
+                    onMouseMove={handleMouseMove}
+                    onMouseLeave={handleMouseLeave}
+                    style={getGeoStyle(geo)}
                   />
                 );
               })
