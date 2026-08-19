@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { getDistricts, getLatestMarketPrices } from '../api';
 import PriceChart from '../components/Market/PriceChart';
 import ComparisonChart from '../components/Market/ComparisonChart';
+import PriceAlerts from '../components/Market/PriceAlerts';
 
 export default function Market() {
   const [districts, setDistricts] = useState([]);
@@ -91,6 +92,8 @@ export default function Market() {
             {error}
           </div>
         )}
+
+        <PriceAlerts data={prices} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Chart Area */}
