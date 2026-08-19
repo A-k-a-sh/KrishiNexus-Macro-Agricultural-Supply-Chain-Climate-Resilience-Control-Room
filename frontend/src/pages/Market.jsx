@@ -13,11 +13,12 @@ export default function Market() {
   useEffect(() => {
     getDistricts()
       .then(res => {
-        setDistricts(res.data);
-        if (res.data.length > 0) {
+        const districtsArray = res.data.data || [];
+        setDistricts(districtsArray);
+        if (districtsArray.length > 0) {
           // Default to Dhaka (district id usually 40 or 1 in bdapi, let's just pick the first)
-          const dhaka = res.data.find(d => d.name.toLowerCase() === 'dhaka');
-          const defaultId = dhaka ? dhaka.id : res.data[0].id;
+          const dhaka = districtsArray.find(d => d.name && d.name.toLowerCase() === 'dhaka');
+          const defaultId = dhaka ? dhaka._id : districtsArray[0]._id;
           setSelectedDistrict(defaultId);
         }
       })
@@ -76,7 +77,7 @@ export default function Market() {
                 className="block w-full bg-slate-900 border border-slate-700 text-white rounded-xl py-3 px-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 appearance-none cursor-pointer transition-colors"
               >
                 {districts.map(d => (
-                  <option key={d.id} value={d.id}>{d.name} ({d.bn_name})</option>
+                  <option key={d._id} value={d._id}>{d.name} ({d.bnName})</option>
                 ))}
               </select>
             </div>
