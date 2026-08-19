@@ -11,6 +11,10 @@ export default function Market() {
   const [prices, setPrices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Table state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: 'commodity', direction: 'asc' });
 
   useEffect(() => {
     getDistricts()
@@ -47,6 +51,35 @@ export default function Market() {
 
   const wfpPrices = prices.filter(p => p.source === 'WFP');
   const damPrices = prices.filter(p => p.source === 'DAM');
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedAndFilteredPrices = React.useMemo(() => {
+    let result = [...prices];
+    if (searchTerm) {
+      const lower = searchTerm.toLowerCase();
+      result = result.filter(p => p.commodity.toLowerCase().includes(lower) || (p.marketName && p.marketName.toLowerCase().includes(lower)));
+    }
+    if (sortConfig.key) {
+      result.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return result;
+  }, [prices, searchTerm, sortConfig]);
+
+  const SortIcon = ({ columnKey }) => {
+    if (sortConfig.key !== columnKey) return <span className="ml-1 opacity-20">↕</span>;
+    return <span className="ml-1 text-emerald-400">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>;
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 pt-24 pb-12 px-4 sm:px-6 lg:px-8">
@@ -178,26 +211,49 @@ export default function Market() {
           transition={{ delay: 0.3 }}
           className="bg-slate-900/50 border border-slate-800 rounded-3xl overflow-hidden backdrop-blur-sm"
         >
-          <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+          <div className="p-6 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h2 className="text-xl font-bold text-white flex items-center">
               <span className="w-2 h-6 bg-blue-500 rounded-full mr-3"></span>
               Price Index Table
             </h2>
-            <span className="text-sm text-slate-500">{prices.length > 0 ? prices[0].date : 'N/A'}</span>
+            
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search commodities or markets..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-slate-950 border border-slate-700 text-sm text-white rounded-full py-2 pl-4 pr-10 focus:outline-none focus:border-emerald-500 w-64 transition-colors"
+                />
+                <svg className="w-4 h-4 text-slate-500 absolute right-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <span className="text-sm text-slate-500">{prices.length > 0 ? prices[0].date : 'N/A'}</span>
+            </div>
           </div>
           
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-300">
-              <thead className="text-xs uppercase bg-slate-950/50 text-slate-400 font-semibold">
+              <thead className="text-xs uppercase bg-slate-950/50 text-slate-400 font-semibold select-none">
                 <tr>
-                  <th className="px-6 py-4">Commodity</th>
-                  <th className="px-6 py-4">Price / KG</th>
-                  <th className="px-6 py-4">Source</th>
-                  <th className="px-6 py-4">Market Details</th>
+                  <th className="px-6 py-4 cursor-pointer hover:text-white transition-colors" onClick={() => handleSort('commodity')}>
+                    Commodity <SortIcon columnKey="commodity" />
+                  </th>
+                  <th className="px-6 py-4 cursor-pointer hover:text-white transition-colors" onClick={() => handleSort('pricePerKg')}>
+                    Price / KG <SortIcon columnKey="pricePerKg" />
+                  </th>
+                  <th className="px-6 py-4 cursor-pointer hover:text-white transition-colors" onClick={() => handleSort('source')}>
+                    Source <SortIcon columnKey="source" />
+                  </th>
+                  <th className="px-6 py-4 cursor-pointer hover:text-white transition-colors" onClick={() => handleSort('marketName')}>
+                    Market Details <SortIcon columnKey="marketName" />
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/50">
-                {prices.map((p, idx) => (
+                {sortedAndFilteredPrices.map((p, idx) => (
                   <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
                     <td className="px-6 py-4 font-medium text-white">{p.commodity}</td>
                     <td className="px-6 py-4 font-bold text-emerald-400">৳ {p.pricePerKg}</td>
@@ -209,10 +265,10 @@ export default function Market() {
                     <td className="px-6 py-4 text-slate-400">{p.marketName}</td>
                   </tr>
                 ))}
-                {prices.length === 0 && !loading && (
+                {sortedAndFilteredPrices.length === 0 && !loading && (
                   <tr>
                     <td colSpan="4" className="px-6 py-12 text-center text-slate-500">
-                      No price data found for this district.
+                      No price data found matching your search.
                     </td>
                   </tr>
                 )}
