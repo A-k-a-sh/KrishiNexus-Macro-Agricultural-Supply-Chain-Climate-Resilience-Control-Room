@@ -60,7 +60,11 @@ async function runIngestion() {
   process.exit(0);
 }
 
-runIngestion().catch((err) => {
-  console.error('\n[runIngestion] Pipeline failed:', err);
-  process.exit(1);
-});
+if (require.main === module) {
+  runIngestion().catch((err) => {
+    console.error('\n[runIngestion] Pipeline failed:', err);
+    process.exit(1);
+  });
+}
+
+module.exports = { runIngestion };

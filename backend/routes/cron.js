@@ -1,6 +1,5 @@
 const { Router } = require('express');
-const { fetchAllWeatherAndScore } = require('../../backend-ingestion/cron/weatherRefresh');
-const { fetchAndEmbedAllBulletins } = require('../../backend-ingestion/ingestion/runIngestion');
+const { runWeatherRefresh } = require('../../backend-ingestion/cron/weatherRefresh');
 
 const router = Router();
 
