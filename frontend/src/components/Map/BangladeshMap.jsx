@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   ComposableMap,
   Geographies,
@@ -19,7 +19,7 @@ const RISK_STYLE = {
   red: { fill: '#450a0a', stroke: '#ef4444', strokeWidth: 0.8 },
   yellow: { fill: '#451a03', stroke: '#f59e0b', strokeWidth: 0.6 },
   green: { fill: '#052e16', stroke: '#00ff88', strokeWidth: 0.5 },
-  default: { fill: '#111827', stroke: '#1e3a5f', strokeWidth: 0.4 },
+  default: { fill: '#1e293b', stroke: '#475569', strokeWidth: 0.4 }, // Made brighter so it never blends into the page background
 };
 
 const SELECTED_STYLE = { fill: '#1e3a5f', stroke: '#3b82f6', strokeWidth: 1.5 };
@@ -57,14 +57,45 @@ export default function BangladeshMap() {
   useEffect(() => {
     fetch(GEO_URL)
       .then(res => res.json())
-      .then(data => setDistrictGeoData(data))
+      .then(data => {
+        // Tag features so we can distinguish them in the combined array
+        data.features.forEach(f => f.properties.geoType = 'district');
+        setDistrictGeoData(data);
+      })
       .catch(console.error);
       
     fetch(UPAZILA_GEO_URL)
       .then(res => res.json())
-      .then(data => setUpazilaGeoData(data))
+      .then(data => {
+        data.features.forEach(f => f.properties.geoType = 'upazila');
+        setUpazilaGeoData(data);
+      })
       .catch(console.error);
   }, []);
+
+  // Compute the combined GeoJSON object dynamically to avoid multiple <Geographies> components
+  const combinedGeoData = useMemo(() => {
+    if (!districtGeoData) return null;
+    
+    let combinedFeatures = [...districtGeoData.features];
+    
+    if (isDrilledIn && upazilaGeoData && selectedDistrict) {
+      const upzList = upazilasByDistrict[selectedDistrict._id] || [];
+      const validIds = new Set(upzList.map(u => String(u._id)));
+      
+      const filteredUpazilas = upazilaGeoData.features.filter(geo => {
+        const mappedId = UPAZILA_SHAPE_NAME_TO_ID[geo.properties.shapeName];
+        return mappedId && validIds.has(String(mappedId));
+      });
+      
+      combinedFeatures = [...combinedFeatures, ...filteredUpazilas];
+    }
+    
+    return {
+      type: "FeatureCollection",
+      features: combinedFeatures
+    };
+  }, [districtGeoData, upazilaGeoData, isDrilledIn, selectedDistrict, upazilasByDistrict]);
 
   const [tooltip, setTooltip] = useState({ visible: false, district: null, upazila: null, x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -249,65 +280,53 @@ export default function BangladeshMap() {
             setCenter(coordinates);
           }}
         >
-          {districtGeoData && (
-            <Geographies geography={districtGeoData}>
+          {combinedGeoData && (
+            <Geographies geography={combinedGeoData}>
               {({ geographies }) =>
                 geographies.map((geo) => {
                   const shapeName = geo.properties.shapeName;
-                const id = SHAPE_NAME_TO_ID[shapeName];
-                
-                // We always render all districts using getDistrictStyle, exactly like v1.
-                // We just disable interactions for unselected districts when drilled in.
-                const isSelected = selectedDistrict && id && String(districtById[id]?._id) === String(selectedDistrict._id);
+                  const geoType = geo.properties.geoType;
 
-                return (
-                  <Geography
-                    key={`district-${geo.rsmKey}`}
-                    geography={geo}
-                    onClick={() => {
-                      if (!isDrilledIn) handleDistrictClick(geo);
-                    }}
-                    onMouseEnter={(evt) => {
-                      // Only show tooltip for unselected districts if NOT drilled in.
-                      // If drilled in, only show tooltip for the selected district (or don't show it, since upazilas are on top).
-                      if (!isDrilledIn || isSelected) {
-                        handleDistrictMouseEnter(geo, evt);
-                      }
-                    }}
-                    onMouseMove={handleMouseMove}
-                    onMouseLeave={handleMouseLeave}
-                    style={getDistrictStyle(geo)}
-                  />
-                );
-              })
+                  if (geoType === 'district') {
+                    const id = SHAPE_NAME_TO_ID[shapeName];
+                    const isSelected = selectedDistrict && id && String(districtById[id]?._id) === String(selectedDistrict._id);
+
+                    return (
+                      <Geography
+                        key={`district-${geo.rsmKey}`}
+                        geography={geo}
+                        onClick={() => {
+                          if (!isDrilledIn) handleDistrictClick(geo);
+                        }}
+                        onMouseEnter={(evt) => {
+                          if (!isDrilledIn || isSelected) {
+                            handleDistrictMouseEnter(geo, evt);
+                          }
+                        }}
+                        onMouseMove={handleMouseMove}
+                        onMouseLeave={handleMouseLeave}
+                        style={getDistrictStyle(geo)}
+                      />
+                    );
+                  }
+
+                  if (geoType === 'upazila') {
+                    return (
+                      <Geography
+                        key={`upazila-${geo.rsmKey}`}
+                        geography={geo}
+                        onClick={() => handleUpazilaClick(geo)}
+                        onMouseEnter={(evt) => handleUpazilaMouseEnter(geo, evt)}
+                        onMouseMove={handleMouseMove}
+                        onMouseLeave={handleMouseLeave}
+                        style={getUpazilaStyle(geo)}
+                      />
+                    );
+                  }
+
+                  return null;
+                })
               }
-            </Geographies>
-          )}
-
-          {isDrilledIn && upazilaGeoData && (
-            <Geographies geography={upazilaGeoData}>
-              {({ geographies }) => {
-                // Filter features belonging to the selected district
-                const upzList = selectedDistrict ? (upazilasByDistrict[selectedDistrict._id] || []) : [];
-                const validIds = new Set(upzList.map(u => String(u._id)));
-                
-                const filteredGeos = geographies.filter(geo => {
-                  const mappedId = UPAZILA_SHAPE_NAME_TO_ID[geo.properties.shapeName];
-                  return mappedId && validIds.has(String(mappedId));
-                });
-                
-                return filteredGeos.map((geo) => (
-                  <Geography
-                    key={`upazila-${geo.rsmKey}`}
-                    geography={geo}
-                    onClick={() => handleUpazilaClick(geo)}
-                    onMouseEnter={(evt) => handleUpazilaMouseEnter(geo, evt)}
-                    onMouseMove={handleMouseMove}
-                    onMouseLeave={handleMouseLeave}
-                    style={getUpazilaStyle(geo)}
-                  />
-                ));
-              }}
             </Geographies>
           )}
         </ZoomableGroup>
