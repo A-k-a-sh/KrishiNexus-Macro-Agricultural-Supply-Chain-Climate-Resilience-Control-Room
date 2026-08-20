@@ -77,7 +77,8 @@ router.get('/dispatch-summary', async (req, res, next) => {
             crop: "$crop"
           },
           totalMtons: { $sum: "$cargoWeightMtons" },
-          count: { $sum: 1 }
+          count: { $sum: 1 },
+          latestDate: { $max: "$createdAt" }
         }
       },
       {
@@ -87,7 +88,8 @@ router.get('/dispatch-summary', async (req, res, next) => {
           toDistrictName: "$_id.toDistrictName",
           crop: "$_id.crop",
           totalMtons: 1,
-          count: 1
+          count: 1,
+          latestDate: 1
         }
       },
       {
