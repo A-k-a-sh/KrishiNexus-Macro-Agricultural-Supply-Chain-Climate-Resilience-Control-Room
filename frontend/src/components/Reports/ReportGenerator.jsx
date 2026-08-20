@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { getDistricts, generateReport } from '../../api';
+import { getDistricts, getUpazilas, generateReport } from '../../api';
 
 export default function ReportGenerator() {
   const [districts, setDistricts] = useState([]);
-  const [targetId, setTargetId] = useState('');
+  const [upazilas, setUpazilas] = useState([]);
+  const [selectedDistrictId, setSelectedDistrictId] = useState('');
+  const [selectedUpazilaId, setSelectedUpazilaId] = useState('');
   const [reportType, setReportType] = useState('district');
   const [config, setConfig] = useState({
     includeWeather: true,
@@ -22,11 +24,27 @@ export default function ReportGenerator() {
         const dArray = res.data.data || [];
         setDistricts(dArray);
         if (dArray.length > 0) {
-          setTargetId(dArray[0]._id);
+          setSelectedDistrictId(dArray[0]._id);
         }
       })
       .catch(err => console.error("Error loading districts", err));
   }, []);
+
+  useEffect(() => {
+    if (selectedDistrictId) {
+      getUpazilas(selectedDistrictId)
+        .then(res => {
+          const uArray = res.data.data || [];
+          setUpazilas(uArray);
+          if (uArray.length > 0) {
+            setSelectedUpazilaId(uArray[0]._id);
+          } else {
+            setSelectedUpazilaId('');
+          }
+        })
+        .catch(err => console.error("Error loading upazilas", err));
+    }
+  }, [selectedDistrictId]);
 
   const handleCheckboxChange = (field) => {
     setConfig(prev => ({ ...prev, [field]: !prev[field] }));
@@ -37,6 +55,11 @@ export default function ReportGenerator() {
     setLoading(true);
     setError(null);
     try {
+      const targetId = reportType === 'upazila' ? selectedUpazilaId : selectedDistrictId;
+      if (!targetId) {
+        throw new Error('Please select a target region.');
+      }
+      
       const payload = {
         reportType,
         targetId,
@@ -52,12 +75,19 @@ export default function ReportGenerator() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      // Get filename from header if possible, else fallback
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = 'krishinexus-report.pdf';
-      if (contentDisposition && contentDisposition.includes('filename="')) {
-        filename = contentDisposition.split('filename="')[1].split('"')[0];
+      
+      // Construct filename on frontend to avoid CORS issues with Content-Disposition
+      let targetName = 'Unknown';
+      if (reportType === 'district') {
+        const d = districts.find(d => d._id === selectedDistrictId);
+        if (d) targetName = d.name;
+      } else {
+        const u = upazilas.find(u => u._id === selectedUpazilaId);
+        if (u) targetName = u.name;
       }
+      const safeName = targetName.replace(/\s+/g, '-').toLowerCase();
+      const dateStr = new Date().toISOString().split('T')[0];
+      const filename = `krishinexus-report_${safeName}_${dateStr}.pdf`;
       
       a.download = filename;
       document.body.appendChild(a);
@@ -67,7 +97,7 @@ export default function ReportGenerator() {
       
     } catch (err) {
       console.error(err);
-      setError('Could not generate PDF. Please try again.');
+      setError(err.message || 'Could not generate PDF. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -114,11 +144,12 @@ export default function ReportGenerator() {
                 />
                 <span className="text-slate-300">District</span>
               </label>
-              <label className="flex items-center space-x-2 cursor-pointer opacity-50" title="Coming soon">
+              <label className="flex items-center space-x-2 cursor-pointer">
                 <input 
                   type="radio" 
                   value="upazila"
-                  disabled
+                  checked={reportType === 'upazila'}
+                  onChange={(e) => setReportType(e.target.value)}
                   className="form-radio text-emerald-500 focus:ring-emerald-500 bg-slate-900 border-slate-700"
                 />
                 <span className="text-slate-300">Upazila</span>
@@ -126,17 +157,36 @@ export default function ReportGenerator() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Select District</label>
-            <select
-              value={targetId}
-              onChange={(e) => setTargetId(e.target.value)}
-              className="block w-full bg-slate-950 border border-slate-700 text-white rounded-xl py-3 px-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 appearance-none cursor-pointer"
-            >
-              {districts.map(d => (
-                <option key={d._id} value={d._id}>{d.name} ({d.bnName})</option>
-              ))}
-            </select>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-300 mb-2">Select District</label>
+              <select
+                value={selectedDistrictId}
+                onChange={(e) => setSelectedDistrictId(e.target.value)}
+                className="block w-full bg-slate-950 border border-slate-700 text-white rounded-xl py-3 px-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 appearance-none cursor-pointer"
+              >
+                {districts.map(d => (
+                  <option key={d._id} value={d._id}>{d.name} ({d.bnName})</option>
+                ))}
+              </select>
+            </div>
+
+            {reportType === 'upazila' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">Select Upazila</label>
+                <select
+                  value={selectedUpazilaId}
+                  onChange={(e) => setSelectedUpazilaId(e.target.value)}
+                  className="block w-full bg-slate-950 border border-slate-700 text-white rounded-xl py-3 px-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 appearance-none cursor-pointer"
+                  disabled={upazilas.length === 0}
+                >
+                  {upazilas.length === 0 && <option value="">No Upazilas available</option>}
+                  {upazilas.map(u => (
+                    <option key={u._id} value={u._id}>{u.name} ({u.bnName})</option>
+                  ))}
+                </select>
+              </motion.div>
+            )}
           </div>
         </div>
 
@@ -192,9 +242,9 @@ export default function ReportGenerator() {
         <div className="pt-4">
           <button
             type="submit"
-            disabled={loading || !targetId}
+            disabled={loading || (reportType === 'district' ? !selectedDistrictId : !selectedUpazilaId)}
             className={`w-full py-4 px-6 rounded-xl text-white font-bold text-lg shadow-lg transition-all ${
-              loading || !targetId 
+              loading || (reportType === 'district' ? !selectedDistrictId : !selectedUpazilaId)
                 ? 'bg-slate-700 cursor-not-allowed opacity-70' 
                 : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 transform hover:-translate-y-1'
             }`}
