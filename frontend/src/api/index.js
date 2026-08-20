@@ -71,3 +71,14 @@ export const getDispatchSummary = (days = 30) =>
 
 export const getIngestionHealth = (limit = 20) =>
   api.get(`/api/analytics/ingestion-health?limit=${limit}`).then(res => res.data);
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+export const generateReport = (reportConfig) =>
+  fetch(`${BASE_URL}/api/reports/generate`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(reportConfig)
+  });
