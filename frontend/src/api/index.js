@@ -61,3 +61,13 @@ export const getAlerts = (status = 'active', filters = {}) => {
 
 export const acknowledgeAlert = (alertId, notes = '') =>
   api.patch(`/api/alerts/${alertId}/acknowledge`, { notes }).then(res => res.data);
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+export const getRiskTrends = (days = 90) =>
+  api.get(`/api/analytics/risk-trends?days=${days}`).then(res => res.data);
+
+export const getDispatchSummary = (days = 30) =>
+  api.get(`/api/analytics/dispatch-summary?days=${days}`).then(res => res.data);
+
+export const getIngestionHealth = (limit = 20) =>
+  api.get(`/api/analytics/ingestion-health?limit=${limit}`).then(res => res.data);
