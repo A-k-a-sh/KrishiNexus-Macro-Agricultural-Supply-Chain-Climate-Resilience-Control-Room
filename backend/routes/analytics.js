@@ -65,7 +65,7 @@ router.get('/dispatch-summary', async (req, res, next) => {
     const pipeline = [
       {
         $match: {
-          createdAt: { $gte: cutoffDate },
+          createdAt: { $gte: cutoffDate.toISOString() },
           status: "dispatched"
         }
       },
