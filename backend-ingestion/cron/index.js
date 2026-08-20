@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const { runWeatherRefresh } = require('./weatherRefresh');
 const { runMarketPriceRefresh } = require('./marketPriceRefresh');
 const { runAlertAggregation } = require('./alertAggregation');
+const { runAnalyticsSnapshot } = require('./analyticsSnapshot');
 
 // /**
 //  * Start all cron jobs.
@@ -49,9 +50,18 @@ function startCronJobs() {
     );
   });
 
+  // Daily analytics snapshot at 23:55
+  cron.schedule('55 23 * * *', () => {
+    console.log('[cron] Running scheduled analytics snapshot...');
+    runAnalyticsSnapshot().catch((err) =>
+      console.error('[cron] Scheduled analytics snapshot failed:', err.message)
+    );
+  });
+
   console.log('[cron] Weather refresh scheduled every 6 hours.');
   console.log('[cron] Market price refresh scheduled every 12 hours.');
   console.log('[cron] Alert aggregation scheduled daily at 01:00.');
+  console.log('[cron] Analytics snapshot scheduled daily at 23:55.');
 }
 
 module.exports = { startCronJobs };
