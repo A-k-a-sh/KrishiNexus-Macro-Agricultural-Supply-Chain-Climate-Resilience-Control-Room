@@ -54,8 +54,15 @@ router.post('/generate', async (req, res, next) => {
     const doc = new PDFDocument({ 
       size: 'A4', 
       margin: 50,
+      bufferPages: true,
       info: { Title: 'KrishiNexus Report', Author: 'KrishiNexus Platform' }
     });
+    
+    // Fill background on every new page
+    doc.on('pageAdded', () => {
+      doc.rect(0, 0, 595, 842).fill('#f1f5f9');
+    });
+
     const safeName = targetDoc.name ? targetDoc.name.replace(/\s+/g, '-').toLowerCase() : targetId;
     const dateStr = new Date().toISOString().split('T')[0];
     const filename = `krishinexus-report-${safeName}-${dateStr}.pdf`;
@@ -71,118 +78,155 @@ router.post('/generate', async (req, res, next) => {
 
     doc.pipe(res);
 
-    // --- Helper Functions for Styling ---
-    const drawHeader = (title) => {
-      doc.rect(50, doc.y, 495, 30).fill('#0f766e'); // Teal 700 background
-      doc.fillColor('#ffffff').fontSize(14).text(title, 60, doc.y + 8);
-      doc.moveDown(1.5);
-      doc.fillColor('#334155'); // Slate 700
+    // Initial background for page 1
+    doc.rect(0, 0, 595, 842).fill('#f1f5f9');
+
+    // --- Helper Functions ---
+    const checkSpace = (requiredSpace) => {
+      if (doc.y + requiredSpace > 780) {
+        doc.addPage();
+        return true;
+      }
+      return false;
     };
 
-    // --- Page 1: Overview ---
-    doc.rect(0, 0, 595, 120).fill('#022c22'); // Emerald 950 header
-    doc.fillColor('#34d399').fontSize(26).text('KrishiNexus Mission Control', 50, 40, { align: 'center' });
-    doc.fillColor('#94a3b8').fontSize(14).text('Automated Intelligence Report', 50, 75, { align: 'center' });
+    const drawHeader = (title) => {
+      checkSpace(60);
+      doc.rect(50, doc.y, 495, 30).fill('#0f766e'); // Teal 700
+      doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(14).text(title, 60, doc.y + 8);
+      doc.moveDown(1.5);
+      doc.fillColor('#334155').font('Helvetica');
+    };
+
+    // --- Page 1: Header ---
+    doc.rect(0, 0, 595, 120).fill('#022c22'); // Emerald 950
+    doc.fillColor('#34d399').font('Helvetica-Bold').fontSize(28).text('KrishiNexus Mission Control', 0, 35, { align: 'center' });
+    doc.fillColor('#94a3b8').font('Helvetica').fontSize(12).text('Automated Intelligence & Logistics Report', 0, 70, { align: 'center', characterSpacing: 2 });
     
     doc.y = 150;
-    doc.fillColor('#0f172a').fontSize(20).text(`Target: ${targetDoc.name || targetDoc.bnName || targetId} (${reportType.toUpperCase()})`);
-    doc.fontSize(12).fillColor('#64748b').text(`Generated on: ${new Date().toLocaleDateString()}`);
     
-    doc.moveDown(1);
+    // Metadata block
+    doc.rect(50, doc.y, 495, 80).fill('#ffffff').stroke('#e2e8f0');
+    doc.fillColor('#0f172a').font('Helvetica-Bold').fontSize(22).text(`Target: ${targetDoc.name || targetDoc.bnName || targetId} (${reportType.toUpperCase()})`, 70, doc.y + 20);
+    doc.fontSize(12).fillColor('#64748b').font('Helvetica').text(`Generated on: ${new Date().toLocaleString()}`, 70, doc.y + 10);
+    
+    doc.y += 40;
     
     // Risk Status Box
+    checkSpace(60);
     const riskColor = targetDoc.riskStatus === 'red' ? '#ef4444' : (targetDoc.riskStatus === 'yellow' ? '#f59e0b' : '#10b981');
-    doc.rect(50, doc.y, 495, 40).fill(riskColor);
-    doc.fillColor('#ffffff').fontSize(16).text(`Current Risk Status: ${targetDoc.riskStatus ? targetDoc.riskStatus.toUpperCase() : 'UNKNOWN'}`, 60, doc.y + 12);
-    doc.moveDown(2);
+    doc.rect(50, doc.y, 495, 45).fill(riskColor);
+    doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(18).text(`OVERALL RISK STATUS: ${targetDoc.riskStatus ? targetDoc.riskStatus.toUpperCase() : 'UNKNOWN'}`, 0, doc.y + 14, { align: 'center' });
+    doc.moveDown(3);
     
+    // --- Weather Summary ---
     if (includeWeather && targetDoc.liveWeather) {
-      drawHeader('Weather Summary (Today)');
+      drawHeader('WEATHER SUMMARY (TODAY)');
       const w = targetDoc.liveWeather;
       
-      doc.fontSize(12);
-      doc.text(`Max Temperature: `, { continued: true }).font('Helvetica-Bold').text(`${w.tempMaxToday || '--'}°C`).font('Helvetica');
-      doc.moveDown(0.5);
-      doc.text(`Min Temperature: `, { continued: true }).font('Helvetica-Bold').text(`${w.tempMinToday || '--'}°C`).font('Helvetica');
-      doc.moveDown(0.5);
-      doc.text(`Max Humidity: `, { continued: true }).font('Helvetica-Bold').text(`${w.humidityMaxToday || '--'}%`).font('Helvetica');
-      doc.moveDown(0.5);
+      doc.rect(50, doc.y, 495, 80).fill('#ffffff').stroke('#e2e8f0');
+      const startY = doc.y + 15;
       
-      let precipSum = 0;
-      if (w.precipitationSum7Day && w.precipitationSum7Day.length > 0) {
-        precipSum = w.precipitationSum7Day[0];
-      }
-      doc.text(`Precipitation (Today): `, { continued: true }).font('Helvetica-Bold').text(`${precipSum} mm`).font('Helvetica');
-      doc.moveDown(2);
+      doc.fillColor('#475569').fontSize(10).text('MAX TEMP', 70, startY);
+      doc.fillColor('#0f172a').fontSize(16).font('Helvetica-Bold').text(`${w.tempMaxToday || '--'}°C`, 70, startY + 15).font('Helvetica');
+      
+      doc.fillColor('#475569').fontSize(10).text('MIN TEMP', 190, startY);
+      doc.fillColor('#0f172a').fontSize(16).font('Helvetica-Bold').text(`${w.tempMinToday || '--'}°C`, 190, startY + 15).font('Helvetica');
+      
+      doc.fillColor('#475569').fontSize(10).text('HUMIDITY', 310, startY);
+      doc.fillColor('#0f172a').fontSize(16).font('Helvetica-Bold').text(`${w.humidityMaxToday || '--'}%`, 310, startY + 15).font('Helvetica');
+      
+      let precipSum = w.precipitationSum7Day && w.precipitationSum7Day.length > 0 ? w.precipitationSum7Day[0] : 0;
+      doc.fillColor('#475569').fontSize(10).text('RAINFALL', 430, startY);
+      doc.fillColor('#0f172a').fontSize(16).font('Helvetica-Bold').text(`${precipSum} mm`, 430, startY + 15).font('Helvetica');
+      
+      doc.y = startY + 65;
     }
 
-    // --- Page 2: Alerts & Crops ---
+    // --- Alerts & Crops ---
     if (includeAdvisory && ((targetDoc.activeAlerts && targetDoc.activeAlerts.length > 0) || (targetDoc.activeCrops && targetDoc.activeCrops.length > 0))) {
-      doc.addPage();
       
       if (targetDoc.activeAlerts && targetDoc.activeAlerts.length > 0) {
-        drawHeader('Active Alerts');
-        targetDoc.activeAlerts.forEach((alert, idx) => {
-          doc.rect(50, doc.y, 495, doc.heightOfString(alert.message || alert.label || alert.alertType) + 40).fill('#fef2f2').stroke('#fca5a5');
-          doc.fillColor('#b91c1c').fontSize(14).font('Helvetica-Bold').text(`${alert.label || alert.type || 'Alert'} (Severity: ${alert.severity || 'Unknown'})`, 60, doc.y + 10);
-          doc.fillColor('#7f1d1d').fontSize(12).font('Helvetica').text(alert.triggerReason || alert.message || '', 60, doc.y + 5);
-          doc.moveDown(1.5);
+        drawHeader('ACTIVE CLIMATE ALERTS');
+        targetDoc.activeAlerts.forEach((alert) => {
+          const content = alert.triggerReason || alert.message || 'No additional details provided.';
+          const boxHeight = doc.heightOfString(content, { width: 455 }) + 45;
+          checkSpace(boxHeight);
+          
+          doc.rect(50, doc.y, 495, boxHeight).fill('#fef2f2').stroke('#fca5a5');
+          doc.fillColor('#b91c1c').fontSize(14).font('Helvetica-Bold').text(`⚠ ${alert.label || alert.type || 'Alert'} (Severity: ${alert.severity || 'Unknown'})`, 70, doc.y + 12);
+          doc.fillColor('#7f1d1d').fontSize(11).font('Helvetica').text(content, 70, doc.y + 6, { width: 455 });
+          doc.moveDown(2);
         });
       }
 
       if (targetDoc.activeCrops && targetDoc.activeCrops.length > 0) {
-        doc.moveDown(1);
-        drawHeader('Active Crops');
-        doc.fillColor('#334155').fontSize(12);
+        drawHeader('ACTIVE REGIONAL CROPS');
+        doc.rect(50, doc.y, 495, (targetDoc.activeCrops.length * 20) + 20).fill('#ffffff').stroke('#e2e8f0');
+        doc.fillColor('#334155').fontSize(12).font('Helvetica');
+        doc.y += 10;
         targetDoc.activeCrops.forEach(c => {
           const cropName = typeof c === 'string' ? c : c.crop;
           const stage = typeof c === 'string' ? '' : ` (Stage: ${c.stage})`;
-          doc.text(`• ${cropName}${stage}`);
-          doc.moveDown(0.5);
+          doc.text(`• ${cropName}${stage}`, 70, doc.y);
         });
+        doc.y += 25;
       }
     }
 
-    // --- Page 3: Logistics ---
+    // --- Logistics ---
     if (includeLogistics && dispatches.length > 0) {
-      doc.addPage();
-      drawHeader('Recent Logistics Dispatches (Last 3)');
-      
+      drawHeader('RECENT LOGISTICS DISPATCHES');
       dispatches.forEach(d => {
+        checkSpace(70);
         const dDate = new Date(d.dispatchedAt || d.createdAt).toLocaleDateString();
-        doc.rect(50, doc.y, 495, 60).fill('#f8fafc').stroke('#cbd5e1');
-        doc.fillColor('#0f172a').font('Helvetica-Bold').fontSize(14).text(`${d.crop} — ${d.cargoWeightMtons || d.totalMtons} Mtons`, 60, doc.y + 10);
-        doc.fillColor('#475569').font('Helvetica').fontSize(12).text(`Date: ${dDate}  |  Source Division ID: ${d.fromDivisionId || 'N/A'}`, 60, doc.y + 5);
-        doc.moveDown(1.5);
+        doc.rect(50, doc.y, 495, 60).fill('#ffffff').stroke('#cbd5e1');
+        doc.fillColor('#0f172a').font('Helvetica-Bold').fontSize(14).text(`${d.crop} — ${d.cargoWeightMtons || d.totalMtons} Metric Tons`, 70, doc.y + 12);
+        doc.fillColor('#64748b').font('Helvetica').fontSize(11).text(`Dispatched: ${dDate}  |  Origin Division ID: ${d.fromDivisionId || 'N/A'}`, 70, doc.y + 8);
+        doc.moveDown(2.5);
       });
     }
 
-    // --- Page 4: Market ---
+    // --- Market Prices ---
     if (includeMarket && marketPrices.length > 0) {
-      doc.addPage();
-      drawHeader('Market Price Snapshot (Last 7 Days)');
+      drawHeader('MARKET PRICE SNAPSHOT');
       
-      // Simple table header
-      doc.font('Helvetica-Bold').fontSize(12).fillColor('#0f172a');
-      doc.text('Date', 60, doc.y, { continued: true, width: 100 });
-      doc.text('Commodity', 160, doc.y, { continued: true, width: 200 });
-      doc.text('Price/Kg (BDT)', 360, doc.y);
-      doc.moveDown(0.5);
+      checkSpace(40);
+      doc.rect(50, doc.y, 495, 30).fill('#e2e8f0');
+      doc.font('Helvetica-Bold').fontSize(11).fillColor('#334155');
+      doc.text('Date', 70, doc.y + 10, { continued: true, width: 100 });
+      doc.text('Commodity', 170, doc.y, { continued: true, width: 200 });
+      doc.text('Price / Kg', 370, doc.y);
+      doc.moveDown(1.5);
       
-      doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke('#cbd5e1');
-      doc.moveDown(0.5);
-
-      doc.font('Helvetica').fillColor('#334155');
-      marketPrices.forEach(mp => {
-        const mpDate = new Date(mp.date).toLocaleDateString();
+      doc.font('Helvetica').fillColor('#0f172a');
+      marketPrices.forEach((mp, i) => {
+        checkSpace(30);
         const startY = doc.y;
-        doc.text(mpDate, 60, startY, { width: 100 });
-        doc.text(mp.commodity, 160, startY, { width: 200 });
-        doc.text(`৳ ${mp.pricePerKg}`, 360, startY);
-        doc.moveDown(0.5);
-        doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke('#f1f5f9');
-        doc.moveDown(0.5);
+        
+        if (i % 2 === 0) doc.rect(50, startY - 5, 495, 25).fill('#ffffff');
+        else doc.rect(50, startY - 5, 495, 25).fill('#f8fafc');
+        
+        doc.fillColor('#334155');
+        const mpDate = new Date(mp.date).toLocaleDateString();
+        doc.text(mpDate, 70, startY, { width: 100 });
+        doc.text(mp.commodity, 170, startY, { width: 200 });
+        doc.font('Helvetica-Bold').fillColor('#059669').text(`BDT ${mp.pricePerKg}`, 370, startY);
+        doc.font('Helvetica');
+        doc.moveDown(1);
       });
+      doc.y += 10;
+    }
+
+    // Add footers to all pages
+    const range = doc.bufferedPageRange();
+    for (let i = range.start; i < range.start + range.count; i++) {
+      doc.switchToPage(i);
+      doc.rect(0, 800, 595, 42).fill('#1e293b');
+      doc.fillColor('#94a3b8').fontSize(10).font('Helvetica').text(
+        `KrishiNexus Confidential  |  Page ${i + 1} of ${range.count}`, 
+        50, 815, { align: 'center' }
+      );
     }
 
     doc.end();
