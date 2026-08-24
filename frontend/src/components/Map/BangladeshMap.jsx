@@ -22,7 +22,10 @@ const RISK_STYLE = {
   default: { fill: '#1e293b', stroke: '#475569', strokeWidth: 0.4 }, // Made brighter so it never blends into the page background
 };
 
-const SELECTED_STYLE = { fill: '#1e3a5f', stroke: '#3b82f6', strokeWidth: 1.5 };
+// Selected district/upazila: cyan reads as "active" against the red/yellow/green
+// risk palette, so it never collides with a risk color.
+const SELECTED_COLOR = '#22d3ee';
+const SELECTED_STYLE = { fill: '#0c3f52', stroke: SELECTED_COLOR, strokeWidth: 2 };
 
 // --- GeoJSON winding-order normalization -------------------------------------
 // d3-geo (used internally by react-simple-maps' geoPath) treats polygons on a
@@ -142,8 +145,22 @@ export default function BangladeshMap() {
       });
       
       combinedFeatures = [...combinedFeatures, ...filteredUpazilas];
+
+      // Redraw the selected district's border ON TOP of its upazilas as an
+      // outline-only overlay so the "you are here" boundary stays crisp instead
+      // of being buried under the upazila fills. pointer-events are disabled on
+      // it (see render) so upazila clicks still pass through.
+      const selectedGeo = districtGeoData.features.find(
+        f => String(SHAPE_NAME_TO_ID[f.properties.shapeName]) === String(selectedDistrict._id)
+      );
+      if (selectedGeo) {
+        combinedFeatures = [
+          ...combinedFeatures,
+          { ...selectedGeo, properties: { ...selectedGeo.properties, geoType: 'district-outline' } },
+        ];
+      }
     }
-    
+
     return {
       type: "FeatureCollection",
       features: combinedFeatures
@@ -170,18 +187,21 @@ export default function BangladeshMap() {
   }, [selectDistrict, setIsDrilledIn]);
 
   const handleDistrictClick = useCallback((geo) => {
-    if (isDrilledIn) return;
     const shapeName = geo.properties.shapeName;
     const id = SHAPE_NAME_TO_ID[shapeName];
     if (!id) return;
     const district = districtById[id];
     if (!district) return;
 
+    // selectDistrict() clears any prior drill state (selected upazila +
+    // isDrilledIn), and we immediately re-enter drill-down for the clicked
+    // district. This lets the user jump straight from one district to another
+    // without first pressing "← Back to Districts".
     selectDistrict(district);
     setCenter([parseFloat(district.lon), parseFloat(district.lat)]);
     setZoom(4);
     setIsDrilledIn(true);
-  }, [isDrilledIn, districtById, selectDistrict, setIsDrilledIn]);
+  }, [districtById, selectDistrict, setIsDrilledIn]);
 
   const handleUpazilaClick = useCallback((geo) => {
     const shapeName = geo.properties.shapeName;
@@ -234,7 +254,7 @@ export default function BangladeshMap() {
     const s = RISK_STYLE[risk] || RISK_STYLE.default;
     return {
       default: { fill: s.fill, stroke: s.stroke, strokeWidth: s.strokeWidth, outline: 'none' },
-      hover: { fill: '#1e2a42', stroke: '#3b82f6', strokeWidth: 0.5, outline: 'none', cursor: 'pointer' },
+      hover: { fill: '#123543', stroke: SELECTED_COLOR, strokeWidth: 0.5, outline: 'none', cursor: 'pointer' },
       pressed: { fill: '#1e2a42', outline: 'none' },
     };
   }
@@ -256,7 +276,7 @@ export default function BangladeshMap() {
     const s = RISK_STYLE[risk] || RISK_STYLE.default;
     return {
       default: { fill: s.fill, stroke: s.stroke, strokeWidth: s.strokeWidth, outline: 'none' },
-      hover: { fill: '#1e2a42', stroke: '#3b82f6', strokeWidth: 1, outline: 'none', cursor: 'pointer' },
+      hover: { fill: '#123543', stroke: SELECTED_COLOR, strokeWidth: 1, outline: 'none', cursor: 'pointer' },
       pressed: { fill: '#1e2a42', outline: 'none' },
     };
   }
@@ -337,30 +357,54 @@ export default function BangladeshMap() {
             <Geographies geography={combinedGeoData}>
               {({ geographies }) =>
                 geographies.map((geo) => {
-                  const shapeName = geo.properties.shapeName;
                   const geoType = geo.properties.geoType;
 
                   if (geoType === 'district') {
-                    const id = SHAPE_NAME_TO_ID[shapeName];
-                    const isSelected = selectedDistrict && id && String(districtById[id]?._id) === String(selectedDistrict._id);
-
                     return (
                       <Geography
                         key={`district-${geo.rsmKey}`}
                         geography={geo}
-                        onClick={() => {
-                          if (!isDrilledIn) handleDistrictClick(geo);
-                        }}
-                        onMouseEnter={(evt) => {
-                          if (!isDrilledIn || isSelected) {
-                            handleDistrictMouseEnter(geo, evt);
-                          }
-                        }}
+                        onClick={() => handleDistrictClick(geo)}
+                        onMouseEnter={(evt) => handleDistrictMouseEnter(geo, evt)}
                         onMouseMove={handleMouseMove}
                         onMouseLeave={handleMouseLeave}
                         style={getDistrictStyle(geo)}
                       />
                     );
+                  }
+
+                  // The selected district's border, re-drawn on top of its
+                  // upazilas as a neon ring: a soft breathing halo plus a crisp
+                  // bright core. Non-scaling strokes keep the ring a constant
+                  // width at any zoom; pointer-events:none lets upazila clicks
+                  // underneath still register. Animation lives in globals.css.
+                  if (geoType === 'district-outline') {
+                    const base = {
+                      fill: 'none',
+                      stroke: SELECTED_COLOR,
+                      vectorEffect: 'non-scaling-stroke',
+                      pointerEvents: 'none',
+                      outline: 'none',
+                      strokeLinejoin: 'round',
+                    };
+                    // strokeWidth/opacity for the halo are driven by the CSS
+                    // keyframes, so they're intentionally not set inline here.
+                    const halo = { ...base };
+                    const core = { ...base, strokeWidth: 2 };
+                    return [
+                      <Geography
+                        key={`district-halo-${geo.rsmKey}`}
+                        className="rsm-district-halo"
+                        geography={geo}
+                        style={{ default: halo, hover: halo, pressed: halo }}
+                      />,
+                      <Geography
+                        key={`district-core-${geo.rsmKey}`}
+                        className="rsm-district-core"
+                        geography={geo}
+                        style={{ default: core, hover: core, pressed: core }}
+                      />,
+                    ];
                   }
 
                   if (geoType === 'upazila') {

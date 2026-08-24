@@ -25,6 +25,8 @@
   --accent-red-bg: #450a0a;
   --accent-blue: #3b82f6;
   --accent-blue-bg: #1e3a5f;
+  --accent-cyan: #22d3ee;
+  --accent-cyan-bg: #083344;
 
   --font-mono: 'JetBrains Mono', monospace;
   --font-body: 'Inter', sans-serif;
@@ -278,8 +280,41 @@ textarea:focus {
   }
 }
 
-/* ── Typewriter cursor ───────────────────────────────────────── */
-@keyframes blink {
+/* ── Selected-district neon outline (map drill-down) ──────────── */
+/* Two stacked paths make the neon: a thick soft halo that breathes,
+   plus a thin bright core line drawn over it. Both are pointer-events:none
+   (set inline) so upazila clicks underneath still register. */
+@keyframes district-halo-breathe {
+
+  0%,
+  100% {
+    opacity: 0.3;
+    stroke-width: 6;
+  }
+
+  50% {
+    opacity: 0.65;
+    stroke-width: 9;
+  }
+}
+
+.rsm-district-halo {
+  animation: district-halo-breathe 2.6s ease-in-out infinite;
+}
+
+.rsm-district-core {
+  filter: drop-shadow(0 0 3px rgba(34, 211, 238, 0.9));
+}
+
+/* Respect users who ask the OS to minimize motion — keep the glow, drop the pulse */
+@media (prefers-reduced-motion: reduce) {
+  .rsm-district-halo {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+/* ── Typewriter cursor ───────────────────────────────────────── */@keyframes blink {
 
   0%,
   100% {
