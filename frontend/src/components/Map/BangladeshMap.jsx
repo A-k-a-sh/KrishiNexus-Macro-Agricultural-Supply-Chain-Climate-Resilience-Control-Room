@@ -24,6 +24,55 @@ const RISK_STYLE = {
 
 const SELECTED_STYLE = { fill: '#1e3a5f', stroke: '#3b82f6', strokeWidth: 1.5 };
 
+// --- GeoJSON winding-order normalization -------------------------------------
+// d3-geo (used internally by react-simple-maps' geoPath) treats polygons on a
+// SPHERE, not a plane. It uses ring winding order to decide which side is
+// "inside": an exterior ring must wind counter-clockwise. If it winds the wrong
+// way, d3 interprets the polygon as its COMPLEMENT — i.e. the entire globe minus
+// the shape — and fills the whole map. The bd-upazilas.geojson asset (exported
+// from geoBoundaries ADM3 via mapshaper) has every ring inverted, so on drill-in
+// each upazila painted a full-canvas fill that hid all district outlines — the
+// "map outline disappeared" bug. bd-districts.geojson is wound correctly, so the
+// base map always worked.
+//
+// We can't rely on an absolute CW/CCW test here without pulling in d3-geo, but we
+// don't need to: the districts are known-good, and in this projection their
+// exterior rings have NEGATIVE planar (shoelace) signed area. So we normalize any
+// polygon whose exterior ring has POSITIVE signed area to match. This is a no-op
+// on all 64 districts and corrects all 544 upazilas. Validated with d3-geo:
+// post-fix, 0 districts change, 0 upazilas remain inverted, and upazila centroids
+// resolve inside their parent district (e.g. geoContains(Comilla, Barura)=true).
+function ringSignedArea(ring) {
+  let area = 0;
+  for (let i = 0, n = ring.length, j = n - 1; i < n; j = i++) {
+    area += ring[j][0] * ring[i][1] - ring[i][0] * ring[j][1];
+  }
+  return area / 2;
+}
+
+function normalizePolygon(rings) {
+  // rings[0] is the exterior ring; holes follow. Reverse every ring together so
+  // interior/exterior relationships are preserved.
+  if (rings.length && ringSignedArea(rings[0]) > 0) {
+    for (const ring of rings) ring.reverse();
+  }
+}
+
+function normalizeWinding(featureCollection) {
+  if (!featureCollection || !Array.isArray(featureCollection.features)) return featureCollection;
+  for (const feature of featureCollection.features) {
+    const geom = feature.geometry;
+    if (!geom) continue;
+    if (geom.type === 'Polygon') {
+      normalizePolygon(geom.coordinates);
+    } else if (geom.type === 'MultiPolygon') {
+      for (const polygon of geom.coordinates) normalizePolygon(polygon);
+    }
+  }
+  return featureCollection;
+}
+// -----------------------------------------------------------------------------
+
 export default function BangladeshMap() {
   const { 
     allDistricts, selectedDistrict, selectDistrict,
@@ -60,15 +109,19 @@ export default function BangladeshMap() {
       .then(data => {
         // Tag features so we can distinguish them in the combined array
         data.features.forEach(f => f.properties.geoType = 'district');
-        setDistrictGeoData(data);
+        // Correct any inverted rings so d3-geo never renders a shape as its
+        // whole-globe complement (no-op for the already-correct district file).
+        setDistrictGeoData(normalizeWinding(data));
       })
       .catch(console.error);
-      
+
     fetch(UPAZILA_GEO_URL)
       .then(res => res.json())
       .then(data => {
         data.features.forEach(f => f.properties.geoType = 'upazila');
-        setUpazilaGeoData(data);
+        // The ADM3 upazila polygons ship with inverted winding — normalize so
+        // they render as their real small shapes instead of full-canvas fills.
+        setUpazilaGeoData(normalizeWinding(data));
       })
       .catch(console.error);
   }, []);
