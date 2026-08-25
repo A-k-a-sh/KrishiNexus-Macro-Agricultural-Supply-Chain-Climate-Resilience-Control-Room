@@ -314,6 +314,34 @@ textarea:focus {
   }
 }
 
+/* ── High-risk district attention pulse (map overview) ───────────── */
+/* Breathes a red drop-shadow on red-risk district polygons so the eye lands on
+   them first. We animate `filter` only: react-simple-maps writes fill/stroke as
+   inline styles, so animating a property it never sets inline sidesteps the
+   inline-vs-stylesheet specificity fight. */
+@keyframes risk-pulse-red {
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 1.5px rgba(239, 68, 68, 0.45));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 7px rgba(239, 68, 68, 0.95));
+  }
+}
+
+.rsm-risk-pulse {
+  animation: risk-pulse-red 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rsm-risk-pulse {
+    animation: none;
+    filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.6));
+  }
+}
+
 /* ── Typewriter cursor ───────────────────────────────────────── */@keyframes blink {
 
   0%,

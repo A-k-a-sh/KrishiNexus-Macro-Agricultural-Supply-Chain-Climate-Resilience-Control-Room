@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   ComposableMap,
   Geographies,
@@ -405,6 +405,45 @@ export default function BangladeshMap() {
   const [zoom, setZoom] = useState(1);
   const [center, setCenter] = useState([90.35, 23.68]); // Bangladesh centroid — ZoomableGroup pans here
 
+  // A tween reads its start point from refs (so it never re-subscribes to state)
+  // and stores its RAF handle so a fresh move can cancel one already in flight.
+  const zoomRef = useRef(zoom);
+  const centerRef = useRef(center);
+  const tweenRef = useRef(null);
+  useEffect(() => { zoomRef.current = zoom; }, [zoom]);
+  useEffect(() => { centerRef.current = center; }, [center]);
+  useEffect(() => () => { if (tweenRef.current) cancelAnimationFrame(tweenRef.current); }, []);
+
+  const prefersReducedMotion = () => (
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+
+  // Glide the viewport to a target instead of snapping — the drill-in zoom is the
+  // map's signature moment. User drag/wheel keeps updating instantly through
+  // onMoveEnd; only these programmatic moves tween, and reduced-motion skips it.
+  const animateView = useCallback((targetCenter, targetZoom) => {
+    if (tweenRef.current) cancelAnimationFrame(tweenRef.current);
+    if (prefersReducedMotion()) {
+      setCenter(targetCenter);
+      setZoom(targetZoom);
+      return;
+    }
+    const [c0, c1] = centerRef.current;
+    const z0 = zoomRef.current;
+    const duration = 550;
+    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+    let start = null;
+    const frame = (now) => {
+      if (start === null) start = now;
+      const e = easeOutCubic(Math.min(1, (now - start) / duration));
+      setCenter([c0 + (targetCenter[0] - c0) * e, c1 + (targetCenter[1] - c1) * e]);
+      setZoom(z0 + (targetZoom - z0) * e);
+      tweenRef.current = e < 1 ? requestAnimationFrame(frame) : null;
+    };
+    tweenRef.current = requestAnimationFrame(frame);
+  }, []);
+
   const zoomIn = useCallback(() => {
     setZoom((current) => Math.min(8, +(current + 0.75).toFixed(2)));
   }, []);
@@ -414,10 +453,9 @@ export default function BangladeshMap() {
   }, []);
 
   const resetView = useCallback(() => {
-    setZoom(1);
-    setCenter([90.35, 23.68]);
+    animateView([90.35, 23.68], 1);
     selectDistrict(null);
-  }, [selectDistrict]);
+  }, [selectDistrict, animateView]);
 
   const handleDistrictClick = useCallback((geo) => {
     const shapeName = geo.properties.shapeName;
@@ -430,9 +468,8 @@ export default function BangladeshMap() {
     // drill-down for this district in one update, so clicking a second district
     // while already drilled in just switches — no "← Back to Districts" first.
     selectDistrict(district, { drillIn: true });
-    setCenter([parseFloat(district.lon), parseFloat(district.lat)]);
-    setZoom(4);
-  }, [districtById, selectDistrict]);
+    animateView([parseFloat(district.lon), parseFloat(district.lat)], 4);
+  }, [districtById, selectDistrict, animateView]);
 
   const handleUpazilaClick = useCallback((geo) => {
     const upz = findUpazilaRecord(geo, activeUpazilaList);
@@ -528,14 +565,23 @@ export default function BangladeshMap() {
   }
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: '100%' }}>
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        minHeight: '100%',
+        // Depth: the map floats in a pool of lifted blue-slate that falls off to a
+        // darker vignette at the edges, so the country reads as raised off the panel.
+        background: 'radial-gradient(115% 85% at 50% 40%, #12203a 0%, #0a0e1a 46%, #06090f 100%)',
+      }}
+    >
       <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 10, display: 'flex', gap: 8 }}>
         {isDrilledIn && (
           <button
             onClick={() => {
               setIsDrilledIn(false);
-              setZoom(1);
-              setCenter([90.35, 23.68]);
+              animateView([90.35, 23.68], 1);
             }}
             style={{
               background: 'var(--bg-surface)', border: '1px solid var(--border)',
@@ -606,9 +652,17 @@ export default function BangladeshMap() {
                   const geoType = geo.properties.geoType;
 
                   if (geoType === 'district') {
+                    // Pulse a soft red glow on high-risk districts so the eye is
+                    // drawn to them on the overview — skipped for the selected
+                    // district, which already carries its own cyan treatment.
+                    const rid = SHAPE_NAME_TO_ID[geo.properties.shapeName];
+                    const rdistrict = rid ? districtById[rid] : null;
+                    const isRedRisk = rdistrict?.riskStatus === 'red'
+                      && !(selectedDistrict && String(rdistrict._id) === String(selectedDistrict._id));
                     return (
                       <Geography
                         key={`district-${geo.rsmKey}`}
+                        className={isRedRisk ? 'rsm-risk-pulse' : undefined}
                         geography={geo}
                         onClick={() => handleDistrictClick(geo)}
                         onMouseEnter={(evt) => handleDistrictMouseEnter(geo, evt)}
