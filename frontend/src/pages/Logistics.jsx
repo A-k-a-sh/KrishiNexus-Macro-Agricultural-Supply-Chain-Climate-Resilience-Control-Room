@@ -49,14 +49,12 @@ export default function Logistics() {
 
   const district = allDistricts.find((d) => d._id === districtId);
 
-  // Sync from global selectedDistrict if present or select first available
+  // Sync from global selectedDistrict if present
   useEffect(() => {
     if (selectedDistrict?._id) {
       setDistrictId(selectedDistrict._id);
-    } else if (allDistricts.length > 0 && !districtId) {
-      setDistrictId(allDistricts[0]._id);
     }
-  }, [selectedDistrict, allDistricts]);
+  }, [selectedDistrict]);
 
   // Load warehouse stocks + dispatch records on mount
   useEffect(() => {
