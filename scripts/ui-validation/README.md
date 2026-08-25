@@ -1,32 +1,38 @@
 # UI validation scripts
 
-Regression checks for the `/dashboard` panel logic — the parts of the UI that are
-arithmetic and filtering rather than layout, and so can be tested honestly without
-a browser.
+Regression checks for the dashboard's **pure UI logic** — the parts of the
+interface where a silent arithmetic or filtering mistake produces a plausible
+picture rather than a crash, so a build passing tells you nothing.
 
-1. **Sparkline geometry** — the 7-day trend lines on the CLIMATE TELEMETRY cards.
-   Guards two bugs found while building them: a `null` forecast day coerced to `0`
-   (drawing a phantom dip to the floor), and a flat week pinned to the bottom edge
-   (reading as "lowest" instead of "unchanged").
-2. **Region-tree search** — the left-nav Division → District → Upazila tree. The
-   nav is the only way to reach an upazila without hunting for its polygon, so a
-   search that quietly drops a match makes a region unreachable.
+1. **Sparkline geometry** — the 7-day trend lines on the CLIMATE TELEMETRY
+   cards must map a series onto the card honestly: missing forecast days skipped
+   rather than plotted as zero, a flat week drawn flat rather than on the floor,
+   and the maximum at the top (SVG `y` grows *downward*, so this is easy to
+   invert).
+2. **Region-tree search** — the left nav is the only way to reach an upazila
+   without hunting for its polygon on the map, so a search that quietly drops a
+   match makes a region unreachable.
 
 ## What makes these trustworthy
 
-The scripts `import` the shipped modules directly —
-[`sparklineGeometry.js`](../../frontend/src/components/Dashboard/sparklineGeometry.js)
-and [`regionTree.js`](../../frontend/src/components/Dashboard/regionTree.js) — so
-they run the **exact functions the app renders with**. No copies, no string
-extraction: both modules are pure and free of React and JSX precisely so the tests
-can reach them (`frontend/package.json` declares `"type": "module"`, so a plain
-`.mjs` runner can load them with no build step and no dependencies).
+The scripts do **not** re-implement the logic. Each one imports the shipped
+module directly:
 
-This is the same principle as
-[`scripts/map-validation/`](../map-validation/README.md), which slices its helpers
-out of `BangladeshMap.jsx` because they live inside a component. Here the logic was
-extracted into its own module instead, which is the better shape when you have the
-choice.
+| Script | Imports |
+| --- | --- |
+| `validate-sparkline.mjs` | [`sparklineGeometry.js`](../../frontend/src/components/Dashboard/sparklineGeometry.js) |
+| `validate-region-tree.mjs` | [`regionTree.js`](../../frontend/src/components/Dashboard/regionTree.js) |
+
+Both modules were extracted out of their components for exactly this reason: the
+component owns the SVG and the caret state, the module owns the maths and the
+filtering, and the module is what ships. Edit either one and the test picks the
+change up on the next run — no copy to drift, and no DOM or render harness
+needed. (`frontend/package.json` sets `"type": "module"`, which is what lets a
+plain `.mjs` script import them.)
+
+This mirrors the approach in
+[`scripts/map-validation/`](../map-validation/README.md), which slices the pure
+geometry helpers out of `BangladeshMap.jsx` to test the functions the app ships.
 
 ## Run
 
@@ -42,23 +48,47 @@ npm test
 Each script prints a PASS/FAIL line per check and exits non-zero on any failure,
 so they drop straight into CI.
 
-## Coverage
+## Bugs these pin
 
-| Check | Cases | Pins |
-| --- | --- | --- |
-| `validate-sparkline.mjs` | 30 | null/undefined/`''`/non-numeric gaps, <2 plottable points, flat series at mid-height, SVG y-axis orientation, padding inset, uniform x spacing, negative values, custom dimensions |
-| `validate-region-tree.mjs` | 31 | browse-all, district-name hit, division-name hit (incl. the Dhaka division/district name collision), upazila-only hit force-opening its parent, Bangla `bnName` on both levels, case and whitespace normalization, unloaded subtrees, empty result, empty input |
+Both were caught by these checks before the feature shipped, and both would have
+rendered something that looked fine.
 
-## Notable behaviours these lock in
+### Sparkline — a missing day drawn as zero
 
-- **A missing day is skipped, not zeroed.** Open-Meteo returns `null` for a day it
-  has no value for, and `Number(null) === 0`. Filtering happens *before* coercion.
-- **A flat week sits mid-box.** `(v - min) / (max - min)` is `0/0` when a series
-  never varies — the common case for rainfall in a dry week.
-- **Search rules are unioned, not prioritised.** A district survives on its own
-  name, its division's name, *or* an upazila hit. Only the upazila-only case
-  narrows the subtree and force-opens it, so the reason a district survived is
-  always visible without a click.
-- **`Dhaka` is both a division and a district.** The division rule fires first, so
-  the search widens to the whole division. Surprising until said out loud, hence
-  its own case.
+Open-Meteo returns `null` for a forecast day it has no value for, and
+`Number(null) === 0`. Coercing before filtering turned a rain series of
+`[12, null, 8]` into `[12, 0, 8]` — a hard dip to the floor of the card that
+reads as *"the rain stopped"* when the truth is *"we have no figure for that
+day"*. Fix: drop gaps **before** coercing.
+
+### Sparkline — an unchanged week pinned to the floor
+
+With `max === min` the normalizer `(v - min) / (max - min)` is `0/0`. The first
+guard sent a flat series to the bottom edge, so a rainless week — the single most
+common rainfall series in the dry season — drew a line along the floor, reading
+as *"lowest"* rather than *"unchanged"*. Fix: a flat series sits at mid-height.
+
+### Region tree — case-sensitivity as a latent trap
+
+`buildRegionTree` originally documented its query as *"already lower-cased"*, and
+its one caller obliged. The test called it with `'COMILLA'` and got nothing back.
+The app was not broken, but an exported search helper that silently matches
+nothing on `'Dhaka'` is a trap for the next caller, so it now normalizes its own
+input.
+
+## Behaviour pinned by the tree tests
+
+Worth stating plainly, because two of these look like bugs until you say them out
+loud:
+
+- A district matched **by its own name** shows its **full** upazila subtree.
+  Narrowing it would hide siblings the user can plainly see match.
+- **`Dhaka` is both a division and a district.** The division rule fires first,
+  so searching it widens to the whole division (Dhaka *and* Gazipur) rather than
+  narrowing to the one district.
+- A district kept **only** by upazila hits shows just those hits, force-opened,
+  so the reason it survived is visible without a click.
+- A division a search emptied is dropped; an empty division while *browsing* is
+  kept, because its absence would read as "no such division" rather than "no
+  results".
+- Bangla `bnName` matches on both levels.
