@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { buildRegionTree } from './regionTree';
 import AlertBadges from './AlertBadges';
@@ -101,6 +101,8 @@ export default function LeftNav() {
   const [search, setSearch] = useState('');
   const [openDivisions, setOpenDivisions] = useState({ '6': true }); // Dhaka open by default
   const [openDistricts, setOpenDistricts] = useState({});
+  const listRef = useRef(null);          // the scrolling tree container
+  const pendingScrollRef = useRef(null); // rowId still waiting to be scrolled to
 
   const query = search.trim().toLowerCase();
 
@@ -110,14 +112,57 @@ export default function LeftNav() {
     if (query.length >= 2) ensureAllUpazilas();
   }, [query, ensureAllUpazilas]);
 
-  // Keep the drilled-in district open in the tree, and make sure its upazilas
-  // are on their way so the subtree isn't empty when it expands.
+  // Reveal the selected district: its division always, and its own subtree once
+  // we're drilled in. Without the division part, a district clicked on the map
+  // could sit inside a collapsed group with nothing in the nav to show for it.
   useEffect(() => {
-    if (!isDrilledIn || !selectedDistrict) return;
-    setOpenDistricts((prev) => ({ ...prev, [selectedDistrict._id]: true }));
-    setOpenDivisions((prev) => ({ ...prev, [selectedDistrict.divisionId]: true }));
+    if (!selectedDistrict) return;
+    setOpenDivisions((prev) => (
+      prev[selectedDistrict.divisionId] ? prev : { ...prev, [selectedDistrict.divisionId]: true }
+    ));
+    if (!isDrilledIn) return;
+    setOpenDistricts((prev) => (
+      prev[selectedDistrict._id] ? prev : { ...prev, [selectedDistrict._id]: true }
+    ));
     ensureUpazilas(selectedDistrict._id);
   }, [isDrilledIn, selectedDistrict, ensureUpazilas]);
+
+  // Scroll the selection into view. A region picked on the map can be anywhere in
+  // a 64-district tree, and off-screen it looks like the click did nothing.
+  //
+  // The target is queued in a ref and fulfilled on whichever render actually
+  // mounts the row, because the effect above may still have to expand a division
+  // and a district first — on the render that changed the selection, the row
+  // usually isn't in the DOM yet. Clearing the ref on success is what stops it
+  // re-firing and yanking the list while the user scrolls or opens carets.
+  const activeRowId = selectedUpazila ? `u:${selectedUpazila._id}`
+    : selectedDistrict ? `d:${selectedDistrict._id}`
+    : null;
+
+  useEffect(() => { pendingScrollRef.current = activeRowId; }, [activeRowId]);
+
+  useEffect(() => {
+    const target = pendingScrollRef.current;
+    if (!target || !listRef.current) return;
+    const row = listRef.current.querySelector(`[data-region-row="${target}"]`);
+    if (!row) return;
+    pendingScrollRef.current = null;
+
+    // Already on screen? Leave the list alone. Otherwise clicking a row in the nav
+    // would scroll it out from under the pointer, which is worse than not moving.
+    const view = listRef.current.getBoundingClientRect();
+    const rect = row.getBoundingClientRect();
+    if (rect.top >= view.top && rect.bottom <= view.bottom) return;
+
+    row.scrollIntoView({
+      // A district is about to open its upazilas beneath it, so centre it and
+      // leave room for them. An upazila is already within reach — move the least
+      // that puts it on screen.
+      block: target.startsWith('d:') ? 'center' : 'nearest',
+      behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+        ? 'auto' : 'smooth',
+    });
+  });
 
   const tree = useMemo(
     () => buildRegionTree(allDistricts, upazilasByDistrict, query),
@@ -173,7 +218,7 @@ export default function LeftNav() {
         )}
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px 8px' }}>
+      <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '0 8px 8px' }}>
         {isDrilledIn && (
           <button
             onClick={() => setIsDrilledIn(false)}
