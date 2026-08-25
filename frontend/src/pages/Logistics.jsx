@@ -72,13 +72,6 @@ export default function Logistics() {
       .catch((err) => console.error('Failed to fetch dispatch records:', err));
   };
 
-  // Auto-calculate on initial load or when districtId or crop changes
-  useEffect(() => {
-    if (districtId && crop) {
-      handleCalculate(districtId, crop, severity);
-    }
-  }, [districtId, crop]);
-
   // Live client-side calculations (slider preview before API calculation)
   const baselineMtons = plan?.baselineMtons ?? 0;
   const projectedDeficit = +(baselineMtons * severity).toFixed(2);
@@ -233,6 +226,8 @@ export default function Logistics() {
                     value={districtId}
                     onChange={(e) => {
                       setDistrictId(e.target.value);
+                      setPlan(null);
+                      setDispatched(false);
                     }}
                     className="w-full bg-slate-950/80 border border-slate-700 hover:border-slate-600 focus:border-emerald-500 text-white rounded-2xl py-3 px-4 shadow-inner focus:outline-none focus:ring-2 focus:ring-emerald-500/30 appearance-none cursor-pointer transition-all text-sm font-medium"
                   >
@@ -259,6 +254,8 @@ export default function Logistics() {
                     value={crop}
                     onChange={(e) => {
                       setCrop(e.target.value);
+                      setPlan(null);
+                      setDispatched(false);
                     }}
                     className="w-full bg-slate-950/80 border border-slate-700 hover:border-slate-600 focus:border-teal-500 text-white rounded-2xl py-3 px-4 shadow-inner focus:outline-none focus:ring-2 focus:ring-teal-500/30 appearance-none cursor-pointer transition-all text-sm font-medium"
                   >
@@ -294,7 +291,7 @@ export default function Logistics() {
                 ) : (
                   <>
                     <span className="text-base">⚡</span>
-                    <span>Recalculate Plan</span>
+                    <span>Calculate Logistics Plan</span>
                   </>
                 )}
               </button>
