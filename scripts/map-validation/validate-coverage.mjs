@@ -65,6 +65,9 @@ if (fs.existsSync(legacyPath)) {
     console.log(`  ${name.padEnd(13)} ${String(before).padStart(2)} → ${feats.length}   `
       + `(${feats.length - before} hole${feats.length - before === 1 ? '' : 's'} closed)`);
   }
+} else {
+  console.log('\n  (legacy upazilaGeoNameMap.json has been removed — before/after illustration');
+  console.log('   skipped; the historical counts live in docs/map-drilldown-fixes.md)');
 }
 
 // --- Name matcher: the district-scoped fuzzy behaviour ------------------------

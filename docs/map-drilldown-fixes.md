@@ -240,10 +240,11 @@ non-scaling **neon ring** (soft breathing halo + crisp core; animation in
   It is deliberately conservative (≤ 2 edits, clear-gap winner), so a genuinely
   record-less polygon still falls through to "Not in database" rather than
   grabbing a neighbour.
-- `upazilaGeoNameMap.json` is now **unused by the frontend** (no import references
-  it). It and the coordinate assignment in `seedUpazilas.js` still use the flawed
-  national name-match, so any *future* upazila-level feature relying on seeded
-  `lat`/`lon` should move that seed to geometric assignment too.
+- `seedUpazilas.js` now assigns upazila coordinates by the **same geometric
+  grouping + district-scoped matching** (no more national name-search), and the
+  dead `upazilaGeoNameMap.json` has been removed. Re-run the seed (needs Atlas +
+  bdapi) to refresh the ~166 upazilas whose `lat`/`lon` were previously
+  mis-placed by the old matcher.
 
 ---
 
@@ -269,11 +270,10 @@ cd frontend && npm run dev
 
 ## Follow-ups (not yet done)
 
-- Port `seedUpazilas.js` to geometric parent assignment so seeded upazila
-  coordinates stop depending on national name-matching; then delete
-  `upazilaGeoNameMap.json`.
 - Optionally relabel "Not in database" → "No live data" for polygons that are
   genuinely finer than the record set.
+- Re-run `seedUpazilas.js` against the live DB to persist the corrected upazila
+  coordinates.
 
 ---
 
@@ -284,4 +284,6 @@ cd frontend && npm run dev
 | `frontend/src/components/Map/BangladeshMap.jsx` | winding normalization; geometric parent assignment; within-district record matching (exact → containment → bounded fuzzy); three-tier palette; neutral drill backdrop; honest no-data style |
 | `frontend/src/context/AppContext.jsx` | `selectDistrict(district, { drillIn })` explicit intent |
 | `frontend/src/styles/globals.css` | neon ring keyframes + reduced-motion guard |
+| `backend/db/seeds/seedUpazilas.js` | geometric parent assignment + district-scoped matching for seeded coordinates (replaces national name-search); geometry unit-testable via a `require.main` guard |
+| `frontend/src/data/upazilaGeoNameMap.json` | **removed** — superseded by geometric assignment |
 | `scripts/map-validation/*` | this doc's regression checks |
