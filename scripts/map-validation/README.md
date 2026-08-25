@@ -66,3 +66,9 @@ BUG #2 — geometric parent-district coverage
 | `frontend/public/bd-districts.geojson` | 64 | ADM2 district polygons (winding correct) |
 | `frontend/public/bd-upazilas.geojson` | 544 | ADM3 upazila polygons (winding was inverted) |
 | `frontend/src/data/geoNameMap.json` | 64 | district `shapeName` → bdapi district `_id` |
+
+## See also
+
+[`scripts/ui-validation/`](../ui-validation/README.md) covers the dashboard's pure
+UI logic — sparkline geometry and left-nav region search — on the same principle of
+running the shipped code rather than a copy of it.

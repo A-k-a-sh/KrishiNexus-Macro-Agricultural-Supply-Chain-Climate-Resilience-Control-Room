@@ -1,5 +1,6 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext';
+import { buildRegionTree } from './regionTree';
 import AlertBadges from './AlertBadges';
 
 const RISK_DOT = {
@@ -7,13 +8,6 @@ const RISK_DOT = {
   yellow: { bg: '#f59e0b', shadow: '#f59e0b66' },
   green:  { bg: '#00ff88', shadow: '#00ff8866' },
 };
-
-// Division names by bdapi division id
-const DIVISION_NAMES = {
-  '1': 'Chattagram', '2': 'Rajshahi', '3': 'Khulna',     '4': 'Barishal',
-  '5': 'Sylhet',     '6': 'Dhaka',    '7': 'Rangpur',    '8': 'Mymensingh',
-};
-const DIVISION_IDS = Object.keys(DIVISION_NAMES);
 
 // One row renderer for both districts and upazilas: risk dot, name, alert count.
 // The two levels differ only in indent and in which accent marks "selected" —
@@ -94,10 +88,6 @@ export default function LeftNav() {
   const [openDistricts, setOpenDistricts] = useState({});
 
   const query = search.trim().toLowerCase();
-  const matches = useCallback(
-    (value) => !!value && String(value).toLowerCase().includes(query),
-    [query],
-  );
 
   // Searching has to look inside districts the user never opened, which needs the
   // national upazila list. Fetch it once, and only once a query is worth running.
@@ -114,37 +104,10 @@ export default function LeftNav() {
     ensureUpazilas(selectedDistrict._id);
   }, [isDrilledIn, selectedDistrict, ensureUpazilas]);
 
-  // Build the visible tree. With a query, a district survives if its own name
-  // matches, its division's name matches, or any of its upazilas match; a
-  // district with upazila hits shows just those, expanded.
-  const tree = useMemo(() => {
-    const byDivision = {};
-    for (const d of allDistricts) (byDivision[d.divisionId] ||= []).push(d);
-
-    return DIVISION_IDS.map((divId) => {
-      const divisionMatches = !!query && matches(DIVISION_NAMES[divId]);
-      const rows = [];
-
-      for (const district of byDivision[divId] || []) {
-        const all = upazilasByDistrict[district._id] || [];
-        const districtMatches = !!query && (matches(district.name) || matches(district.bnName));
-        const hits = query && !districtMatches && !divisionMatches
-          ? all.filter((u) => matches(u.name) || matches(u.bnName))
-          : [];
-
-        if (query && !divisionMatches && !districtMatches && !hits.length) continue;
-        rows.push({ district, upazilas: hits.length ? hits : all, forceOpen: hits.length > 0 });
-      }
-
-      if (query && !rows.length) return null;
-      return {
-        id: divId,
-        name: DIVISION_NAMES[divId],
-        rows,
-        redCount: rows.filter((r) => r.district.riskStatus === 'red').length,
-      };
-    }).filter(Boolean);
-  }, [allDistricts, upazilasByDistrict, query, matches]);
+  const tree = useMemo(
+    () => buildRegionTree(allDistricts, upazilasByDistrict, query),
+    [allDistricts, upazilasByDistrict, query],
+  );
 
   const shownDistricts = tree.reduce((n, div) => n + div.rows.length, 0);
 

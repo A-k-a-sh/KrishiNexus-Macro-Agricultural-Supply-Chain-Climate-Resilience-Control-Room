@@ -1,7 +1,12 @@
 import { useId } from 'react';
 import WeatherChart from './WeatherChart';
+import { sparklinePoints } from './sparklineGeometry';
 
 const RISK_COLOR = { red: '#ef4444', yellow: '#f59e0b', green: '#00ff88' };
+
+// Inset the sparkline path from the SVG edges so the stroke and the last-point
+// dot aren't clipped.
+const PAD = 2;
 
 export default function TelemetryPanel({ district, upazila }) {
   const target = upazila || district;
@@ -205,29 +210,13 @@ function Sparkline({ series, color, width = 96, height = 22 }) {
   // useId keeps the gradient unique per instance — two cards sharing a colour
   // would otherwise emit duplicate SVG ids into the document.
   const gradientId = `spark${useId().replace(/:/g, '')}`;
-  // Drop gaps BEFORE coercing: Open-Meteo returns null for a day it has no value
-  // for, and Number(null) is 0 — which would draw a phantom dip to the floor
-  // instead of simply skipping the day.
-  const points = (series || [])
-    .filter((v) => v !== null && v !== undefined && v !== '')
-    .map(Number)
-    .filter((n) => Number.isFinite(n));
-  if (points.length < 2) return null;
+  const geometry = sparklinePoints(series, width, height, PAD);
+  if (!geometry) return null;
 
-  const min = Math.min(...points);
-  const max = Math.max(...points);
-  const isFlat = max === min;
-  const pad = 2;
-  const stepX = (width - pad * 2) / (points.length - 1);
-  // A week with no variation belongs in the middle of the box. Scaling it would
-  // pin it to the bottom edge, which reads as "lowest" rather than "unchanged".
-  const y = (v) => (isFlat
-    ? height / 2
-    : height - pad - ((v - min) / (max - min)) * (height - pad * 2));
-
-  const path = points.map((v, i) => `${i ? 'L' : 'M'}${(pad + i * stepX).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
-  const lastX = pad + (points.length - 1) * stepX;
-  const lastY = y(points[points.length - 1]);
+  const { xs, ys } = geometry;
+  const path = xs.map((x, i) => `${i ? 'L' : 'M'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+  const lastX = xs[xs.length - 1];
+  const lastY = ys[ys.length - 1];
 
   return (
     <svg
@@ -241,7 +230,7 @@ function Sparkline({ series, color, width = 96, height = 22 }) {
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d={`${path} L${lastX.toFixed(1)},${height} L${pad},${height} Z`} fill={`url(#${gradientId})`} />
+      <path d={`${path} L${lastX.toFixed(1)},${height} L${PAD},${height} Z`} fill={`url(#${gradientId})`} />
       <path d={path} fill="none" stroke={color} strokeWidth="1.25" strokeLinejoin="round" strokeLinecap="round" />
       <circle cx={lastX.toFixed(1)} cy={lastY.toFixed(1)} r="1.9" fill={color} />
     </svg>

@@ -1,0 +1,12 @@
+{
+  "name": "krishinexus-ui-validation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Regression checks for the dashboard's pure UI logic (sparkline geometry, region-tree search)",
+  "type": "module",
+  "scripts": {
+    "test": "node validate-sparkline.mjs && node validate-region-tree.mjs",
+    "test:sparkline": "node validate-sparkline.mjs",
+    "test:tree": "node validate-region-tree.mjs"
+  }
+}
