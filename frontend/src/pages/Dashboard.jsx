@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useLocation, NavLink } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import LeftNav       from '../components/Dashboard/LeftNav';
 import BangladeshMap from '../components/Map/BangladeshMap';
@@ -10,24 +9,11 @@ import ChatTerminal  from '../components/Dashboard/ChatTerminal';
 export default function Dashboard() {
   const { selectedDistrict, selectedUpazila, isDrilledIn } = useAppContext();
   const [activeTab, setActiveTab] = useState('telemetry'); // 'telemetry' | 'advisory' | 'chat'
-  const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      {/* Top bar */}
-      <div className="topbar">
-        <span className="topbar-brand">[ KRISHINEXUS ]</span>
-        <nav className="topbar-nav">
-          <NavLink to="/">HOME</NavLink>
-          <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'active' : ''}>DASHBOARD</NavLink>
-          <NavLink to="/logistics" className={({ isActive }) => isActive ? 'active' : ''}>LOGISTICS</NavLink>
-        </nav>
-        <div className="topbar-live">
-          <span className="live-dot" />
-          LIVE · {now}
-        </div>
-      </div>
-
+    // 100% of the space App leaves below TopNav, not 100vh — the page is one
+    // fixed frame with its own scrolling panels, so nothing here may overflow.
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Three-column layout */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 

@@ -1,12 +1,24 @@
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
+
+const clockLabel = () =>
+  new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
 const TopNav = () => {
   const { currentUser, setCurrentUser } = useContext(AppContext);
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // The LIVE readout moved here from the dashboard's own bar when that duplicate
+  // was removed. It ticks on a timer: the old one read the clock during render, so
+  // it froze at whatever minute the page happened to mount and then lied.
+  const [now, setNow] = useState(clockLabel);
+  useEffect(() => {
+    const id = setInterval(() => setNow(clockLabel()), 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   if (!currentUser) return null;
 
@@ -74,6 +86,13 @@ const TopNav = () => {
           </div>
           
           <div className="hidden md:flex items-center space-x-6">
+            <div className="flex items-center gap-2 font-mono text-[11px] text-slate-500">
+              <span className="live-dot" />
+              LIVE · {now}
+            </div>
+
+            <div className="w-px h-8 bg-slate-800"></div>
+
             <div className="text-right">
               <div className="text-sm font-bold text-slate-200">{currentUser.name}</div>
               <div className="text-xs font-medium text-emerald-400 uppercase tracking-wider">{roleLabels[currentUser.role] || currentUser.role}</div>

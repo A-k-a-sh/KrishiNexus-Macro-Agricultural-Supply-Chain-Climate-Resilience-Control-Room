@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { calcLogistics, dispatchCargo, genManifest, getWarehouseStocks, getDispatchRecords } from '../api';
 
@@ -102,21 +101,7 @@ export default function Logistics() {
   const severityColor = severity >= 0.5 ? '#ef4444' : severity >= 0.25 ? '#f59e0b' : '#00ff88';
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Top bar */}
-      <div className="topbar">
-        <span className="topbar-brand">[ KRISHINEXUS ]</span>
-        <nav className="topbar-nav">
-          <NavLink to="/">HOME</NavLink>
-          <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'active' : ''}>DASHBOARD</NavLink>
-          <NavLink to="/logistics" className={({ isActive }) => isActive ? 'active' : ''}>LOGISTICS</NavLink>
-        </nav>
-        <div className="topbar-live">
-          <span className="live-dot" />
-          SUPPLY CHAIN RUNTIME
-        </div>
-      </div>
-
+    <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ flex: 1, padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
 
         {/* Header + selectors */}

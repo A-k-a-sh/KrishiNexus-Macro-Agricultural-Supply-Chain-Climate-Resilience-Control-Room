@@ -82,7 +82,7 @@ export default function Landing() {
   }, []);
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', overflowX: 'hidden', background: 'var(--bg-primary)' }}>
+    <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', overflowX: 'hidden', background: 'var(--bg-primary)' }}>
 
       {/* Top Banner: Status Bar */}
       <div style={{

@@ -18,9 +18,14 @@ const ROLES = {
 
 export default function App() {
   return (
-    <>
+    // One viewport-height column: TopNav takes its natural height — or none at
+    // all, since it renders null for a signed-out visitor — and the routed page
+    // gets exactly what's left. Pages size against this instead of 100vh, which
+    // is what made /dashboard a navbar taller than the window.
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <TopNav />
-      <Routes>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+        <Routes>
         {/* Public */}
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
@@ -49,6 +54,7 @@ export default function App() {
           <ProtectedRoute allowedRoles={ROLES.ADMIN_ONLY}><Analytics /></ProtectedRoute>
         } />
       </Routes>
-    </>
+      </div>
+    </div>
   );
 }
