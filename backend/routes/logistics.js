@@ -75,6 +75,48 @@ router.post('/calculate', async (req, res, next) => {
 
     const projectedDeficit = +(baselineMtons * severityFactor).toFixed(2);
 
+    // ── Real market price deviation (replaces Severity × 72 formula) ──────────
+    let pricePressurePct = null;
+    let priceDataSource = 'modelled'; // honest default
+
+    try {
+      // Most recent price for this crop in this district (last 7 days)
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        .toISOString().slice(0, 10);
+
+      const latestPrice = await db
+        .collection('market_prices')
+        .findOne(
+          { districtId, commodity: crop, date: { $gte: sevenDaysAgo } },
+          { sort: { date: -1 } }
+        );
+
+      // National average for same crop (last 7 days)
+      const nationalAvgResult = await db
+        .collection('market_prices')
+        .aggregate([
+          { $match: { commodity: crop, date: { $gte: sevenDaysAgo } } },
+          { $group: { _id: null, avg: { $avg: '$pricePerKg' } } }
+        ]).toArray();
+
+      if (latestPrice && nationalAvgResult.length > 0) {
+        const avg = nationalAvgResult[0].avg;
+        // Positive = district price is above national avg (price stress)
+        // Negative = district price is below national avg (surplus signal)
+        pricePressurePct = +(((latestPrice.pricePerKg - avg) / avg) * 100).toFixed(1);
+        priceDataSource = latestPrice.source; // "WFP" or "DAM"
+      }
+    } catch (priceErr) {
+      // Non-fatal — fall through to formula fallback below
+      console.warn('[logistics/calculate] market price lookup failed:', priceErr.message);
+    }
+
+    // Fallback: formula if no real data found for this crop/district
+    if (pricePressurePct === null) {
+      pricePressurePct = +(severityFactor * 72).toFixed(1);
+      priceDataSource = 'modelled';
+    }
+
     // ── Find best surplus division — score by efficiency (stock / distance) ─────
     // Fetch all divisions that have stock for this crop, excluding the district's own division
     const stocks = await db
@@ -92,6 +134,8 @@ router.post('/calculate', async (req, res, next) => {
           severityFactor,
           baselineMtons,
           projectedDeficit,
+          pricePressurePct,
+          priceDataSource,
           surplusDivision: null,
           message: 'No surplus divisions found for this crop.',
         },
@@ -119,9 +163,6 @@ router.post('/calculate', async (req, res, next) => {
     const cap = bestStock.reserveMtons * 0.3;
     const recommendedCargo = +Math.min(rawRecommended, cap).toFixed(2);
 
-    // Simplified price pressure index: 1% yield loss ≈ 0.72% price increase
-    const pricePressurePct = +(severityFactor * 72).toFixed(1);
-
     res.json({
       ok: true,
       data: {
@@ -132,6 +173,7 @@ router.post('/calculate', async (req, res, next) => {
         baselineMtons,
         projectedDeficit,
         pricePressurePct,
+        priceDataSource,
         surplusDivision: {
           divisionId: bestStock.divisionId,
           divisionName: bestStock.divisionName,
