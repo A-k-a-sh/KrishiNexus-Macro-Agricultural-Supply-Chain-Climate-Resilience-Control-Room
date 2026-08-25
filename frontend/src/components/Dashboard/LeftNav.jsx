@@ -50,11 +50,14 @@ export default function LeftNav() {
 
   if (districtsLoading) {
     return (
-      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="skeleton" style={{ height: 28, borderRadius: 4 }} />
-        ))}
-      </div>
+      <>
+        <div className="panel-head"><span>Region selector</span></div>
+        <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="skeleton" style={{ height: 28, borderRadius: 4 }} />
+          ))}
+        </div>
+      </>
     );
   }
 
@@ -64,14 +67,17 @@ export default function LeftNav() {
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-        <div style={{ padding: '12px 12px 8px' }}>
-          <button 
-            onClick={() => setIsDrilledIn(false)} 
+        <div className="panel-head">
+          <span className="panel-head-value">{selectedDistrict.name} upazilas</span>
+          <span className="panel-head-note">{filteredUpazilas.length}</span>
+        </div>
+        <div style={{ padding: '10px 12px 8px' }}>
+          <button
+            onClick={() => setIsDrilledIn(false)}
             style={{ background: 'transparent', border: 'none', color: 'var(--accent-blue)', cursor: 'pointer', fontSize: 12, marginBottom: 8, padding: 0 }}
           >
             ← Back to Districts
           </button>
-          <div className="panel-label">{selectedDistrict.name.toUpperCase()} UPAZILAS</div>
           <input
             type="text"
             placeholder="Search upazila..."
@@ -136,8 +142,13 @@ export default function LeftNav() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Search */}
-      <div style={{ padding: '12px 12px 8px' }}>
-        <div className="panel-label">REGION SELECTOR</div>
+      <div className="panel-head">
+        <span>Region selector</span>
+        <span className="panel-head-note">
+          {search.trim() ? `${filtered.length} of ${allDistricts.length}` : `${allDistricts.length} districts`}
+        </span>
+      </div>
+      <div style={{ padding: '10px 12px 8px' }}>
         <input
           type="text"
           placeholder="Search district..."

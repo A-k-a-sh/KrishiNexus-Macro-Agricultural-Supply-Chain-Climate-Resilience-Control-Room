@@ -41,9 +41,35 @@ export default function Dashboard() {
           <LeftNav />
         </div>
 
-        {/* CENTER — Interactive map */}
-        <div style={{ flex: 1, background: 'var(--bg-primary)', position: 'relative', overflow: 'hidden' }}>
-          <BangladeshMap />
+        {/* CENTER — Interactive map, under a drill-path rail */}
+        <div style={{
+          flex: 1, minWidth: 0,
+          background: 'var(--bg-primary)',
+          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        }}>
+          <div className="panel-head">
+            <span className="drill-path">
+              <span>Bangladesh</span>
+              {selectedDistrict && (
+                <>
+                  <span className="drill-path-sep">/</span>
+                  <span className="panel-head-value">{selectedDistrict.name}</span>
+                </>
+              )}
+              {selectedUpazila && (
+                <>
+                  <span className="drill-path-sep">/</span>
+                  <span className="panel-head-value is-upazila">{selectedUpazila.name}</span>
+                </>
+              )}
+            </span>
+            <span className="panel-head-note">
+              {isDrilledIn ? 'Scroll to zoom · drag to pan' : 'Click a district to drill in'}
+            </span>
+          </div>
+          <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+            <BangladeshMap />
+          </div>
         </div>
 
         {/* RIGHT — Telemetry + AI advisory + chat */}
@@ -55,17 +81,11 @@ export default function Dashboard() {
           overflow: 'hidden',
         }}>
           {/* Section label strip */}
-          <div style={{
-            padding: '8px 14px',
-            borderBottom: '1px solid var(--border)',
-            fontFamily: 'var(--font-mono)', fontSize: 10,
-            color: 'var(--text-muted)', letterSpacing: '0.1em',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-          }}>
-            <span>INTELLIGENCE PANEL</span>
+          <div className="panel-head">
+            <span>Intelligence panel</span>
             {selectedDistrict && (
-              <span style={{ color: 'var(--accent-blue)', fontWeight: 600 }}>
-                {selectedUpazila ? selectedUpazila.name.toUpperCase() : selectedDistrict.name.toUpperCase()}
+              <span className={`panel-head-value${selectedUpazila ? ' is-upazila' : ''}`}>
+                {selectedUpazila ? selectedUpazila.name : selectedDistrict.name}
               </span>
             )}
           </div>

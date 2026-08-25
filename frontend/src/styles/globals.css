@@ -28,6 +28,12 @@
   --accent-cyan: #22d3ee;
   --accent-cyan-bg: #083344;
 
+  /* Map interaction scopes — mirrors the palette in
+     components/Map/BangladeshMap.jsx so the dashboard chrome speaks the same
+     colour language as the map: cyan = district, magenta = upazila. */
+  --scope-district: #22d3ee;
+  --scope-upazila: #f472b6;
+
   --font-mono: 'JetBrains Mono', monospace;
   --font-body: 'Inter', sans-serif;
 
@@ -241,6 +247,66 @@ textarea:focus {
   color: var(--text-muted);
   text-transform: uppercase;
   margin-bottom: 10px;
+}
+
+/* ── Panel head rail ─────────────────────────────────────────── */
+/* One shared rail across all three dashboard columns, so the region selector,
+   the map, and the intelligence panel read as one instrument rather than three
+   stacked widgets. Fixed height is what makes the three tops line up. */
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  height: 34px;
+  flex-shrink: 0;
+  padding: 0 14px;
+  background: #0c111d;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* The active region, coloured by which scope it belongs to. */
+.panel-head-value {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--scope-district);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.panel-head-value.is-upazila {
+  color: var(--scope-upazila);
+}
+
+/* Right-hand slot: counts and contextual hints, quieter than the label. */
+.panel-head-note {
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: #475569;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Drill path in the map column: BANGLADESH / SUNAMGANJ / DHARMAPASHA. A status
+   line, not navigation — the map's own Back and Reset controls move you. */
+.drill-path {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.drill-path-sep {
+  color: #334155;
+  font-weight: 400;
 }
 
 /* ── Pulsing district animations ─────────────────────────────── */
