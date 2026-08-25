@@ -235,22 +235,69 @@ function normalizeName(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
+// Optimal string alignment distance: Levenshtein plus a discount for a single
+// adjacent transposition, which is the most common romanization drift here
+// ("Dharampasha" ↔ "Dharmapasha" is one swap). Bails early once the length gap
+// alone exceeds 2, since tier 3 never accepts a distance above that.
+function editDistance(a, b) {
+  const m = a.length;
+  const n = b.length;
+  if (Math.abs(m - n) > 2) return 3;
+  const d = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) d[i][0] = i;
+  for (let j = 0; j <= n; j++) d[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      }
+    }
+  }
+  return d[m][n];
+}
+
 function findUpazilaRecord(geo, upazilaList) {
   if (!upazilaList || !upazilaList.length) return null;
   const shapeName = normalizeName(geo.properties.shapeName);
   if (!shapeName) return null;
 
+  // Tier 1 — exact normalized match.
   const exact = upazilaList.find((u) => normalizeName(u.name) === shapeName);
   if (exact) return exact;
 
-  // Spelling drift between geoBoundaries and bdapi: "Kawkhali (Betbunia)" vs
-  // "Kawkhali", "Baghai Chhari" vs "Baghaichhari". Require 4+ chars so a short
-  // fragment can't swallow an unrelated name.
   if (shapeName.length < 4) return null;
-  return upazilaList.find((u) => {
+
+  // Tier 2 — containment: "Kawkhali (Betbunia)" ⊃ "Kawkhali", "Baghai Chhari" →
+  // "Baghaichhari". 4+ chars so a fragment can't swallow an unrelated name.
+  const substring = upazilaList.find((u) => {
     const name = normalizeName(u.name);
     return name.length >= 4 && (name.includes(shapeName) || shapeName.includes(name));
-  }) || null;
+  });
+  if (substring) return substring;
+
+  // Tier 3 — bounded fuzzy match. Safe ONLY because it's scoped to this
+  // district's ~10 records (a national fuzzy match would mis-pair the repeated
+  // names). Recovers drift the containment test misses — transpositions
+  // ("Dharampasha"/"Dharmapasha") and alternate romanizations ("Sulla"/"Shalla").
+  // Accept the closest record only when it is within 2 edits AND markedly closer
+  // than the runner-up, so (a) a granularity-only polygon with no real record
+  // can't grab a neighbour, and (b) two similar names can't be confused.
+  if (shapeName.length < 5) return null;
+  let best = null;
+  let bestDist = Infinity;
+  let secondDist = Infinity;
+  for (const u of upazilaList) {
+    const name = normalizeName(u.name);
+    // Skip records that can't be within 2 edits on length alone, so a far name
+    // never poses as a close runner-up and defeats the separation guard below.
+    if (name.length < 4 || Math.abs(name.length - shapeName.length) > 2) continue;
+    const dist = editDistance(shapeName, name);
+    if (dist < bestDist) { secondDist = bestDist; bestDist = dist; best = u; }
+    else if (dist < secondDist) { secondDist = dist; }
+  }
+  return best && bestDist <= 2 && secondDist - bestDist >= 2 ? best : null;
 }
 // -----------------------------------------------------------------------------
 

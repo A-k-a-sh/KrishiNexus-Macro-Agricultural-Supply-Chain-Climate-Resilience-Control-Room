@@ -68,15 +68,16 @@ if (fs.existsSync(legacyPath)) {
 }
 
 // --- Name matcher: the district-scoped fuzzy behaviour ------------------------
-console.log('\n  Name matcher (exact → substring, scoped to one district)');
+console.log('\n  Name matcher (exact → substring → district-scoped fuzzy)');
 console.log('  ' + '-'.repeat(62));
 const CASES = [
-  { shapeName: 'Baghai Chhari', list: [{ _id: 'a', name: 'Baghaichhari' }], expect: 'a', why: 'spacing drift' },
-  { shapeName: 'Belai Chhari', list: [{ _id: 'b', name: 'Belaichhari' }], expect: 'b', why: 'spacing drift' },
-  { shapeName: 'Kawkhali (Betbunia)', list: [{ _id: 'c', name: 'Kawkhali' }], expect: 'c', why: 'parenthetical' },
-  { shapeName: 'Dakshin Sunamganj', list: [{ _id: 'd', name: 'Sunamganj Sadar' }, { _id: 'e', name: 'Dakshin Sunamganj' }], expect: 'e', why: 'prefers exact over substring' },
-  { shapeName: 'Mohanganj', list: [{ _id: 'f', name: 'Mohanganj' }], expect: 'f', why: 'exact' },
-  { shapeName: 'Dharampasha', list: [{ _id: 'g', name: 'Dharmapasha' }], expect: null, why: 'letter transposition ⇒ honestly no match' },
+  { shapeName: 'Baghai Chhari', list: [{ _id: 'a', name: 'Baghaichhari' }], expect: 'a', why: 'exact after normalizing' },
+  { shapeName: 'Kawkhali (Betbunia)', list: [{ _id: 'c', name: 'Kawkhali' }], expect: 'c', why: 'containment' },
+  { shapeName: 'Dakshin Sunamganj', list: [{ _id: 'd', name: 'Sunamganj Sadar' }, { _id: 'e', name: 'Dakshin Sunamganj' }], expect: 'e', why: 'exact beats containment' },
+  { shapeName: 'Dharampasha', list: [{ _id: 'g', name: 'Dharmapasha' }, { _id: 'g2', name: 'Jagannathpur' }, { _id: 'g3', name: 'Tahirpur' }], expect: 'g', why: 'fuzzy: transposition (dist 1), clear gap' },
+  { shapeName: 'Sulla', list: [{ _id: 'h', name: 'Shalla' }, { _id: 'h2', name: 'Bishwamvarpur' }, { _id: 'h3', name: 'Tahirpur' }], expect: 'h', why: 'fuzzy: romanization (dist 2), clear gap' },
+  { shapeName: 'Kotwali', list: [{ _id: 'i', name: 'Dhamrai' }, { _id: 'i2', name: 'Savar' }], expect: null, why: 'fuzzy: nothing within 2 edits ⇒ no forced match' },
+  { shapeName: 'Abcdz', list: [{ _id: 'j', name: 'Abcde' }, { _id: 'j2', name: 'Abcdf' }], expect: null, why: 'fuzzy: two equally close ⇒ ambiguous, rejected' },
   { shapeName: 'Ram', list: [{ _id: 'x', name: 'Ramganj' }], expect: null, why: 'short fragment guard (<4 chars)' },
 ];
 for (const c of CASES) {

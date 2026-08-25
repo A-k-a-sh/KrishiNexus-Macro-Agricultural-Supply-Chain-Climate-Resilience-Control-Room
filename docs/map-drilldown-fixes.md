@@ -162,9 +162,12 @@ Result: **544 / 544** polygons assigned, all **64** districts covered, **0**
 unassigned — identical to `d3-geo`'s `geoContains`, in ~11 ms.
 
 **b) Match DB records within the district only.** `findUpazilaRecord` now
-searches just the ~8–12 records of the drilled-in district (exact normalized
-name → 4+ char substring). Scoping is what disambiguates the repeats: there are
-four `Kaliganj`s nationally, but only one in any given district.
+searches just the ~8–12 records of the drilled-in district in three tiers —
+exact normalized name → 4+ char containment → **bounded fuzzy** (optimal-string-
+alignment edit distance ≤ 2, accepted only when the winner is clearly closer
+than the runner-up). Scoping is what makes fuzzy matching safe and disambiguates
+the repeats: there are four `Kaliganj`s nationally, but only one in any given
+district, so even a fuzzy match can't cross district lines.
 
 **c) Make holes impossible to misread.** Two defensive changes so this class of
 bug can't visually recur even if a polygon slips through:
@@ -177,9 +180,12 @@ bug can't visually recur even if a polygon slips through:
 
 ### Proof
 See the table above and [Verification](#verification). Matcher spot-checks:
-`Baghai Chhari → Baghaichhari`, `Kawkhali (Betbunia) → Kawkhali`,
-`Dakshin Sunamganj` correctly beats `Sunamganj Sadar`, and short fragments are
-guarded (`Ram` does **not** match `Ramganj`).
+`Baghai Chhari → Baghaichhari` (exact after normalizing),
+`Kawkhali (Betbunia) → Kawkhali` (containment), `Dakshin Sunamganj` correctly
+beats `Sunamganj Sadar` (exact over containment), fuzzy recovers
+`Dharampasha → Dharmapasha` (transposition) and `Sulla → Shalla`, while
+ambiguous or distant names are rejected and short fragments guarded (`Ram` does
+**not** match `Ramganj`).
 
 ---
 
@@ -229,11 +235,11 @@ non-scaling **neon ring** (soft breathing halo + crisp core; animation in
   geoBoundaries ADM3 is finer than bdapi's upazila list (metropolitan thanas,
   splits). Some polygons therefore have **no** matching record and correctly
   show "Not in database". This is a granularity mismatch, not a rendering bug.
-- **Letter-transposition names** (`Dharampasha` vs bdapi `Dharmapasha`,
-  `Sulla` vs `Shalla`) are not resolved by exact/substring matching. They render
-  as proper polygons in "no data" style. A bounded, **district-scoped** fuzzy
-  match (edit-distance ≤ 2) would recover these safely — see
-  [Follow-ups](#follow-ups).
+- **Letter-transposition and romanization drift** (`Dharampasha`/`Dharmapasha`,
+  `Sulla`/`Shalla`) is now recovered by the tier-3 district-scoped fuzzy match.
+  It is deliberately conservative (≤ 2 edits, clear-gap winner), so a genuinely
+  record-less polygon still falls through to "Not in database" rather than
+  grabbing a neighbour.
 - `upazilaGeoNameMap.json` is now **unused by the frontend** (no import references
   it). It and the coordinate assignment in `seedUpazilas.js` still use the flawed
   national name-match, so any *future* upazila-level feature relying on seeded
@@ -263,7 +269,6 @@ cd frontend && npm run dev
 
 ## Follow-ups (not yet done)
 
-- Add district-scoped fuzzy matching to recover transposition names.
 - Port `seedUpazilas.js` to geometric parent assignment so seeded upazila
   coordinates stop depending on national name-matching; then delete
   `upazilaGeoNameMap.json`.
@@ -276,7 +281,7 @@ cd frontend && npm run dev
 
 | File | Change |
 | --- | --- |
-| `frontend/src/components/Map/BangladeshMap.jsx` | winding normalization; geometric parent assignment; within-district record matching; three-tier palette; neutral drill backdrop; honest no-data style |
+| `frontend/src/components/Map/BangladeshMap.jsx` | winding normalization; geometric parent assignment; within-district record matching (exact → containment → bounded fuzzy); three-tier palette; neutral drill backdrop; honest no-data style |
 | `frontend/src/context/AppContext.jsx` | `selectDistrict(district, { drillIn })` explicit intent |
 | `frontend/src/styles/globals.css` | neon ring keyframes + reduced-motion guard |
 | `scripts/map-validation/*` | this doc's regression checks |
