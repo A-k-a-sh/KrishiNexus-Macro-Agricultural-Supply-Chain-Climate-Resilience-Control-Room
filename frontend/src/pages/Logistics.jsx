@@ -36,7 +36,8 @@ export default function Logistics() {
   // Live client-side calculations (no API call while slider moves)
   const baselineMtons = plan?.baselineMtons ?? 0;
   const projectedDeficit = +(baselineMtons * severity).toFixed(2);
-  const pricePressure = +(severity * 72).toFixed(1);
+  const pricePressure = plan?.pricePressurePct ?? +(severity * 72).toFixed(1);
+  const priceSource = plan?.priceDataSource ?? 'modelled';
 
   async function handleCalculate() {
     if (!districtId) return;
@@ -151,11 +152,25 @@ export default function Logistics() {
               />
               <MetricCard
                 label="PRICE PRESSURE"
-                value={baselineMtons ? `+${pricePressure}%` : '—'}
-                sub="Surge risk estimate"
-                valueColor="#f59e0b"
+                value={baselineMtons ? `${pricePressure > 0 ? '+' : ''}${pricePressure}%` : '—'}
+                sub={
+                  priceSource === 'WFP'      ? 'Real market data · WFP/HDX'  :
+                  priceSource === 'DAM'      ? 'Real market data · DAM'       :
+                  'Modelled estimate · no market data'
+                }
+                valueColor={
+                  pricePressure >= 20 ? 'var(--accent-red)' :
+                  pricePressure >= 10 ? 'var(--accent-yellow)' :
+                  'var(--accent-green)'
+                }
               />
             </div>
+
+            {!plan && (
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: -8 }}>
+                Preview estimate — click "Calculate" for real market data
+              </div>
+            )}
 
             {/* Severity slider */}
             <div>
