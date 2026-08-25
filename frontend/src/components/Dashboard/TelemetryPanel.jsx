@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import WeatherChart from './WeatherChart';
 
 const RISK_COLOR = { red: '#ef4444', yellow: '#f59e0b', green: '#00ff88' };
@@ -16,6 +17,10 @@ export default function TelemetryPanel({ district, upazila }) {
   const w = target.liveWeather || {};
   const riskColor = RISK_COLOR[target.riskStatus] || '#94a3b8';
   const idNum = parseInt(target._id) || 1;
+
+  const rain7Day = Array.isArray(w.precipitationSum7Day)
+    ? +w.precipitationSum7Day.reduce((sum, v) => sum + (Number(v) || 0), 0).toFixed(1)
+    : null;
 
   // ── Deterministic Soil Dynamics ──────────────────────────────────────────
   const soilPh = +(5.6 + (idNum % 7) * 0.2).toFixed(1); // Realistic soil pH (5.6 - 6.8)
@@ -56,8 +61,29 @@ export default function TelemetryPanel({ district, upazila }) {
       <div>
         <div className="panel-label">CLIMATE TELEMETRY</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <MetricCard label="MAX TEMP" value={w.tempMaxToday != null ? `${w.tempMaxToday}°C` : 'N/A'} color="#f59e0b" />
-          <MetricCard label="HUMIDITY" value={w.humidityMaxToday != null ? `${w.humidityMaxToday}%` : 'N/A'} color="#8b5cf6" />
+          <MetricCard
+            label="MAX TEMP"
+            value={w.tempMaxToday != null ? `${w.tempMaxToday}°C` : 'N/A'}
+            color="#f59e0b"
+            series={w.tempMax7Day}
+          />
+          <MetricCard
+            label="HUMIDITY"
+            value={w.humidityMaxToday != null ? `${w.humidityMaxToday}%` : 'N/A'}
+            color="#8b5cf6"
+          />
+          <MetricCard
+            label="MIN TEMP"
+            value={w.tempMinToday != null ? `${w.tempMinToday}°C` : 'N/A'}
+            color="#22d3ee"
+            series={w.tempMin7Day}
+          />
+          <MetricCard
+            label="RAIN · 7 DAY"
+            value={rain7Day != null ? `${rain7Day} mm` : 'N/A'}
+            color="#3b82f6"
+            series={w.precipitationSum7Day}
+          />
         </div>
       </div>
 
@@ -171,14 +197,65 @@ export default function TelemetryPanel({ district, upazila }) {
   );
 }
 
-function MetricCard({ label, value, color, subText }) {
+// A 7-point trend line, drawn by hand rather than with another recharts instance:
+// at this size the axes, tooltip and legend a chart brings are all cost and no
+// signal — the shape of the week is the whole message. The last point is marked
+// so "where we are now" reads at a glance.
+function Sparkline({ series, color, width = 96, height = 22 }) {
+  // useId keeps the gradient unique per instance — two cards sharing a colour
+  // would otherwise emit duplicate SVG ids into the document.
+  const gradientId = `spark${useId().replace(/:/g, '')}`;
+  // Drop gaps BEFORE coercing: Open-Meteo returns null for a day it has no value
+  // for, and Number(null) is 0 — which would draw a phantom dip to the floor
+  // instead of simply skipping the day.
+  const points = (series || [])
+    .filter((v) => v !== null && v !== undefined && v !== '')
+    .map(Number)
+    .filter((n) => Number.isFinite(n));
+  if (points.length < 2) return null;
+
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const isFlat = max === min;
+  const pad = 2;
+  const stepX = (width - pad * 2) / (points.length - 1);
+  // A week with no variation belongs in the middle of the box. Scaling it would
+  // pin it to the bottom edge, which reads as "lowest" rather than "unchanged".
+  const y = (v) => (isFlat
+    ? height / 2
+    : height - pad - ((v - min) / (max - min)) * (height - pad * 2));
+
+  const path = points.map((v, i) => `${i ? 'L' : 'M'}${(pad + i * stepX).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const lastX = pad + (points.length - 1) * stepX;
+  const lastY = y(points[points.length - 1]);
+
+  return (
+    <svg
+      width="100%" height={height} viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none" aria-hidden="true"
+      style={{ display: 'block', overflow: 'visible' }}
+    >
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.28" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={`${path} L${lastX.toFixed(1)},${height} L${pad},${height} Z`} fill={`url(#${gradientId})`} />
+      <path d={path} fill="none" stroke={color} strokeWidth="1.25" strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={lastX.toFixed(1)} cy={lastY.toFixed(1)} r="1.9" fill={color} />
+    </svg>
+  );
+}
+
+function MetricCard({ label, value, color, subText, series }) {
   return (
     <div style={{
       background: 'var(--bg-surface)', border: '1px solid var(--border)',
       borderRadius: 'var(--radius-sm)', padding: '8px 10px',
-      display: 'flex', flexDirection: 'column', justify: 'space-between'
+      display: 'flex', flexDirection: 'column', gap: 4,
     }}>
-      <div style={{ fontSize: 8, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: 4 }}>
+      <div style={{ fontSize: 8, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>
         {label}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -191,6 +268,7 @@ function MetricCard({ label, value, color, subText }) {
           </span>
         )}
       </div>
+      {series && <Sparkline series={series} color={color} />}
     </div>
   );
 }
