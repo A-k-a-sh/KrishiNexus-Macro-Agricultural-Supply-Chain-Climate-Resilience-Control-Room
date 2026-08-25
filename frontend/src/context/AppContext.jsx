@@ -67,11 +67,16 @@ export function AppProvider({ children }) {
     }
   }, []);
 
-  function selectDistrict(district) {
+  // `drillIn` is explicit so the caller owns the drill-down decision. It used to
+  // be hardcoded false here while the map's click handler set it back to true
+  // immediately afterwards, which only worked because React batched the two
+  // updates — one non-batched call site away from clearing the drill state it
+  // was supposed to enter.
+  function selectDistrict(district, { drillIn = false } = {}) {
     setSelectedDistrict(district);
     // Reset upazila state on district change
     setSelectedUpazila(null);
-    setIsDrilledIn(false);
+    setIsDrilledIn(Boolean(district) && drillIn);
   }
 
   return (

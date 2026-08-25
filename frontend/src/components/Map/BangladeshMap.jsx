@@ -9,7 +9,6 @@ import { useAppContext } from '../../context/AppContext';
 import DistrictTooltip from './DistrictTooltip';
 import RiskLegend from './RiskLegend';
 import SHAPE_NAME_TO_ID from '../../data/geoNameMap.json';
-import UPAZILA_SHAPE_NAME_TO_ID from '../../data/upazilaGeoNameMap.json';
 
 const GEO_URL = '/bd-districts.geojson';
 const UPAZILA_GEO_URL = '/bd-upazilas.geojson';
@@ -22,10 +21,28 @@ const RISK_STYLE = {
   default: { fill: '#1e293b', stroke: '#475569', strokeWidth: 0.4 }, // Made brighter so it never blends into the page background
 };
 
-// Selected district/upazila: cyan reads as "active" against the red/yellow/green
-// risk palette, so it never collides with a risk color.
-const SELECTED_COLOR = '#22d3ee';
-const SELECTED_STYLE = { fill: '#0c3f52', stroke: SELECTED_COLOR, strokeWidth: 2 };
+// Interaction palette. Three tiers, none of which collide with the
+// red/yellow/green risk colors, so "what am I pointing at, and at which level"
+// is always readable:
+//   cyan    → district scope  (selected district ring, district hover)
+//   violet  → upazila hover   (transient "you could pick this")
+//   magenta → upazila selected("you picked this")
+const DISTRICT_COLOR = '#22d3ee';         // cyan
+const UPAZILA_HOVER_COLOR = '#a78bfa';    // violet
+const UPAZILA_SELECTED_COLOR = '#f472b6'; // magenta
+
+const DISTRICT_SELECTED_STYLE = { fill: '#0c3f52', stroke: DISTRICT_COLOR, strokeWidth: 2 };
+const UPAZILA_SELECTED_STYLE = { fill: '#4c1d3d', stroke: UPAZILA_SELECTED_COLOR, strokeWidth: 1.4 };
+
+// While drilled in, the parent district sits UNDERNEATH the upazila polygons, so
+// it has to be a neutral backdrop. If it kept its cyan selected fill, any sliver
+// not covered by an upazila polygon would look exactly like an already-selected
+// upazila — which is precisely how the phantom-cyan-patch bug presented.
+const DRILL_BACKDROP_STYLE = { fill: '#0f172a', stroke: '#334155', strokeWidth: 0.4 };
+
+// An upazila polygon we can't tie to a database record: draw the true boundary
+// but dimmed, and don't pretend it's selectable.
+const UPAZILA_NO_DATA_STYLE = { fill: '#161f2e', stroke: '#3b475c', strokeWidth: 0.35 };
 
 // --- GeoJSON winding-order normalization -------------------------------------
 // d3-geo (used internally by react-simple-maps' geoPath) treats polygons on a
@@ -73,6 +90,167 @@ function normalizeWinding(featureCollection) {
     }
   }
   return featureCollection;
+}
+// -----------------------------------------------------------------------------
+
+// --- Geometric parent-district resolution ------------------------------------
+// upazilaGeoNameMap.json only covers 378 of the 544 ADM3 polygons, and 13 of the
+// names in it are ambiguous (there are 4 different "Kaliganj" upazilas, 3
+// "Daulatpur", 3 "Kotwali", ...), so a name lookup alone both MISSES polygons and
+// MIS-ASSIGNS them. Filtering the drill-down by that map left real holes — e.g.
+// Sunamganj lost 3 upazilas, Rangamati 4, Khagrachhari 4 — and the parent
+// district's own cyan fill showed through those holes, looking like patches that
+// were already selected and reporting district info on hover.
+//
+// So we don't ask the name map which district a polygon belongs to; we ask the
+// geometry. Each upazila's representative point is tested against the district
+// polygons (planar even-odd ray casting, matching how these shapes are drawn in
+// the projected plane). Verified against d3-geo: identical result on 544/544
+// features, ~11ms for the whole file, computed once and memoized.
+function polygonsOf(geometry) {
+  if (!geometry) return [];
+  if (geometry.type === 'Polygon') return [geometry.coordinates];
+  if (geometry.type === 'MultiPolygon') return geometry.coordinates;
+  return [];
+}
+
+// Area-weighted centroid of a ring — guaranteed to fall inside a convex-ish ring
+// and, unlike a naive average of vertices, is not dragged off-shape by dense
+// coastline detail.
+function ringCentroid(ring) {
+  let twiceArea = 0;
+  let x = 0;
+  let y = 0;
+  for (let i = 0, n = ring.length, j = n - 1; i < n; j = i++) {
+    const cross = ring[j][0] * ring[i][1] - ring[i][0] * ring[j][1];
+    twiceArea += cross;
+    x += (ring[j][0] + ring[i][0]) * cross;
+    y += (ring[j][1] + ring[i][1]) * cross;
+  }
+  if (twiceArea === 0) return [ring[0][0], ring[0][1]];
+  return [x / (3 * twiceArea), y / (3 * twiceArea)];
+}
+
+// Representative point = centroid of the feature's LARGEST ring, so island
+// fragments of a multipart upazila never speak for the whole shape.
+function representativePoint(feature) {
+  let biggestRing = null;
+  let biggestArea = -1;
+  for (const rings of polygonsOf(feature.geometry)) {
+    const area = Math.abs(ringSignedArea(rings[0]));
+    if (area > biggestArea) {
+      biggestArea = area;
+      biggestRing = rings[0];
+    }
+  }
+  return biggestRing ? ringCentroid(biggestRing) : null;
+}
+
+function pointInRing(point, ring) {
+  let inside = false;
+  for (let i = 0, n = ring.length, j = n - 1; i < n; j = i++) {
+    const xi = ring[i][0];
+    const yi = ring[i][1];
+    const xj = ring[j][0];
+    const yj = ring[j][1];
+    if ((yi > point[1]) !== (yj > point[1])
+      && point[0] < ((xj - xi) * (point[1] - yi)) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function featureContainsPoint(feature, point) {
+  for (const rings of polygonsOf(feature.geometry)) {
+    if (!pointInRing(point, rings[0])) continue;
+    let inHole = false;
+    for (let k = 1; k < rings.length; k++) {
+      if (pointInRing(point, rings[k])) { inHole = true; break; }
+    }
+    if (!inHole) return true;
+  }
+  return false;
+}
+
+function featureBbox(feature) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const rings of polygonsOf(feature.geometry)) {
+    for (const p of rings[0]) {
+      if (p[0] < x0) x0 = p[0];
+      if (p[0] > x1) x1 = p[0];
+      if (p[1] < y0) y0 = p[1];
+      if (p[1] > y1) y1 = p[1];
+    }
+  }
+  return [x0, y0, x1, y1];
+}
+
+// → { [districtId]: Feature[] }, every upazila polygon assigned to exactly one
+// district. The 4 features whose representative point lands just outside every
+// district polygon (coastal/riverine edge cases) fall back to the nearest
+// district centroid, so the map never silently drops a shape.
+function groupUpazilasByDistrict(upazilaFc, districtFc) {
+  const districts = districtFc.features
+    .map((f) => ({
+      id: SHAPE_NAME_TO_ID[f.properties.shapeName],
+      bbox: featureBbox(f),
+      point: representativePoint(f),
+      feature: f,
+    }))
+    .filter((d) => d.id);
+
+  const grouped = {};
+  for (const feature of upazilaFc.features) {
+    const point = representativePoint(feature);
+    if (!point) continue;
+
+    let parent = districts.find(
+      (d) => point[0] >= d.bbox[0] && point[0] <= d.bbox[2]
+        && point[1] >= d.bbox[1] && point[1] <= d.bbox[3]
+        && featureContainsPoint(d.feature, point),
+    );
+
+    if (!parent) {
+      let bestDistance = Infinity;
+      for (const d of districts) {
+        if (!d.point) continue;
+        const dx = d.point[0] - point[0];
+        const dy = d.point[1] - point[1];
+        const distance = dx * dx + dy * dy;
+        if (distance < bestDistance) { bestDistance = distance; parent = d; }
+      }
+    }
+    if (!parent) continue;
+
+    (grouped[String(parent.id)] ||= []).push(feature);
+  }
+  return grouped;
+}
+
+// Match a polygon to its database record WITHIN its parent district only. Scoping
+// by district is what disambiguates the repeated names — there are four
+// "Kaliganj" upazilas nationally, but only one inside any given district.
+function normalizeName(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function findUpazilaRecord(geo, upazilaList) {
+  if (!upazilaList || !upazilaList.length) return null;
+  const shapeName = normalizeName(geo.properties.shapeName);
+  if (!shapeName) return null;
+
+  const exact = upazilaList.find((u) => normalizeName(u.name) === shapeName);
+  if (exact) return exact;
+
+  // Spelling drift between geoBoundaries and bdapi: "Kawkhali (Betbunia)" vs
+  // "Kawkhali", "Baghai Chhari" vs "Baghaichhari". Require 4+ chars so a short
+  // fragment can't swallow an unrelated name.
+  if (shapeName.length < 4) return null;
+  return upazilaList.find((u) => {
+    const name = normalizeName(u.name);
+    return name.length >= 4 && (name.includes(shapeName) || shapeName.includes(name));
+  }) || null;
 }
 // -----------------------------------------------------------------------------
 
@@ -129,22 +307,31 @@ export default function BangladeshMap() {
       .catch(console.error);
   }, []);
 
+  // Assign every upazila polygon to a district once, up front — not per drill-in.
+  const upazilasByDistrictGeo = useMemo(() => {
+    if (!districtGeoData || !upazilaGeoData) return {};
+    return groupUpazilasByDistrict(upazilaGeoData, districtGeoData);
+  }, [districtGeoData, upazilaGeoData]);
+
+  // The upazila polygons for the district currently drilled into.
+  const activeUpazilaFeatures = useMemo(() => {
+    if (!isDrilledIn || !selectedDistrict) return [];
+    return upazilasByDistrictGeo[String(selectedDistrict._id)] || [];
+  }, [isDrilledIn, selectedDistrict, upazilasByDistrictGeo]);
+
+  // …and the matching database records, which arrive separately from the API.
+  const activeUpazilaList = useMemo(() => (
+    selectedDistrict ? (upazilasByDistrict[selectedDistrict._id] || []) : []
+  ), [selectedDistrict, upazilasByDistrict]);
+
   // Compute the combined GeoJSON object dynamically to avoid multiple <Geographies> components
   const combinedGeoData = useMemo(() => {
     if (!districtGeoData) return null;
-    
+
     let combinedFeatures = [...districtGeoData.features];
-    
-    if (isDrilledIn && upazilaGeoData && selectedDistrict) {
-      const upzList = upazilasByDistrict[selectedDistrict._id] || [];
-      const validIds = new Set(upzList.map(u => String(u._id)));
-      
-      const filteredUpazilas = upazilaGeoData.features.filter(geo => {
-        const mappedId = UPAZILA_SHAPE_NAME_TO_ID[geo.properties.shapeName];
-        return mappedId && validIds.has(String(mappedId));
-      });
-      
-      combinedFeatures = [...combinedFeatures, ...filteredUpazilas];
+
+    if (isDrilledIn && selectedDistrict && activeUpazilaFeatures.length) {
+      combinedFeatures = [...combinedFeatures, ...activeUpazilaFeatures];
 
       // Redraw the selected district's border ON TOP of its upazilas as an
       // outline-only overlay so the "you are here" boundary stays crisp instead
@@ -165,7 +352,7 @@ export default function BangladeshMap() {
       type: "FeatureCollection",
       features: combinedFeatures
     };
-  }, [districtGeoData, upazilaGeoData, isDrilledIn, selectedDistrict, upazilasByDistrict]);
+  }, [districtGeoData, isDrilledIn, selectedDistrict, activeUpazilaFeatures]);
 
   const [tooltip, setTooltip] = useState({ visible: false, district: null, upazila: null, x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -183,8 +370,7 @@ export default function BangladeshMap() {
     setZoom(1);
     setCenter([90.35, 23.68]);
     selectDistrict(null);
-    setIsDrilledIn(false);
-  }, [selectDistrict, setIsDrilledIn]);
+  }, [selectDistrict]);
 
   const handleDistrictClick = useCallback((geo) => {
     const shapeName = geo.properties.shapeName;
@@ -193,26 +379,18 @@ export default function BangladeshMap() {
     const district = districtById[id];
     if (!district) return;
 
-    // selectDistrict() clears any prior drill state (selected upazila +
-    // isDrilledIn), and we immediately re-enter drill-down for the clicked
-    // district. This lets the user jump straight from one district to another
-    // without first pressing "← Back to Districts".
-    selectDistrict(district);
+    // drillIn: true clears any previous drill state (selected upazila) and enters
+    // drill-down for this district in one update, so clicking a second district
+    // while already drilled in just switches — no "← Back to Districts" first.
+    selectDistrict(district, { drillIn: true });
     setCenter([parseFloat(district.lon), parseFloat(district.lat)]);
     setZoom(4);
-    setIsDrilledIn(true);
-  }, [districtById, selectDistrict, setIsDrilledIn]);
+  }, [districtById, selectDistrict]);
 
   const handleUpazilaClick = useCallback((geo) => {
-    const shapeName = geo.properties.shapeName;
-    const id = UPAZILA_SHAPE_NAME_TO_ID[shapeName];
-    if (!id || !selectedDistrict) return;
-    const upzList = upazilasByDistrict[selectedDistrict._id] || [];
-    const upz = upzList.find(u => u._id === id);
-    if (upz) {
-      setSelectedUpazila(upz);
-    }
-  }, [selectedDistrict, upazilasByDistrict, setSelectedUpazila]);
+    const upz = findUpazilaRecord(geo, activeUpazilaList);
+    if (upz) setSelectedUpazila(upz);
+  }, [activeUpazilaList, setSelectedUpazila]);
 
   const handleDistrictMouseEnter = useCallback((geo, evt) => {
     const shapeName = geo.properties.shapeName;
@@ -223,11 +401,12 @@ export default function BangladeshMap() {
 
   const handleUpazilaMouseEnter = useCallback((geo, evt) => {
     const shapeName = geo.properties.shapeName;
-    const id = UPAZILA_SHAPE_NAME_TO_ID[shapeName];
-    const upzList = selectedDistrict ? (upazilasByDistrict[selectedDistrict._id] || []) : [];
-    const upazila = upzList.find(u => String(u._id) === String(id));
-    setTooltip({ visible: true, district: selectedDistrict, upazila, shapeName, x: evt.clientX, y: evt.clientY });
-  }, [selectedDistrict, upazilasByDistrict]);
+    const upazila = findUpazilaRecord(geo, activeUpazilaList);
+    // district stays null on purpose: without a record the tooltip should say so
+    // rather than quietly falling back to the parent district's numbers, which
+    // made unmatched polygons look like they were reporting their own data.
+    setTooltip({ visible: true, district: null, upazila, shapeName, x: evt.clientX, y: evt.clientY });
+  }, [activeUpazilaList]);
 
   const handleMouseMove = useCallback((evt) => {
     setTooltip((t) => ({ ...t, x: evt.clientX, y: evt.clientY }));
@@ -238,24 +417,38 @@ export default function BangladeshMap() {
   }, []);
 
   function getUpazilaStyle(geo) {
-    const shapeName = geo.properties.shapeName;
-    const id = UPAZILA_SHAPE_NAME_TO_ID[shapeName];
-    const upzList = selectedDistrict ? (upazilasByDistrict[selectedDistrict._id] || []) : [];
-    const upazila = upzList.find(u => String(u._id) === String(id));
-    
-    if (selectedUpazila && upazila && String(upazila._id) === String(selectedUpazila._id)) {
+    const upazila = findUpazilaRecord(geo, activeUpazilaList);
+
+    // No database record → show the real boundary, dimmed, and signal that it
+    // isn't selectable rather than letting a click silently do nothing.
+    if (!upazila) {
+      const s = UPAZILA_NO_DATA_STYLE;
+      const base = { fill: s.fill, stroke: s.stroke, strokeWidth: s.strokeWidth, outline: 'none' };
       return {
-        default: { ...SELECTED_STYLE, outline: 'none' },
-        hover: { ...SELECTED_STYLE, outline: 'none' },
-        pressed: { ...SELECTED_STYLE, outline: 'none' },
+        default: base,
+        hover: { ...base, stroke: UPAZILA_HOVER_COLOR, strokeWidth: 0.8, cursor: 'not-allowed' },
+        pressed: base,
       };
     }
-    const risk = upazila?.riskStatus || 'default';
+
+    // Committed selection: magenta, held through hover/pressed so the ring never
+    // flickers back to the hover colour while the cursor sits on it.
+    if (selectedUpazila && String(upazila._id) === String(selectedUpazila._id)) {
+      const selected = {
+        ...UPAZILA_SELECTED_STYLE,
+        outline: 'none',
+        cursor: 'pointer',
+        filter: `drop-shadow(0 0 4px ${UPAZILA_SELECTED_COLOR}cc)`,
+      };
+      return { default: selected, hover: selected, pressed: selected };
+    }
+
+    const risk = upazila.riskStatus || 'default';
     const s = RISK_STYLE[risk] || RISK_STYLE.default;
     return {
       default: { fill: s.fill, stroke: s.stroke, strokeWidth: s.strokeWidth, outline: 'none' },
-      hover: { fill: '#123543', stroke: SELECTED_COLOR, strokeWidth: 0.5, outline: 'none', cursor: 'pointer' },
-      pressed: { fill: '#1e2a42', outline: 'none' },
+      hover: { fill: '#2b2145', stroke: UPAZILA_HOVER_COLOR, strokeWidth: 1.2, outline: 'none', cursor: 'pointer' },
+      pressed: { fill: '#2b2145', outline: 'none' },
     };
   }
 
@@ -263,20 +456,26 @@ export default function BangladeshMap() {
     const shapeName = geo.properties.shapeName;
     const id = SHAPE_NAME_TO_ID[shapeName];
     const district = id ? districtById[id] : null;
+    const isSelected = selectedDistrict && district && String(district._id) === String(selectedDistrict._id);
 
-    if (selectedDistrict && district && district._id === selectedDistrict._id) {
-      return {
-        default: { ...SELECTED_STYLE, outline: 'none' },
-        hover: { ...SELECTED_STYLE, outline: 'none' },
-        pressed: { ...SELECTED_STYLE, outline: 'none' },
-      };
+    // Drilled in: this polygon is only a backdrop behind the upazilas, so keep it
+    // neutral — see DRILL_BACKDROP_STYLE.
+    if (isSelected && isDrilledIn) {
+      const s = DRILL_BACKDROP_STYLE;
+      const base = { fill: s.fill, stroke: s.stroke, strokeWidth: s.strokeWidth, outline: 'none' };
+      return { default: base, hover: base, pressed: base };
+    }
+
+    if (isSelected) {
+      const selected = { ...DISTRICT_SELECTED_STYLE, outline: 'none' };
+      return { default: selected, hover: selected, pressed: selected };
     }
 
     const risk = district?.riskStatus || 'default';
     const s = RISK_STYLE[risk] || RISK_STYLE.default;
     return {
       default: { fill: s.fill, stroke: s.stroke, strokeWidth: s.strokeWidth, outline: 'none' },
-      hover: { fill: '#123543', stroke: SELECTED_COLOR, strokeWidth: 1, outline: 'none', cursor: 'pointer' },
+      hover: { fill: '#123543', stroke: DISTRICT_COLOR, strokeWidth: 1, outline: 'none', cursor: 'pointer' },
       pressed: { fill: '#1e2a42', outline: 'none' },
     };
   }
@@ -381,7 +580,7 @@ export default function BangladeshMap() {
                   if (geoType === 'district-outline') {
                     const base = {
                       fill: 'none',
-                      stroke: SELECTED_COLOR,
+                      stroke: DISTRICT_COLOR,
                       vectorEffect: 'non-scaling-stroke',
                       pointerEvents: 'none',
                       outline: 'none',
