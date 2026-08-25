@@ -80,22 +80,34 @@ router.post('/calculate', async (req, res, next) => {
     let priceDataSource = 'modelled'; // honest default
 
     try {
-      // Most recent price for this crop in this district (last 7 days)
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-        .toISOString().slice(0, 10);
+      const COMMODITY_PATTERNS = {
+        'Rice': /Rice/i,
+        'Wheat': /Wheat/i,
+        'Onion': /Onion/i,
+        'Garlic': /Garlic/i,
+        'Cabbage': /Cabbage/i,
+        'Cauliflower': /Cauliflower/i,
+        'Beans': /Lentils|Gram|Beans/i,
+        'Tomato': /Tomato/i,
+        'Radish': /Radish/i,
+        'Laushak': /Gourd|Laushak/i,
+      };
 
+      const commodityRegex = COMMODITY_PATTERNS[crop] || new RegExp(crop, 'i');
+
+      // Most recent price for this crop in this district
       const latestPrice = await db
         .collection('market_prices')
         .findOne(
-          { districtId, commodity: crop, date: { $gte: sevenDaysAgo } },
+          { districtId: String(districtId), commodity: { $regex: commodityRegex } },
           { sort: { date: -1 } }
         );
 
-      // National average for same crop (last 7 days)
+      // National average for same crop across latest market records
       const nationalAvgResult = await db
         .collection('market_prices')
         .aggregate([
-          { $match: { commodity: crop, date: { $gte: sevenDaysAgo } } },
+          { $match: { commodity: { $regex: commodityRegex } } },
           { $group: { _id: null, avg: { $avg: '$pricePerKg' } } }
         ]).toArray();
 

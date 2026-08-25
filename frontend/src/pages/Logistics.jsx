@@ -5,6 +5,19 @@ import { calcLogistics, dispatchCargo, genManifest, getWarehouseStocks, getDispa
 
 const CROPS = ['Rice', 'Wheat', 'Onion', 'Beans', 'Cabbage', 'Cauliflower', 'Garlic', 'Laushak', 'Radish', 'Tomato'];
 
+const CROP_ICONS = {
+  Rice: '🌾',
+  Wheat: '🍞',
+  Onion: '🧅',
+  Beans: '🫘',
+  Cabbage: '🥬',
+  Cauliflower: '🥦',
+  Garlic: '🧄',
+  Laushak: '🌿',
+  Radish: '🥕',
+  Tomato: '🍅',
+};
+
 const SCENARIO_PRESETS = [
   { label: 'Mild (10%)', value: 0.10, desc: 'Localized weather anomaly' },
   { label: 'Standard (25%)', value: 0.25, desc: 'Seasonal monsoon stress' },
@@ -36,12 +49,11 @@ export default function Logistics() {
 
   const district = allDistricts.find((d) => d._id === districtId);
 
-  // Sync from global selectedDistrict if present
+  // Sync from global selectedDistrict if present or select first available
   useEffect(() => {
     if (selectedDistrict?._id) {
       setDistrictId(selectedDistrict._id);
     } else if (allDistricts.length > 0 && !districtId) {
-      // Default to first district if none selected
       setDistrictId(allDistricts[0]._id);
     }
   }, [selectedDistrict, allDistricts]);
@@ -60,6 +72,13 @@ export default function Logistics() {
       .catch((err) => console.error('Failed to fetch dispatch records:', err));
   };
 
+  // Auto-calculate on initial load or when districtId or crop changes
+  useEffect(() => {
+    if (districtId && crop) {
+      handleCalculate(districtId, crop, severity);
+    }
+  }, [districtId, crop]);
+
   // Live client-side calculations (slider preview before API calculation)
   const baselineMtons = plan?.baselineMtons ?? 0;
   const projectedDeficit = +(baselineMtons * severity).toFixed(2);
@@ -70,18 +89,22 @@ export default function Logistics() {
   const severityColor =
     severity >= 0.5 ? '#ef4444' : severity >= 0.25 ? '#f59e0b' : '#10b981';
 
-  async function handleCalculate() {
-    if (!districtId) return;
+  async function handleCalculate(targetDistrictId = districtId, targetCrop = crop, targetSeverity = severity) {
+    const dId = targetDistrictId || districtId;
+    if (!dId) return;
     setCalcLoading(true);
-    setPlan(null);
     setManifest('');
     setDispatched(false);
     try {
-      const { data } = await calcLogistics({ districtId, crop, severityFactor: severity });
+      const { data } = await calcLogistics({
+        districtId: dId,
+        crop: targetCrop || crop,
+        severityFactor: targetSeverity ?? severity,
+      });
       setPlan(data.data);
       setCargoWeight(String(data.data.recommendedCargo || ''));
     } catch (err) {
-      alert('Calculation failed: ' + (err.response?.data?.message || err.message));
+      console.error('Calculation failed:', err);
     } finally {
       setCalcLoading(false);
     }
@@ -210,8 +233,6 @@ export default function Logistics() {
                     value={districtId}
                     onChange={(e) => {
                       setDistrictId(e.target.value);
-                      setPlan(null);
-                      setDispatched(false);
                     }}
                     className="w-full bg-slate-950/80 border border-slate-700 hover:border-slate-600 focus:border-emerald-500 text-white rounded-2xl py-3 px-4 shadow-inner focus:outline-none focus:ring-2 focus:ring-emerald-500/30 appearance-none cursor-pointer transition-all text-sm font-medium"
                   >
@@ -228,7 +249,7 @@ export default function Logistics() {
                 </div>
               </div>
 
-              {/* Commodity Selector */}
+              {/* Commodity Selector with Distinct Icons */}
               <div className="relative group">
                 <label className="block text-xs font-semibold text-teal-400 uppercase tracking-wider mb-2 ml-1">
                   Strategic Commodity
@@ -238,14 +259,12 @@ export default function Logistics() {
                     value={crop}
                     onChange={(e) => {
                       setCrop(e.target.value);
-                      setPlan(null);
-                      setDispatched(false);
                     }}
                     className="w-full bg-slate-950/80 border border-slate-700 hover:border-slate-600 focus:border-teal-500 text-white rounded-2xl py-3 px-4 shadow-inner focus:outline-none focus:ring-2 focus:ring-teal-500/30 appearance-none cursor-pointer transition-all text-sm font-medium"
                   >
                     {CROPS.map((c) => (
                       <option key={c} value={c}>
-                        🌾 {c}
+                        {CROP_ICONS[c] || '🌱'} {c}
                       </option>
                     ))}
                   </select>
@@ -259,7 +278,7 @@ export default function Logistics() {
             {/* Calculate Button */}
             <div className="flex items-end">
               <button
-                onClick={handleCalculate}
+                onClick={() => handleCalculate(districtId, crop, severity)}
                 disabled={!districtId || calcLoading}
                 className={`w-full lg:w-auto px-8 py-3.5 rounded-2xl font-bold text-sm tracking-wide transition-all duration-300 shadow-xl flex items-center justify-center gap-3 ${
                   !districtId || calcLoading
@@ -275,7 +294,7 @@ export default function Logistics() {
                 ) : (
                   <>
                     <span className="text-base">⚡</span>
-                    <span>Calculate Logistics Plan</span>
+                    <span>Recalculate Plan</span>
                   </>
                 )}
               </button>
@@ -309,7 +328,7 @@ export default function Logistics() {
                   </h2>
                 </div>
                 <span className="text-xs font-mono text-slate-400 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700">
-                  {district ? district.name : 'No Target Selected'}
+                  {district ? `${district.name} District` : 'No Target Selected'}
                 </span>
               </div>
 
@@ -321,7 +340,7 @@ export default function Logistics() {
                     BBS BASELINE YIELD
                   </div>
                   <div className="text-2xl font-bold font-mono text-white">
-                    {baselineMtons ? `${baselineMtons.toLocaleString()}` : '—'}
+                    {baselineMtons ? `${baselineMtons.toLocaleString()}` : (calcLoading ? '...' : '—')}
                     <span className="text-xs text-slate-400 font-normal ml-1">M.Ton</span>
                   </div>
                   <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1.5">
@@ -336,7 +355,7 @@ export default function Logistics() {
                     PROJECTED SHORTFALL
                   </div>
                   <div className={`text-2xl font-bold font-mono ${severity >= 0.4 ? 'text-red-400' : 'text-amber-400'}`}>
-                    {baselineMtons ? `${projectedDeficit.toLocaleString()}` : '—'}
+                    {baselineMtons ? `${projectedDeficit.toLocaleString()}` : (calcLoading ? '...' : '—')}
                     <span className="text-xs font-normal ml-1 opacity-80">M.Ton</span>
                   </div>
                   <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1.5">
@@ -380,7 +399,7 @@ export default function Logistics() {
                       pricePressure >= 20 ? 'text-red-400' : pricePressure >= 10 ? 'text-amber-400' : 'text-emerald-400'
                     }`}
                   >
-                    {baselineMtons ? `${pricePressure > 0 ? '+' : ''}${pricePressure}%` : '—'}
+                    {baselineMtons ? `${pricePressure > 0 ? '+' : ''}${pricePressure}%` : (calcLoading ? '...' : '—')}
                   </div>
                   <div className="text-[11px] text-slate-400 mt-1 truncate">
                     {priceSource === 'WFP'
@@ -392,10 +411,10 @@ export default function Logistics() {
                 </div>
               </div>
 
-              {!plan && (
+              {priceSource === 'modelled' && !calcLoading && (
                 <div className="mt-3 text-[11px] text-slate-400 font-mono flex items-center gap-1.5 bg-slate-950/40 px-3 py-1.5 rounded-xl border border-slate-800/50">
                   <span className="text-amber-400">ℹ</span>
-                  Preview estimate active — click "Calculate Logistics Plan" to fetch real market data.
+                  Modelled price estimate active for unlisted commodities or regional outliers.
                 </div>
               )}
             </div>
@@ -445,7 +464,10 @@ export default function Logistics() {
                 {SCENARIO_PRESETS.map((p) => (
                   <button
                     key={p.value}
-                    onClick={() => setSeverity(p.value)}
+                    onClick={() => {
+                      setSeverity(p.value);
+                      handleCalculate(districtId, crop, p.value);
+                    }}
                     className={`px-2.5 py-2 rounded-xl text-xs font-mono font-medium transition-all text-center border ${
                       Math.abs(severity - p.value) < 0.001
                         ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-md shadow-emerald-500/10'
@@ -565,7 +587,7 @@ export default function Logistics() {
                       <div className="grid grid-cols-2 gap-2 mt-2 text-xs font-mono">
                         <div className="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
                           <span className="text-slate-400 text-[11px]">Commodity:</span>
-                          <span className="text-white font-bold">{crop}</span>
+                          <span className="text-white font-bold">{CROP_ICONS[crop] || '🌾'} {crop}</span>
                         </div>
                         <div className="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
                           <span className="text-slate-400 text-[11px]">Recommended:</span>
@@ -825,7 +847,7 @@ export default function Logistics() {
                         </td>
                         <td className="px-6 py-4">
                           <span className="px-2.5 py-1 rounded-lg bg-slate-800/80 text-teal-300 text-xs border border-slate-700/60 font-sans font-medium">
-                            {s.crop}
+                            {CROP_ICONS[s.crop] || '🌱'} {s.crop}
                           </span>
                         </td>
                         <td className="px-6 py-4">
@@ -893,7 +915,7 @@ export default function Logistics() {
                       </td>
                       <td className="px-6 py-4">
                         <span className="px-2.5 py-1 rounded-lg bg-slate-800/80 text-teal-300 text-xs border border-slate-700/60 font-sans">
-                          {r.crop}
+                          {CROP_ICONS[r.crop] || '🌱'} {r.crop}
                         </span>
                       </td>
                       <td className="px-6 py-4 font-bold text-white">
