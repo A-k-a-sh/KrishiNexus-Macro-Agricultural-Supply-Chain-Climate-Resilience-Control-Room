@@ -10,24 +10,38 @@ const RISK_DOT = {
 };
 
 // One row renderer for both districts and upazilas: risk dot, name, alert count.
-// The two levels differ only in indent and in which accent marks "selected" —
-// cyan for a district, magenta for an upazila, matching the map's palette.
-function RegionRow({ region, level, selected, indent, onSelect, caret, onToggleCaret }) {
+//
+// `state` is 'active' for the region the intelligence panel is reporting on,
+// 'ancestor' for the district you are currently inside, or null. Those are
+// deliberately different weights rather than two equal boxes: an active row gets
+// a full accent border, an ancestor only a left edge, so the pair reads as a path
+// down to one selection instead of two competing ones. Accent follows the map —
+// cyan for a district, magenta for an upazila.
+function RegionRow({ region, level, state, indent, onSelect, caret, onToggleCaret, rowId }) {
   const dot = RISK_DOT[region.riskStatus] || RISK_DOT.green;
   const alertCount = region.activeAlerts?.length ?? 0;
-  const accent = level === 'upazila' ? 'var(--scope-upazila)' : 'var(--scope-district)';
+  const isUpazila = level === 'upazila';
+  const accent = isUpazila ? 'var(--scope-upazila)' : 'var(--scope-district)';
+  const isActive = state === 'active';
+  const isAncestor = state === 'ancestor';
+
+  const baseBg = isActive
+    ? (isUpazila ? 'rgba(244, 114, 182, 0.10)' : 'rgba(34, 211, 238, 0.10)')
+    : isAncestor ? 'rgba(34, 211, 238, 0.045)' : 'transparent';
 
   return (
     <div
+      data-region-row={rowId}
       style={{
         display: 'flex', alignItems: 'center',
         borderRadius: 'var(--radius-sm)', marginBottom: 1,
-        background: selected ? 'rgba(34, 211, 238, 0.09)' : 'transparent',
-        border: `1px solid ${selected ? accent : 'transparent'}`,
+        background: baseBg,
+        border: `1px solid ${isActive ? accent : 'transparent'}`,
+        boxShadow: isAncestor ? 'inset 2px 0 0 var(--scope-district)' : undefined,
         transition: 'background 0.15s',
       }}
-      onMouseEnter={(e) => { if (!selected) e.currentTarget.style.background = 'var(--bg-card)'; }}
-      onMouseLeave={(e) => { if (!selected) e.currentTarget.style.background = 'transparent'; }}
+      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--bg-card)'; }}
+      onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = baseBg; }}
     >
       {caret !== undefined ? (
         <button
@@ -48,11 +62,12 @@ function RegionRow({ region, level, selected, indent, onSelect, caret, onToggleC
 
       <button
         onClick={onSelect}
+        aria-current={isActive ? 'true' : undefined}
         style={{
           flex: 1, minWidth: 0, display: 'flex', alignItems: 'center',
           justifyContent: 'space-between', gap: 6,
           padding: '5px 8px 5px 4px', background: 'transparent',
-          color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
+          color: isActive || isAncestor ? 'var(--text-primary)' : 'var(--text-secondary)',
           fontSize: 12, textAlign: 'left',
         }}
       >
@@ -210,15 +225,16 @@ export default function LeftNav() {
 
               {isOpen && division.rows.map(({ district, upazilas, forceOpen }) => {
                 const districtOpen = forceOpen || !!openDistricts[district._id];
-                const isDistrictSelected = selectedDistrict?._id === district._id && !selectedUpazila;
+                const isThisDistrict = selectedDistrict?._id === district._id;
 
                 return (
                   <div key={district._id}>
                     <RegionRow
                       region={district}
                       level="district"
+                      rowId={`d:${district._id}`}
                       indent={8}
-                      selected={isDistrictSelected}
+                      state={isThisDistrict ? (selectedUpazila ? 'ancestor' : 'active') : null}
                       caret={districtOpen}
                       onToggleCaret={() => toggleDistrict(district)}
                       onSelect={() => selectDistrict(district, { drillIn: true })}
@@ -236,8 +252,9 @@ export default function LeftNav() {
                               key={upazila._id}
                               region={upazila}
                               level="upazila"
+                              rowId={`u:${upazila._id}`}
                               indent={0}
-                              selected={selectedUpazila?._id === upazila._id}
+                              state={selectedUpazila?._id === upazila._id ? 'active' : null}
                               onSelect={() => selectUpazila(district, upazila)}
                             />
                           ))
