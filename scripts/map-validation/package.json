@@ -1,0 +1,12 @@
+{
+  "name": "krishinexus-map-validation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Regression checks for the Bangladesh drill-down map data pipeline",
+  "type": "module",
+  "scripts": {
+    "test": "node validate-winding.mjs && node validate-coverage.mjs",
+    "test:winding": "node validate-winding.mjs",
+    "test:coverage": "node validate-coverage.mjs"
+  }
+}
