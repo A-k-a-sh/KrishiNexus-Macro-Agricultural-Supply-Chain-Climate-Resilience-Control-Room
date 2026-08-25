@@ -4,6 +4,7 @@
 **Page:** `/dashboard` (centre panel)
 **Stack:** React 18 + `react-simple-maps` v3 (which wraps `d3-geo`'s `geoPath`)
 **Validation:** [`scripts/map-validation/`](../scripts/map-validation/) — run `npm test` there
+**Companion doc:** [`dashboard-ui-upgrade.md`](dashboard-ui-upgrade.md) — the UI built on top of these fixes
 
 ---
 
@@ -287,3 +288,12 @@ cd frontend && npm run dev
 | `backend/db/seeds/seedUpazilas.js` | geometric parent assignment + district-scoped matching for seeded coordinates (replaces national name-search); geometry unit-testable via a `require.main` guard |
 | `frontend/src/data/upazilaGeoNameMap.json` | **removed** — superseded by geometric assignment |
 | `scripts/map-validation/*` | this doc's regression checks |
+
+---
+
+## What came next
+
+With the data layer honest, the dashboard was rebuilt around it — unified panel
+chrome, a searchable region tree, camera easing, and telemetry sparklines. The
+decisions, plus three more bugs found while making them, are in
+[`dashboard-ui-upgrade.md`](dashboard-ui-upgrade.md).
