@@ -75,8 +75,10 @@ export default function Logistics() {
   // Live client-side calculations (slider preview before API calculation)
   const baselineMtons = plan?.baselineMtons ?? 0;
   const projectedDeficit = +(baselineMtons * severity).toFixed(2);
-  const pricePressure = plan?.pricePressurePct ?? +(severity * 72).toFixed(1);
   const priceSource = plan?.priceDataSource ?? 'modelled';
+  const pricePressure = priceSource === 'modelled' 
+    ? +(severity * 72).toFixed(1) 
+    : (plan?.pricePressurePct ?? +(severity * 72).toFixed(1));
 
   const severityPct = (severity * 100).toFixed(0);
   const severityColor =
