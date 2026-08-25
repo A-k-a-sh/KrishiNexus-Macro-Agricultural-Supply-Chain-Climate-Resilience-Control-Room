@@ -30,6 +30,59 @@ function haversineKm(lat1, lon1, lat2, lon2) {
 }
 
 /**
+ * GET /api/logistics/available-crops/:districtId
+ * Returns a sorted list of the 10 macro crops, prioritizing those with real market data in the given district.
+ */
+router.get('/available-crops/:districtId', async (req, res, next) => {
+  try {
+    const { districtId } = req.params;
+    const db = getDb();
+
+    const COMMODITY_PATTERNS = {
+      'Rice': /Rice/i,
+      'Wheat': /Wheat/i,
+      'Onion': /Onion/i,
+      'Garlic': /Garlic/i,
+      'Cabbage': /Cabbage/i,
+      'Cauliflower': /Cauliflower/i,
+      'Beans': /Lentils|Gram|Beans/i,
+      'Tomato': /Tomato/i,
+      'Radish': /Radish/i,
+      'Laushak': /Gourd|Laushak/i,
+    };
+
+    const availableCrops = [];
+    const unavailableCrops = [];
+
+    // Check each crop for recent data in this district
+    for (const [crop, regex] of Object.entries(COMMODITY_PATTERNS)) {
+      const latestPrice = await db
+        .collection('market_prices')
+        .findOne(
+          { districtId: String(districtId), commodity: { $regex: regex } },
+          { projection: { _id: 1 } }
+        );
+      
+      if (latestPrice) {
+        availableCrops.push(crop);
+      } else {
+        unavailableCrops.push(crop);
+      }
+    }
+
+    res.json({
+      ok: true,
+      data: {
+        available: availableCrops,
+        unavailable: unavailableCrops
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * POST /api/logistics/calculate
  * Body: { districtId: string, crop: string, severityFactor: number (0–0.75) }
  *

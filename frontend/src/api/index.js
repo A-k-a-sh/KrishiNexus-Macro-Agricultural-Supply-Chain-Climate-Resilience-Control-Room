@@ -35,6 +35,7 @@ export const postRagQuery  = (body) => api.post('/api/rag/query', body);
 
 // ── Logistics ─────────────────────────────────────────────────────────────────
 export const calcLogistics      = (body) => api.post('/api/logistics/calculate', body);
+export const getAvailableCrops  = (dId)  => api.get(`/api/logistics/available-crops/${dId}`);
 export const dispatchCargo      = (body) => api.post('/api/logistics/dispatch', body);
 export const getWarehouseStocks = ()     => api.get('/api/logistics/warehouse-stocks');
 export const getDispatchRecords = ()     => api.get('/api/logistics/dispatch-records');

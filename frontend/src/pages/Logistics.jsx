@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '../context/AppContext';
-import { calcLogistics, dispatchCargo, genManifest, getWarehouseStocks, getDispatchRecords } from '../api';
+import { calcLogistics, dispatchCargo, genManifest, getWarehouseStocks, getDispatchRecords, getAvailableCrops } from '../api';
 
 const CROPS = ['Rice', 'Wheat', 'Onion', 'Beans', 'Cabbage', 'Cauliflower', 'Garlic', 'Laushak', 'Radish', 'Tomato'];
 
@@ -42,6 +42,9 @@ export default function Logistics() {
   const [stocks, setStocks]                     = useState([]);
   const [records, setRecords]                   = useState([]);
   
+  const [sortedCrops, setSortedCrops]           = useState(CROPS);
+  const [availableCropsSet, setAvailableCropsSet] = useState(new Set());
+
   // Table search & filter states
   const [activeTab, setActiveTab]               = useState('stocks'); // 'stocks' | 'records'
   const [stockSearch, setStockSearch]           = useState('');
@@ -55,6 +58,33 @@ export default function Logistics() {
       setDistrictId(selectedDistrict._id);
     }
   }, [selectedDistrict]);
+
+  // Fetch available crops and sort whenever district changes
+  useEffect(() => {
+    if (!districtId) {
+      setSortedCrops(CROPS);
+      setAvailableCropsSet(new Set());
+      return;
+    }
+    
+    getAvailableCrops(districtId)
+      .then(({ data }) => {
+        if (data.ok && data.data) {
+          const available = data.data.available || [];
+          const unavailable = data.data.unavailable || [];
+          setSortedCrops([...available, ...unavailable]);
+          setAvailableCropsSet(new Set(available));
+          
+          // Auto-select first available if current crop isn't available
+          if (available.length > 0 && !available.includes(crop)) {
+            setCrop(available[0]);
+            setPlan(null);
+            setDispatched(false);
+          }
+        }
+      })
+      .catch(err => console.error('Failed to fetch available crops:', err));
+  }, [districtId]);
 
   // Load warehouse stocks + dispatch records on mount
   useEffect(() => {
@@ -259,11 +289,14 @@ export default function Logistics() {
                     }}
                     className="w-full bg-slate-950/80 border border-slate-700 hover:border-slate-600 focus:border-teal-500 text-white rounded-2xl py-3 px-4 shadow-inner focus:outline-none focus:ring-2 focus:ring-teal-500/30 appearance-none cursor-pointer transition-all text-sm font-medium"
                   >
-                    {CROPS.map((c) => (
-                      <option key={c} value={c}>
-                        {CROP_ICONS[c] || '🌱'} {c}
-                      </option>
-                    ))}
+                    {sortedCrops.map((c) => {
+                      const isAvailable = districtId ? availableCropsSet.has(c) : true;
+                      return (
+                        <option key={c} value={c}>
+                          {CROP_ICONS[c] || '🌱'} {c} {isAvailable ? '' : '(No Market Data)'}
+                        </option>
+                      );
+                    })}
                   </select>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs">
                     ▼
