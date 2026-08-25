@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { getDistricts, getMe } from '../api';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { getDistricts, getMe, getUpazilas } from '../api';
 
 export const AppContext = createContext(null);
 
@@ -17,6 +17,61 @@ export function AppProvider({ children }) {
   const [selectedUpazila, setSelectedUpazila]   = useState(null);
   const [upazilasByDistrict, setUpazilasByDistrict] = useState({});
   const [isDrilledIn, setIsDrilledIn]           = useState(false);
+
+  // --- Upazila loading -------------------------------------------------------
+  // Both the map (on drill-in) and the left-nav tree (on expand, and on a search
+  // that has to look inside districts) need upazilas, so the fetch lives here
+  // instead of in either component. Refs track what's loaded or in flight so
+  // two callers asking at the same instant produce one request, not two.
+  const [allUpazilasLoaded, setAllUpazilasLoaded] = useState(false);
+  const loadedRef   = useRef({}); // districtId → true
+  const inFlightRef = useRef({}); // districtId | '*' → Promise
+  const allLoadedRef = useRef(false);
+
+  const ensureUpazilas = useCallback((districtId) => {
+    const key = String(districtId);
+    if (!districtId || allLoadedRef.current || loadedRef.current[key]) return Promise.resolve();
+    if (inFlightRef.current[key]) return inFlightRef.current[key];
+
+    const request = getUpazilas(districtId)
+      .then((res) => {
+        loadedRef.current[key] = true;
+        setUpazilasByDistrict((prev) => ({ ...prev, [key]: res.data?.data || [] }));
+      })
+      .catch((err) => console.error('Failed to load upazilas', err))
+      .finally(() => { delete inFlightRef.current[key]; });
+
+    inFlightRef.current[key] = request;
+    return request;
+  }, []);
+
+  // One request for the whole country (~495 records). Called lazily — only when
+  // a search actually needs to match upazila names outside the open district —
+  // so the dashboard's first paint never pays for it.
+  const ensureAllUpazilas = useCallback(() => {
+    if (allLoadedRef.current) return Promise.resolve();
+    if (inFlightRef.current['*']) return inFlightRef.current['*'];
+
+    const request = getUpazilas()
+      .then((res) => {
+        const grouped = {};
+        for (const u of res.data?.data || []) {
+          const key = String(u.districtId);
+          (grouped[key] ||= []).push(u);
+          loadedRef.current[key] = true;
+        }
+        allLoadedRef.current = true;
+        setAllUpazilasLoaded(true);
+        // Already-fetched districts win: same data, but keeping their array
+        // identity avoids re-rendering rows that didn't change.
+        setUpazilasByDistrict((prev) => ({ ...grouped, ...prev }));
+      })
+      .catch((err) => console.error('Failed to load upazilas', err))
+      .finally(() => { delete inFlightRef.current['*']; });
+
+    inFlightRef.current['*'] = request;
+    return request;
+  }, []);
 
   // Load all 64 districts once on app mount
   useEffect(() => {
@@ -79,6 +134,17 @@ export function AppProvider({ children }) {
     setIsDrilledIn(Boolean(district) && drillIn);
   }
 
+  // Picking an upazila implies its district and drill-down. Setting all three
+  // here — rather than letting a caller run selectDistrict() and then
+  // setSelectedUpazila() — keeps the intent in one update and avoids depending on
+  // those two calls landing in the right order, which is what broke drill-down
+  // before (see the note above).
+  function selectUpazila(district, upazila) {
+    if (district) setSelectedDistrict(district);
+    setIsDrilledIn(true);
+    setSelectedUpazila(upazila);
+  }
+
   return (
     <AppContext.Provider
       value={{
@@ -95,8 +161,12 @@ export function AppProvider({ children }) {
         
         selectedUpazila,
         setSelectedUpazila,
+        selectUpazila,
         upazilasByDistrict,
         setUpazilasByDistrict,
+        ensureUpazilas,
+        ensureAllUpazilas,
+        allUpazilasLoaded,
         isDrilledIn,
         setIsDrilledIn
       }}

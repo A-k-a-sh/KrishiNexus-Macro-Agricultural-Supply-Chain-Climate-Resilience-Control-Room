@@ -302,11 +302,11 @@ function findUpazilaRecord(geo, upazilaList) {
 // -----------------------------------------------------------------------------
 
 export default function BangladeshMap() {
-  const { 
+  const {
     allDistricts, selectedDistrict, selectDistrict,
     isDrilledIn, setIsDrilledIn,
-    selectedUpazila, setSelectedUpazila,
-    upazilasByDistrict, setUpazilasByDistrict
+    selectedUpazila, selectUpazila,
+    upazilasByDistrict, ensureUpazilas
   } = useAppContext();
 
   // Build a lookup: bdapi district _id → district object (for fast access on hover/click)
@@ -318,14 +318,8 @@ export default function BangladeshMap() {
   }, [allDistricts]);
 
   useEffect(() => {
-    if (isDrilledIn && selectedDistrict && !upazilasByDistrict[selectedDistrict._id]) {
-      import('../../api').then(({ getUpazilas }) => {
-        getUpazilas(selectedDistrict._id).then(res => {
-          setUpazilasByDistrict(prev => ({ ...prev, [selectedDistrict._id]: res.data.data }));
-        }).catch(console.error);
-      });
-    }
-  }, [isDrilledIn, selectedDistrict, upazilasByDistrict, setUpazilasByDistrict]);
+    if (isDrilledIn && selectedDistrict) ensureUpazilas(selectedDistrict._id);
+  }, [isDrilledIn, selectedDistrict, ensureUpazilas]);
 
   // Manually fetch GeoJSON to prevent react-simple-maps from colliding cache when using multiple Geographies
   const [districtGeoData, setDistrictGeoData] = useState(null);
@@ -467,14 +461,26 @@ export default function BangladeshMap() {
     // drillIn: true clears any previous drill state (selected upazila) and enters
     // drill-down for this district in one update, so clicking a second district
     // while already drilled in just switches — no "← Back to Districts" first.
+    // Framing is handled by the drill-in effect below, so a district picked from
+    // the left-nav tree gets exactly the same camera move as one clicked here.
     selectDistrict(district, { drillIn: true });
-    animateView([parseFloat(district.lon), parseFloat(district.lat)], 4);
-  }, [districtById, selectDistrict, animateView]);
+  }, [districtById, selectDistrict]);
+
+  // Frame the drilled-in district. This lives in an effect rather than in the
+  // click handler so a district chosen from the left-nav tree gets the same
+  // camera move as one clicked on the map. Deliberately keyed on the district id
+  // only — it must not re-fire and yank the view back while the user pans.
+  const drilledDistrictId = isDrilledIn && selectedDistrict ? selectedDistrict._id : null;
+  useEffect(() => {
+    if (!drilledDistrictId || !selectedDistrict) return;
+    animateView([parseFloat(selectedDistrict.lon), parseFloat(selectedDistrict.lat)], 4);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drilledDistrictId]);
 
   const handleUpazilaClick = useCallback((geo) => {
     const upz = findUpazilaRecord(geo, activeUpazilaList);
-    if (upz) setSelectedUpazila(upz);
-  }, [activeUpazilaList, setSelectedUpazila]);
+    if (upz) selectUpazila(selectedDistrict, upz);
+  }, [activeUpazilaList, selectUpazila, selectedDistrict]);
 
   const handleDistrictMouseEnter = useCallback((geo, evt) => {
     const shapeName = geo.properties.shapeName;
