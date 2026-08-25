@@ -3,7 +3,7 @@ const { Router } = require('express');
 const { getDb } = require('../db/connect');
 const { embedText } = require('../services/geminiEmbed');
 const { generateText } = require('../services/geminiGenerate');
-const { vectorSearch } = require('../services/vectorSearch');
+const { vectorSearch, searchAdvisories } = require('../services/vectorSearch');
 
 const router = Router();
 
@@ -26,19 +26,19 @@ If the operator writes in Bangla, respond in Bangla. Otherwise respond in Englis
 
 /**
  * POST /api/rag/query
- * Body: { question: string, districtId: string, language?: "en"|"bn" }
+ * Body: { question: string, districtId: string, language?: "en"|"bn", useHybrid?: boolean }
  *
  * Steps:
  *  1. Fetch district doc + raw BAMIS bulletin (parallel)
  *  2. Embed the question
- *  3. $vectorSearch across regional_advisories, crop_pathology, crop_thresholds
- *  4. Build prompt: bulletin (primary) + vector results + live weather
+ *  3. Hybrid/Vector search across regional_advisories + vector search on pathology & thresholds
+ *  4. Build prompt: bulletin (primary) + vector/hybrid results + live weather
  *  5. Call Gemini generation
  *  6. Return answer
  */
 router.post('/query', async (req, res, next) => {
   try {
-    const { question, districtId, language = 'en' } = req.body;
+    const { question, districtId, language = 'en', useHybrid = false } = req.body;
     if (!question || !districtId) {
       return res.status(400).json({ ok: false, message: '`question` and `districtId` are required' });
     }
@@ -69,12 +69,12 @@ router.post('/query', async (req, res, next) => {
     const cropNames = district.activeCrops?.map((c) => c.crop).join(', ') || '';
     const augmentedQuery = `[${district.name}] ${cropNames ? `[Crops: ${cropNames}] ` : ''}${question}`;
 
-    // ── 3. Embed + parallel vector searches ────────────────────────────────────
+    // ── 3. Embed + parallel hybrid/vector searches ─────────────────────────────
     const queryVector = await embedText(augmentedQuery);
     const [advisories, pathology, thresholds] = await Promise.all([
-      vectorSearch('regional_advisories', queryVector, 'embedding', { districtId }, 5),
-      vectorSearch('crop_pathology',       queryVector, 'embedding', null, 5),
-      vectorSearch('crop_thresholds',      queryVector, 'embedding', null, 2),
+      searchAdvisories(queryVector, question, 5, { districtId }, useHybrid),
+      vectorSearch('crop_pathology', queryVector, 'embedding', null, 5),
+      vectorSearch('crop_thresholds', queryVector, 'embedding', null, 2),
     ]);
 
     // ── 4. Build context blocks ────────────────────────────────────────────────
@@ -89,7 +89,7 @@ router.post('/query', async (req, res, next) => {
       : '';
 
     const vectorBlocks = [
-      ...advisories.map((d, i) => `--- District Advisory ${i + 1} ---\n${d.ragContextChunk}`),
+      ...advisories.map((d, i) => `--- District Advisory ${i + 1} (${d.searchMode || 'vector'}) ---\n${d.ragContextChunk}`),
       ...pathology.map((d, i)  => `--- Disease Info ${i + 1} ---\n${d.ragContextChunk}`),
       ...thresholds.map((d, i) => `--- Crop Threshold ${i + 1} ---\n${d.ragContextChunk}`),
     ].join('\n\n');
@@ -124,6 +124,8 @@ ${question}
         districtName: district.name,
         zilaId: zilaId || null,
         hasBulletin: !!bulletinRaw,
+        useHybrid,
+        searchMode: advisories[0]?.searchMode || (useHybrid ? 'hybrid' : 'vector'),
         retrievedAdvisories: advisories.length,
         retrievedPathology: pathology.length,
         retrievedThresholds: thresholds.length,
