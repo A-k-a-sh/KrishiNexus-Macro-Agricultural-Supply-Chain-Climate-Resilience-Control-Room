@@ -14,19 +14,62 @@ function isStubSection(section) {
 }
 
 /**
- * Parse a pipe-delimited structured text block from BAMIS diseases into
- * a key-value object. Example input:
- * "অনুকূল আবহাওয়া | তাপমাত্রা ২৮-৩০° সে. | দমন ব্যবস্থা | সার ব্যবস্থপনা"
+ * Extract the meaningful parts of a BAMIS disease section text.
  *
- * Returns: { "অনুকূল আবহাওয়া": "তাপমাত্রা ২৮-৩০° সে.", "দমন ব্যবস্থা": "সার ব্যবস্থপনা" }
+ * BAMIS section.text has this structure:
+ *   Line 1: disease name (repeated — skip it)
+ *   Block A: plain text paragraph ("অনুকূল আবহাওয়া তাপমাত্রা ২৮-৩০°...")
+ *   Block B: pipe-delimited key-value pairs ("অনুকূল আবহাওয়া | তাপমাত্রা...")
+ *   Block C: line-by-line repetition of key-value pairs (redundant — skip)
+ *
+ * We keep: Block A (plain text) + key-value labels from Block B.
+ * We discard: Block C (starts after the second occurrence of "অনুকূল আবহাওয়া |").
  */
-function parsePipeDelimited(text) {
-  const parts = text.split('|').map((p) => p.trim()).filter(Boolean);
-  const result = {};
-  for (let i = 0; i < parts.length - 1; i += 2) {
-    result[parts[i]] = parts[i + 1] || '';
+function extractCleanSectionText(sectionTitle, sectionText) {
+  if (!sectionText) return '';
+  const lines = sectionText.trim().split('\n');
+
+  // Remove first line if it's just the disease name repeated
+  const contentLines =
+    lines[0].trim() === (sectionTitle || '').trim() ? lines.slice(1) : lines;
+
+  // Find where the pipe-delimited section starts (first line containing " | ")
+  const pipeStart = contentLines.findIndex((l) => l.includes(' | '));
+
+  if (pipeStart === -1) {
+    // No pipe-delimited section — return as-is (already clean)
+    return contentLines.join('\n').trim();
   }
-  return result;
+
+  // Keep: everything before pipe section (plain text) + first pipe block only
+  const plainText = contentLines.slice(0, pipeStart).join('\n').trim();
+
+  // Extract key-value pairs from pipe block — only the labeled fields
+  const pipeLines = contentLines.slice(pipeStart);
+  const kvPairs = [];
+  for (const line of pipeLines) {
+    if (!line.includes(' | ')) break; // end of structured block
+    const parts = line.split(' | ').map((p) => p.trim()).filter(Boolean);
+    if (parts.length > 2) {
+      for (let j = 0; j < parts.length - 1; j += 2) {
+        if (parts[j] && parts[j + 1]) {
+          kvPairs.push(`${parts[j]}: ${parts[j + 1]}`);
+        }
+      }
+      break;
+    } else if (parts.length === 2) {
+      kvPairs.push(`${parts[0]}: ${parts[1]}`);
+    }
+  }
+
+  const uniqueKv = [...new Set(kvPairs)];
+  const structured = uniqueKv.join('। ');
+  return [plainText, structured].filter(Boolean).join('\n').trim();
+}
+
+function buildChunk(cropName, sectionTitle, sectionText) {
+  const cleanBody = extractCleanSectionText(sectionTitle, sectionText);
+  return `ফসল: ${cropName}। রোগ: ${sectionTitle}। ${cleanBody}`;
 }
 
 /**
@@ -38,22 +81,23 @@ function parsePipeDelimited(text) {
  */
 function diseaseDocToChunks(doc) {
   const chunks = [];
+  const cropName = doc.diseaseName || '';
 
   // If there are no sections or all are stubs, try the full rawText as one chunk
   const validSections = (doc.sections || []).filter((s) => !isStubSection(s));
 
   if (validSections.length === 0) {
-    // Fall back: use the full rawText if it has enough substance
-    if (!doc.rawText || doc.rawText.length < 20) return [];
+    const fallbackText = (doc.sourceRawText || doc.rawText || '').trim();
+    if (fallbackText.length < 20) return [];
 
     chunks.push({
       _id: `path_${doc.diseaseId}_full`,
       sourceId: doc.diseaseId,
-      cropName: doc.diseaseName,
-      diseaseName: doc.diseaseName,
-      images: doc.images?.map((img) => img.full).filter(Boolean) || [],
-      fullText: doc.rawText,
-      ragContextChunk: `ফসল: ${doc.diseaseName}। রোগ তথ্য: ${doc.rawText}`,
+      cropName,
+      diseaseName: cropName,
+      images: doc.images?.map((img) => (typeof img === 'string' ? img : img.full)).filter(Boolean) || [],
+      fullText: fallbackText,
+      ragContextChunk: `ফসল: ${cropName}। রোগ তথ্য: ${fallbackText}`,
       embedding: null,
       sourceUrl: doc.sourceUrl,
       needsReview: false,
@@ -65,27 +109,15 @@ function diseaseDocToChunks(doc) {
   // One chunk per valid section
   for (let i = 0; i < validSections.length; i++) {
     const section = validSections[i];
-    const parsed = section.text.includes('|') ? parsePipeDelimited(section.text) : null;
-
-    // Build a clean readable context chunk
-    let ragContextChunk;
-    if (parsed && Object.keys(parsed).length > 0) {
-      const kvLines = Object.entries(parsed)
-        .map(([k, v]) => `${k}: ${v}`)
-        .join('। ');
-      ragContextChunk = `রোগের নাম: ${section.title}। ফসল: ${doc.diseaseName}। ${kvLines}`;
-    } else {
-      ragContextChunk = `রোগের নাম: ${section.title}। ফসল: ${doc.diseaseName}। বিবরণ: ${section.text}`;
-    }
+    const ragContextChunk = buildChunk(cropName, section.title, section.text);
 
     chunks.push({
       _id: `path_${doc.diseaseId}_${i}`,
       sourceId: doc.diseaseId,
-      cropName: doc.diseaseName,
+      cropName,
       diseaseName: section.title,
-      images: doc.images?.map((img) => img.full).filter(Boolean) || [],
+      images: doc.images?.map((img) => (typeof img === 'string' ? img : img.full)).filter(Boolean) || [],
       fullText: section.text,
-      parsedFields: parsed || null,
       ragContextChunk,
       embedding: null,
       sourceUrl: doc.sourceUrl,
@@ -132,4 +164,10 @@ async function parseDiseases() {
   return totalChunks;
 }
 
-module.exports = { parseDiseases, diseaseDocToChunks, isStubSection };
+module.exports = {
+  parseDiseases,
+  diseaseDocToChunks,
+  isStubSection,
+  extractCleanSectionText,
+  buildChunk,
+};
