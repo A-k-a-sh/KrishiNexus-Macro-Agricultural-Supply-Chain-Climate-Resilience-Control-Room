@@ -244,7 +244,7 @@ export default function Logistics() {
           transition={{ delay: 0.1 }}
           className="bg-slate-900/60 border border-slate-800 rounded-3xl p-5 sm:p-6 backdrop-blur-md shadow-2xl relative overflow-hidden"
         >
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-5">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-end justify-between gap-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
               {/* District Selector */}
               <div className="relative group">
@@ -567,7 +567,7 @@ export default function Logistics() {
               {plan && !calcLoading && !dispatched && (
                 <div className="mt-5 space-y-4">
                   {plan.surplusDivision ? (
-                    <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-teal-950/30 border border-teal-500/30 rounded-2xl p-4.5 shadow-lg relative overflow-hidden">
+                    <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-teal-950/30 border border-teal-500/30 rounded-2xl p-5 shadow-lg relative overflow-hidden">
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-[10px] font-mono uppercase tracking-widest text-teal-400 font-bold bg-teal-500/10 px-2 py-0.5 rounded border border-teal-500/20">
                           RECOMMENDED SUPPLY ROUTE
