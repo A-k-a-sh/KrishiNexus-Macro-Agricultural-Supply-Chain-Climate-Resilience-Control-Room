@@ -1,19 +1,51 @@
 const { getDb } = require('../db/connect');
 
 // All known top-level section header keywords in BAMIS bulletins.
-// ⚠️ Extend this list if you find bulletins with headers not listed here.
+// Order matters for regex: longer/more-specific headers first to avoid partial matches.
 const SECTION_HEADERS = [
+  // Rice varieties
   'ধান আমন',
   'ধান আউশ',
   'ধান বোরো',
+  // Cash crops
+  'পাট',
+  'আখ',
+  'তামাক',
+  'চা',
+  // Vegetables & horticulture
   'সবজি',
   'উদ্যান ফসল',
+  // Pulses & oil crops
+  'ডাল ফসল',
+  'তেল ফসল',
+  'সরিষা',
+  'মসুর',
+  'খেসারি',
+  'ছোলা',
+  // Cereals
+  'গম',
+  'ভুট্টা (খরিফ -১)',
+  'ভুট্টা (খরিফ-১)',
+  'ভুট্টা',
+  // Tubers & roots
+  'আলু',
+  // Livestock & aquaculture
   'গবাদি পশু',
   'হাঁসমুরগী',
   'মৎস্য',
-  'ডাল ফসল',
-  'তেল ফসল',
+  // Fruits
+  'ফল ফসল',
 ];
+
+/**
+ * Detect if a chunk contains more than one section header —
+ * which means the splitter missed a boundary and two sections bled together.
+ * Flag these for review but still include them (better than losing data).
+ */
+function detectBleeding(guidelineText) {
+  const found = SECTION_HEADERS.filter((h) => guidelineText.includes(h));
+  return found.length > 1 ? found : null;
+}
 
 /**
  * Split one bulletin's rawText into per-crop-section chunks.
@@ -56,28 +88,45 @@ function splitBulletinSections(rawText) {
  * @returns {object[]}
  */
 function bulletinToChunks(doc, resolvedDistrictId) {
-  const sections = splitBulletinSections(doc.rawText);
-  return sections.map((s, idx) => ({
-    _id: `adv_${doc.zilaId}_${doc.bulletinNo}_${idx}`,
-    districtId: resolvedDistrictId,
-    bamisZilaId: doc.zilaId,
-    bulletinNo: doc.bulletinNo,
-    publishDate: doc.scrapedAt,
-    sourceUrl: doc.sourceUrl,
-    crop: s.crop,
-    stage: s.stage,
-    guidelineText: s.guidelineText,
-    // ragContextChunk is the exact string that will be embedded
-    ragContextChunk: [
-      `জেলা: ${resolvedDistrictId}`,
-      `ফসল: ${s.crop}`,
-      s.stage ? `পর্যায়: ${s.stage}` : null,
-      `পরামর্শ: ${s.guidelineText}`,
-    ]
-      .filter(Boolean)
-      .join('। '),
-    embedding: null, // filled by embedAndStore.js
-  }));
+  const rawText = doc.text || doc.rawText || '';
+  const sections = splitBulletinSections(rawText);
+  return sections.map((s, idx) => {
+    const bleeding = detectBleeding(s.guidelineText);
+    return {
+      _id: `adv_${doc.zilaId}_${doc.bulletinNo || 'x'}_${idx}`,
+      districtId: resolvedDistrictId,
+      bamisZilaId: doc.zilaId,
+      bulletinNo: doc.bulletinNo || null,
+      publishDate: doc.scrapedAt,
+      sourceUrl: doc.sourceUrl,
+      crop: s.crop,
+      stage: s.stage,
+      guidelineText: s.guidelineText,
+      hasBleedingWarning: bleeding ? bleeding : null,
+      // ragContextChunk is the exact string that will be embedded
+      ragContextChunk: [
+        `জেলা: ${resolvedDistrictId}`,
+        `ফসল: ${s.crop}`,
+        s.stage ? `পর্যায়: ${s.stage}` : null,
+        `পরামর্শ: ${s.guidelineText}`,
+      ]
+        .filter(Boolean)
+        .join('। '),
+      embedding: null, // filled by embedAndStore.js
+    };
+  });
+}
+
+/**
+ * Parse a single bulletin document into chunks.
+ * Named export used by automated bulletin re-ingestion cron.
+ *
+ * @param {object} doc
+ * @param {string} resolvedDistrictId
+ * @returns {object[]}
+ */
+function parseBulletinDoc(doc, resolvedDistrictId) {
+  return bulletinToChunks(doc, resolvedDistrictId);
 }
 
 /**
@@ -123,4 +172,10 @@ async function parseBulletins(zilaIdMap) {
   return totalChunks;
 }
 
-module.exports = { parseBulletins, bulletinToChunks, splitBulletinSections };
+module.exports = {
+  parseBulletins,
+  bulletinToChunks,
+  splitBulletinSections,
+  detectBleeding,
+  parseBulletinDoc,
+};
