@@ -69,7 +69,7 @@ function extractParsedRules(rawText) {
   }
 
   // Flowering disruption above X°C: look for "উপরে" near a temperature
-  const disruptMatch = rawText.match(/([\d০-৯.]+)\s*°[^।\n]*উপরে[^।\n]*ফুল|ফুল[^।\n]*([\d০-৯.]+)\s*°[^।\n]*উপরে/);
+  const disruptMatch = rawText.match(/([\d০-৯.]+)\s*°[^।\n]*?উপরে[^।\n]*?ফুল|ফুল[^।\n]*?([\d০-৯.]+)\s*°[^।\n]*?উপরে/);
   if (disruptMatch) {
     const val = parseRangeOrValue(disruptMatch[1] || disruptMatch[2]);
     if (typeof val === 'number') rules.floweringDisruptAbove = val;
@@ -87,6 +87,8 @@ function extractParsedRules(rawText) {
 
   return Object.keys(rules).length > 0 ? rules : null;
 }
+
+const MIN_RAWTEXT_LENGTH = 80;
 
 /**
  * Extract crop name from the heading.
@@ -107,19 +109,28 @@ function cropNameFromHeading(heading) {
  * @returns {object|null}
  */
 function thresholdDocToChunk(doc) {
-  if (!doc.rawText || doc.rawText.length < 20) return null;
-
+  const rawText = (doc.sourceRawText || doc.rawText || '').trim();
   const cropName = cropNameFromHeading(doc.heading) || doc.heading || `crop_${doc.thresholdId}`;
-  const parsedRules = extractParsedRules(doc.rawText);
+
+  // Skip stub documents
+  if (!rawText || rawText.length < MIN_RAWTEXT_LENGTH) {
+    console.warn(
+      `Skipping threshold_${doc.thresholdId} (${cropName}) — rawText too short (${rawText.length} chars)`
+    );
+    return null;
+  }
+
+  const parsedRules = extractParsedRules(rawText);
 
   return {
     _id: `threshold_${doc.thresholdId}`,
     sourceId: doc.thresholdId,
     cropName,
     heading: doc.heading,
-    ragContextChunk: `ফসল: ${cropName}। আবহাওয়া সীমা: ${doc.rawText}`,
-    parsedRules,           // used by riskScorer — may be null if regex found nothing
-    embedding: null,       // filled by embedAndStore.js
+    images: (doc.images || []).map((i) => (typeof i === 'string' ? i : i.full)).filter(Boolean),
+    ragContextChunk: `ফসল: ${cropName}। আবহাওয়া সীমা: ${rawText}`,
+    parsedRules, // used by riskScorer — may be null if regex found nothing
+    embedding: null, // filled by embedAndStore.js
     sourceUrl: doc.sourceUrl,
   };
 }
