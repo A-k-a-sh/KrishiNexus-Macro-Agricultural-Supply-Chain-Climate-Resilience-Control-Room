@@ -38,12 +38,16 @@ const SECTION_HEADERS = [
 ];
 
 /**
- * Detect if a chunk contains more than one section header —
+ * Detect if a chunk contains more than one section header as standalone tokens —
  * which means the splitter missed a boundary and two sections bled together.
  * Flag these for review but still include them (better than losing data).
  */
 function detectBleeding(guidelineText) {
-  const found = SECTION_HEADERS.filter((h) => guidelineText.includes(h));
+  const found = SECTION_HEADERS.filter((h) => {
+    const escaped = h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(^|[\\s\\n।,])(${escaped})([\\s\\n।,]|$)`, 'm');
+    return regex.test(guidelineText);
+  });
   return found.length > 1 ? found : null;
 }
 
