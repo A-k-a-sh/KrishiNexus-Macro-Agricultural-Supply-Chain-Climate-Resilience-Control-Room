@@ -43,9 +43,10 @@ export default function ChatTerminal({ district }) {
       const { data } = await postRagQuery({ question: q, districtId: district._id });
       setMessages((prev) => [...prev, { role: 'assistant', text: data.answer, ts: new Date() }]);
     } catch (err) {
+      console.error('Chat error:', err);
       setMessages((prev) => [
         ...prev,
-        { role: 'error', text: err.response?.data?.message || err.message, ts: new Date() },
+        { role: 'error', text: 'মডেল/সার্ভার ব্যস্ত। দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।', ts: new Date() },
       ]);
     } finally {
       setLoading(false);

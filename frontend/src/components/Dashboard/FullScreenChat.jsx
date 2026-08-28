@@ -52,9 +52,10 @@ export default function FullScreenChat({ district }) {
         ts: new Date()
       }]);
     } catch (err) {
+      console.error('Chat error:', err);
       setMessages(prev => [...prev, {
         role: 'error',
-        text: err.response?.data?.message || err.message,
+        text: 'মডেল/সার্ভার ব্যস্ত। দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।',
         ts: new Date()
       }]);
     } finally {
