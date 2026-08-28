@@ -154,7 +154,7 @@ export default function Landing() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-[clamp(40px,6vw,68px)] font-extrabold leading-[1.1] mb-6 tracking-tight text-slate-100"
             >
-              <div className="font-sans">
+              <div className="krishi-titleee font-sans">
                 <span className="block mb-2">KrishiNexus</span>
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">
                   Control Room for Resilient Supply Chains
