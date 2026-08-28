@@ -12,6 +12,8 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('telemetry'); // 'telemetry' | 'advisory' | 'chat'
   const chatSectionRef = useRef(null);
   const [chatOpen, setChatOpen] = useState(false);
+  const [leftOpen, setLeftOpen] = useState(true);
+  const [rightOpen, setRightOpen] = useState(true);
 
   // Reset when district changes
   useEffect(() => {
@@ -37,14 +39,16 @@ export default function Dashboard() {
 
         {/* LEFT — Region selector + alert badges */}
         <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
+          initial={false}
+          animate={{ width: leftOpen ? 240 : 0, opacity: leftOpen ? 1 : 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
           style={{
-            width: 240, flexShrink: 0,
+            flexShrink: 0,
             overflow: 'hidden', display: 'flex', flexDirection: 'column',
           }} className="border-r border-slate-800/60 bg-slate-950/80 backdrop-blur-md z-20">
-          <LeftNav />
+          <div style={{ width: 240, height: '100%' }}>
+            <LeftNav />
+          </div>
         </motion.div>
 
         {/* CENTER — Interactive map, under a drill-path rail */}
@@ -57,6 +61,32 @@ export default function Dashboard() {
             display: 'flex', flexDirection: 'column', overflow: 'hidden',
             position: 'relative'
           }} className="bg-slate-950 z-10">
+          
+          {/* Toggle Buttons */}
+          <button 
+            onClick={() => setLeftOpen(!leftOpen)}
+            className="absolute top-1/2 left-0 -translate-y-1/2 z-30 bg-slate-900/80 border border-slate-700/60 border-l-0 text-slate-400 p-2 rounded-r-xl hover:bg-slate-800 hover:text-emerald-400 transition-colors shadow-md backdrop-blur-sm focus:outline-none"
+            title={leftOpen ? "Collapse Left Panel" : "Expand Left Panel"}
+          >
+            {leftOpen ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            )}
+          </button>
+
+          <button 
+            onClick={() => setRightOpen(!rightOpen)}
+            className="absolute top-1/2 right-0 -translate-y-1/2 z-30 bg-slate-900/80 border border-slate-700/60 border-r-0 text-slate-400 p-2 rounded-l-xl hover:bg-slate-800 hover:text-emerald-400 transition-colors shadow-md backdrop-blur-sm focus:outline-none"
+            title={rightOpen ? "Collapse Right Panel" : "Expand Right Panel"}
+          >
+            {rightOpen ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            )}
+          </button>
+
           <div className="panel-head !bg-slate-900/40 !backdrop-blur-sm !border-slate-800/60">
             <span className="drill-path">
               <span>Bangladesh</span>
@@ -101,16 +131,17 @@ export default function Dashboard() {
 
         {/* RIGHT — Telemetry + AI advisory + chat */}
         <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
+          initial={false}
+          animate={{ width: rightOpen ? 400 : 0, opacity: rightOpen ? 1 : 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
           style={{
-            width: 400, flexShrink: 0,
+            flexShrink: 0,
             display: 'flex', flexDirection: 'column',
             overflow: 'hidden',
           }} className="border-l border-slate-800/60 bg-slate-950/80 backdrop-blur-md z-20">
-          {/* Section label strip */}
-          <div className="panel-head !bg-slate-900/40 !backdrop-blur-sm !border-slate-800/60">
+          <div style={{ width: 400, height: '100%', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+            {/* Section label strip */}
+            <div className="panel-head !bg-slate-900/40 !backdrop-blur-sm !border-slate-800/60">
             <span>Intelligence panel</span>
             {selectedDistrict && (
               <span className={`panel-head-value${selectedUpazila ? ' is-upazila' : ''}`}>
@@ -169,6 +200,7 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+        </div>
         </motion.div>
       </div>
 
