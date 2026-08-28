@@ -150,12 +150,12 @@ router.post('/query', async (req, res, next) => {
     const queryType = classifyQuery(question, districtId);
 
     if (queryType === 'market') {
-      return handleMarketQuery(req, res, question, districtId);
+      return await handleMarketQuery(req, res, question, districtId);
     }
 
     if (queryType === 'general') {
       const queryVector = await embedText(question);
-      return handleGeneralQuery(req, res, question, queryVector);
+      return await handleGeneralQuery(req, res, question, queryVector);
     }
 
     const db = getDb();
