@@ -49,6 +49,7 @@ export default function Dashboard() {
           flex: 1, minWidth: 0,
           background: 'var(--bg-primary)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          position: 'relative'
         }}>
           <div className="panel-head">
             <span className="drill-path">
@@ -72,6 +73,23 @@ export default function Dashboard() {
           </div>
           <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
             <BangladeshMap />
+            {selectedDistrict && !chatOpen && (
+              <div style={{ position: 'absolute', bottom: 30, left: '50%', transform: 'translateX(-50%)', zIndex: 20 }}>
+                <button
+                  onClick={handleOpenChat}
+                  style={{
+                    padding: '12px 24px', borderRadius: 30,
+                    background: 'var(--accent-blue, #2563eb)', color: '#ffffff', border: 'none',
+                    fontWeight: 600, fontSize: 14, cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.4)', transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={e => e.target.style.transform = 'scale(1.05)'}
+                  onMouseLeave={e => e.target.style.transform = 'scale(1)'}
+                >
+                  ↓ Open AI Chat — {selectedDistrict.name}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -144,39 +162,6 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-
-          {selectedDistrict && (
-            <div style={{ padding: '12px 14px', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
-              {!chatOpen ? (
-                <button
-                  onClick={handleOpenChat}
-                  style={{
-                    width: '100%', padding: '10px', borderRadius: 8,
-                    background: 'var(--bg-card)', border: '1px solid var(--border)',
-                    color: 'var(--text-secondary)', fontSize: 12,
-                    fontFamily: 'var(--font-mono)', cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={e => e.target.style.borderColor = 'var(--border-accent)'}
-                  onMouseLeave={e => e.target.style.borderColor = 'var(--border)'}
-                >
-                  ↓ Open AI Chat — {selectedDistrict.name}
-                </button>
-              ) : (
-                <button
-                  onClick={handleBackToMap}
-                  style={{
-                    width: '100%', padding: '10px', borderRadius: 8,
-                    background: 'transparent', border: '1px solid var(--border)',
-                    color: 'var(--text-muted)', fontSize: 12,
-                    fontFamily: 'var(--font-mono)', cursor: 'pointer',
-                  }}
-                >
-                  ↑ Back to Map
-                </button>
-              )}
-            </div>
-          )}
         </div>
       </div>
 

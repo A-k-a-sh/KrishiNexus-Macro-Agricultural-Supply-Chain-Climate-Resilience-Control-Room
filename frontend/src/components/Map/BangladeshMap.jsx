@@ -451,6 +451,12 @@ export default function BangladeshMap() {
     selectDistrict(null);
   }, [selectDistrict, animateView]);
 
+  useEffect(() => {
+    const onReset = () => resetView();
+    window.addEventListener('map-reset', onReset);
+    return () => window.removeEventListener('map-reset', onReset);
+  }, [resetView]);
+
   const handleDistrictClick = useCallback((geo) => {
     const shapeName = geo.properties.shapeName;
     const id = SHAPE_NAME_TO_ID[shapeName];

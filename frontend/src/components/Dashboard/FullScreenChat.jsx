@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { postRagQuery } from '../../api';
+import { useAppContext } from '../../context/AppContext';
 
 export default function FullScreenChat({ district }) {
+  const { selectDistrict } = useAppContext();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,6 +27,11 @@ export default function FullScreenChat({ district }) {
 
   // Suggested chips — change based on district alerts
   const chips = getSuggestedChips(district);
+
+  function handleCloseChat() {
+    selectDistrict(null);
+    window.dispatchEvent(new CustomEvent('map-reset'));
+  }
 
   async function sendMessage(text) {
     const q = (text || input).trim();
@@ -64,9 +71,25 @@ export default function FullScreenChat({ district }) {
           <span style={styles.headerTitle}>KrishiNexus AI</span>
           <span style={styles.headerDistrict}>{district?.name}</span>
         </div>
-        <span style={styles.headerSub}>
-          Grounded in BAMIS official data
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <span style={styles.headerSub}>
+            Grounded in BAMIS official data
+          </span>
+          <button 
+            onClick={handleCloseChat} 
+            style={{
+              background: 'var(--bg-card)', border: '1px solid var(--border)',
+              color: 'var(--text-secondary)', padding: '4px 10px',
+              borderRadius: 'var(--radius-sm)', fontSize: 11,
+              fontFamily: 'var(--font-mono)', cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={e => { e.target.style.background = 'var(--bg-danger)'; e.target.style.color = '#fff'; }}
+            onMouseLeave={e => { e.target.style.background = 'var(--bg-card)'; e.target.style.color = 'var(--text-secondary)'; }}
+          >
+            ↩ Close Chat
+          </button>
+        </div>
       </div>
 
       {/* Message list */}
