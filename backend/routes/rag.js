@@ -4,6 +4,7 @@ const { getDb } = require('../db/connect');
 const { embedText } = require('../services/geminiEmbed');
 const { generateText } = require('../services/geminiGenerate');
 const { vectorSearch, searchAdvisories } = require('../services/vectorSearch');
+const { classifyQuery } = require('../utils/queryRouter');
 
 const router = Router();
 
@@ -24,6 +25,109 @@ If the context does not contain enough information to answer, use your own agric
 Try to Give a precise response within 250 words most of the time. Do not mention whether the response comes from the context or your own knowledge.
 If the operator writes in Bangla, respond in Bangla. Otherwise respond in English.`;
 
+async function handleMarketQuery(req, res, question, districtId) {
+  const db = getDb();
+
+  // Extract commodity name from question using simple keyword matching
+  // This is enough for common cases — does not need Gemini
+  const commodityMap = {
+    'চাল': 'Rice (Coarse)', 'ধান': 'Rice (Coarse)', 'rice': 'Rice (Coarse)',
+    'আটা': 'Wheat Flour', 'গম': 'Wheat Flour', 'wheat': 'Wheat Flour',
+    'পেঁয়াজ': 'Onion', 'পিঁয়াজ': 'Onion', 'onion': 'Onion',
+    'আলু': 'Potato', 'potato': 'Potato',
+    'মসুর': 'Lentil', 'lentil': 'Lentil',
+  };
+
+  const lower = question.toLowerCase();
+  let commodity = null;
+  for (const [kw, name] of Object.entries(commodityMap)) {
+    if (lower.includes(kw)) { commodity = name; break; }
+  }
+
+  // Build query
+  const filter = { date: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) } };
+  if (commodity) filter.commodity = commodity;
+  if (districtId) filter.districtId = districtId;
+
+  const prices = await db.collection('market_prices')
+    .find(filter)
+    .sort({ date: -1 })
+    .limit(10)
+    .toArray();
+
+  // National average for comparison
+  let nationalAvg = null;
+  if (commodity) {
+    const avg = await db.collection('market_prices').aggregate([
+      { $match: { commodity, date: { $gte: filter.date.$gte } } },
+      { $group: { _id: null, avg: { $avg: '$pricePerKg' } } }
+    ]).toArray();
+    nationalAvg = avg[0]?.avg ?? null;
+  }
+
+  // Use Gemini only to format the answer in natural language
+  const dataContext = prices.length > 0
+    ? prices.map(p => `${p.marketName || p.districtId}: ${p.commodity} — ৳${p.pricePerKg}/kg (${p.date}, source: ${p.source})`).join('\n')
+    : 'No price data found for the requested commodity/district.';
+
+  const prompt = \`
+You are an agricultural price information assistant for Bangladesh.
+Answer the following question based ONLY on the price data below.
+If data is missing, say so clearly. Do not invent prices.
+Respond in the same language as the question.
+
+PRICE DATA:
+\${dataContext}
+\${nationalAvg ? \`National average for \${commodity}: ৳\${nationalAvg.toFixed(2)}/kg\` : ''}
+
+QUESTION: \${question}
+  \`.trim();
+
+  const answer = await generateText('', prompt);
+
+  return res.json({
+    ok: true,
+    answer,
+    queryType: 'market',
+    sourceData: prices,
+    meta: { priceRecordsFound: prices.length, commodity, districtId }
+  });
+}
+
+async function handleGeneralQuery(req, res, question, queryVector) {
+  // No districtId filter — search all pathology and threshold chunks globally on Primary Cluster
+  const [pathology, thresholds] = await Promise.all([
+    vectorSearch('crop_pathology', queryVector, 'embedding', null, 7),
+    vectorSearch('crop_thresholds', queryVector, 'embedding', null, 5),
+  ]);
+
+  const contextBlocks = [
+    ...pathology.map((d, i) => \`--- Disease Info \${i + 1} ---\n\${d.ragContextChunk}\`),
+    ...thresholds.map((d, i) => \`--- Crop Info \${i + 1} ---\n\${d.ragContextChunk}\`),
+  ].join('\n\n');
+
+  const systemPrompt = \`You are an agricultural knowledge assistant for Bangladesh.
+Answer the user's question using ONLY the provided context documents.
+If the answer is not in the context, say "তথ্য পাওয়া যায়নি" (Information not available).
+Never invent chemical names, dosages, or variety codes.
+Respond in the same language as the question.\`;
+
+  const userPrompt = \`CONTEXT:\n\${contextBlocks}\n\nQUESTION: \${question}\`;
+  const answer = await generateText(systemPrompt, userPrompt);
+
+  return res.json({
+    ok: true,
+    answer,
+    queryType: 'general',
+    sourceImages: pathology.flatMap(d => d.images || []).slice(0, 4),
+    sourceLinks: [
+      ...pathology.map(d => ({ label: \`BAMIS — \${d.diseaseName || d.cropName}\`, url: d.sourceUrl })),
+      ...thresholds.map(d => ({ label: \`BAMIS — \${d.cropName}\`, url: d.sourceUrl })),
+    ].filter((v, i, a) => a.findIndex(x => x.url === v.url) === i),
+    meta: { pathologyChunks: pathology.length, thresholdChunks: thresholds.length }
+  });
+}
+
 /**
  * POST /api/rag/query
  * Body: { question: string, districtId: string, language?: "en"|"bn", useHybrid?: boolean }
@@ -41,6 +145,17 @@ router.post('/query', async (req, res, next) => {
     const { question, districtId, language = 'en', useHybrid = false } = req.body;
     if (!question || !districtId) {
       return res.status(400).json({ ok: false, message: '`question` and `districtId` are required' });
+    }
+
+    const queryType = classifyQuery(question, districtId);
+
+    if (queryType === 'market') {
+      return handleMarketQuery(req, res, question, districtId);
+    }
+
+    if (queryType === 'general') {
+      const queryVector = await embedText(question);
+      return handleGeneralQuery(req, res, question, queryVector);
     }
 
     const db = getDb();
@@ -119,6 +234,14 @@ ${question}
     res.json({
       ok: true,
       answer,
+      queryType: 'advisory',
+      sourceImages: [
+        ...pathology.flatMap(d => d.images || []),
+      ].slice(0, 4),
+      sourceLinks: [
+        ...advisories.map(d => ({ label: `BAMIS Bulletin — ${d.crop || ''}`, url: d.sourceUrl })),
+        ...pathology.map(d => ({ label: `BAMIS Disease — ${d.diseaseName || ''}`, url: d.sourceUrl })),
+      ].filter((v, i, a) => a.findIndex(x => x.url === v.url) === i),
       meta: {
         districtId,
         districtName: district.name,
