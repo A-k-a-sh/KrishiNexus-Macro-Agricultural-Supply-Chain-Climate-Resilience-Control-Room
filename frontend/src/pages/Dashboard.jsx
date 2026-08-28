@@ -31,8 +31,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div style={{ width: '100vw', maxWidth: '100%', overflowX: 'hidden' }}>
-      <div style={{ height: '100vh', display: 'flex', overflow: 'hidden', width: '100%' }}>
+    <div style={{ width: '100%', height: '100%', overflowX: 'hidden' }}>
+      <div style={{ height: '100%', display: 'flex', overflow: 'hidden', width: '100%' }}>
 
         {/* LEFT — Region selector + alert badges */}
         <div style={{
