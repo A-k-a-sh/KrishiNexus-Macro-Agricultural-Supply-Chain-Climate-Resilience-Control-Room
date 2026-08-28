@@ -4,7 +4,6 @@ import LeftNav       from '../components/Dashboard/LeftNav';
 import BangladeshMap from '../components/Map/BangladeshMap';
 import TelemetryPanel from '../components/Dashboard/TelemetryPanel';
 import RagAdvisory   from '../components/Dashboard/RagAdvisory';
-import ChatTerminal  from '../components/Dashboard/ChatTerminal';
 import FullScreenChat from '../components/Dashboard/FullScreenChat';
 
 export default function Dashboard() {
@@ -32,8 +31,8 @@ export default function Dashboard() {
   }
 
   return (
-    <>
-      <div style={{ height: '100vh', display: 'flex', overflow: 'hidden' }}>
+    <div style={{ width: '100vw', maxWidth: '100%', overflowX: 'hidden' }}>
+      <div style={{ height: '100vh', display: 'flex', overflow: 'hidden', width: '100%' }}>
 
         {/* LEFT — Region selector + alert badges */}
         <div style={{
@@ -104,8 +103,7 @@ export default function Dashboard() {
           }}>
             {[
               { id: 'telemetry', label: 'TELEMETRY' },
-              { id: 'advisory', label: 'AI ADVISORY' },
-              { id: 'chat', label: 'INTERROGATOR' }
+              { id: 'advisory', label: 'AI ADVISORY' }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -143,12 +141,6 @@ export default function Dashboard() {
                   {/* <div className="panel-label">AI CRISIS ADVISORY</div> */}
                 </div>
                 <RagAdvisory district={selectedDistrict} />
-              </div>
-            )}
-
-            {activeTab === 'chat' && (
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                <ChatTerminal district={selectedDistrict} />
               </div>
             )}
           </div>
@@ -193,6 +185,6 @@ export default function Dashboard() {
           <FullScreenChat district={selectedDistrict} />
         </div>
       )}
-    </>
+    </div>
   );
 }

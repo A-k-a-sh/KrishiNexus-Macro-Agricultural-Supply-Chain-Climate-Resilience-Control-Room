@@ -222,13 +222,13 @@ function TypingIndicator() {
 
 function QueryTypeBadge({ type }) {
   const labels = {
-    advisory: { label: 'District Advisory', color: 'var(--text-accent)', bg: 'var(--bg-accent)' },
-    general:  { label: 'General Knowledge', color: 'var(--text-warning)', bg: 'var(--bg-warning)' },
-    market:   { label: 'Market Price', color: 'var(--text-success)', bg: 'var(--bg-success)' },
+    advisory: { label: 'District Advisory', color: '#00e676', bg: 'rgba(0, 230, 118, 0.15)', border: '1px solid rgba(0, 230, 118, 0.4)' },
+    general:  { label: 'General Knowledge', color: '#ffd54f', bg: 'rgba(255, 213, 79, 0.15)', border: '1px solid rgba(255, 213, 79, 0.4)' },
+    market:   { label: 'Market Price', color: '#4fc3f7', bg: 'rgba(79, 195, 247, 0.15)', border: '1px solid rgba(79, 195, 247, 0.4)' },
   };
-  const { label, color, bg } = labels[type] || labels.advisory;
+  const { label, color, bg, border } = labels[type] || labels.advisory;
   return (
-    <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4, background: bg, color, alignSelf: 'flex-start' }}>
+    <span style={{ fontSize: 10, padding: '4px 8px', borderRadius: 6, background: bg, color, border, alignSelf: 'flex-start', fontWeight: 600, letterSpacing: '0.5px' }}>
       {label}
     </span>
   );
@@ -275,9 +275,10 @@ const styles = {
   emptyText: { color: 'var(--text-muted)', fontSize: 13, lineHeight: 1.7 },
   userBubbleRow: { display: 'flex', justifyContent: 'flex-end' },
   userBubble: {
-    background: 'var(--text-accent)', color: '#042c53',
+    background: 'var(--accent-blue, #2563eb)', color: '#ffffff',
     borderRadius: '16px 16px 4px 16px', padding: '10px 14px',
     maxWidth: '72%', display: 'flex', flexDirection: 'column', gap: 4,
+    boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
   },
   aiBubbleRow: { display: 'flex', gap: 10, alignItems: 'flex-start' },
   aiAvatar: { width: 28, height: 28, borderRadius: '50%', background: 'var(--bg-card)',
@@ -318,13 +319,19 @@ const styles = {
     color: 'var(--text-secondary)', cursor: 'pointer', transition: 'all 0.15s',
   },
   inputBar: {
-    display: 'flex', gap: 8, padding: '12px 24px',
+    display: 'flex', gap: 12, padding: '16px 24px',
     borderTop: '1px solid var(--border)', background: 'var(--bg-surface)', flexShrink: 0,
   },
-  input: { flex: 1, fontSize: 13, padding: '10px 14px', borderRadius: 8 },
+  input: { 
+    flex: 1, fontSize: 14, padding: '12px 16px', borderRadius: 8, 
+    border: '1px solid var(--border)', background: 'var(--bg-primary)', 
+    color: 'var(--text-primary)', outline: 'none',
+    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)',
+  },
   sendBtn: {
-    background: 'var(--text-accent)', color: '#042c53', border: 'none',
-    borderRadius: 8, padding: '10px 20px', fontWeight: 500, fontSize: 13, cursor: 'pointer',
+    background: 'var(--accent-blue, #2563eb)', color: '#ffffff', border: 'none',
+    borderRadius: 8, padding: '0 24px', fontWeight: 600, fontSize: 14, cursor: 'pointer',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.2)', transition: 'opacity 0.2s',
   },
   disclaimer: {
     textAlign: 'center', fontSize: 10, color: 'var(--text-muted)',
