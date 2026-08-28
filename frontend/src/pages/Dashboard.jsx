@@ -185,20 +185,13 @@ export default function Dashboard() {
 
           {/* Active Tab Panel Content */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {activeTab === 'telemetry' && (
-              <div style={{ flex: 1, overflowY: 'auto' }}>
-                <TelemetryPanel district={selectedDistrict} upazila={selectedUpazila} />
-              </div>
-            )}
+            <div className={activeTab === 'telemetry' ? "flex-1 overflow-y-auto" : "hidden"}>
+              <TelemetryPanel district={selectedDistrict} upazila={selectedUpazila} />
+            </div>
 
-            {activeTab === 'advisory' && (
-              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ padding: '14px 14px 0' }}>
-                  {/* <div className="panel-label">AI CRISIS ADVISORY</div> */}
-                </div>
-                <RagAdvisory district={selectedDistrict} />
-              </div>
-            )}
+            <div className={activeTab === 'advisory' ? "flex-1 overflow-y-auto flex flex-col" : "hidden"}>
+              <RagAdvisory district={selectedDistrict} />
+            </div>
           </div>
         </div>
         </motion.div>
