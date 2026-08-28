@@ -5,6 +5,7 @@ import BangladeshMap from '../components/Map/BangladeshMap';
 import TelemetryPanel from '../components/Dashboard/TelemetryPanel';
 import RagAdvisory   from '../components/Dashboard/RagAdvisory';
 import FullScreenChat from '../components/Dashboard/FullScreenChat';
+import { motion } from 'framer-motion';
 
 export default function Dashboard() {
   const { selectedDistrict, selectedUpazila, isDrilledIn } = useAppContext();
@@ -35,19 +36,27 @@ export default function Dashboard() {
       <div style={{ height: '100%', display: 'flex', overflow: 'hidden', width: '100%' }}>
 
         {/* LEFT — Region selector + alert badges */}
-        <div style={{
-          width: 240, flexShrink: 0,
-          overflow: 'hidden', display: 'flex', flexDirection: 'column',
-        }} className="border-r border-slate-800/60 bg-slate-950/80 backdrop-blur-md">
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          style={{
+            width: 240, flexShrink: 0,
+            overflow: 'hidden', display: 'flex', flexDirection: 'column',
+          }} className="border-r border-slate-800/60 bg-slate-950/80 backdrop-blur-md z-20">
           <LeftNav />
-        </div>
+        </motion.div>
 
         {/* CENTER — Interactive map, under a drill-path rail */}
-        <div style={{
-          flex: 1, minWidth: 0,
-          display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          position: 'relative'
-        }} className="bg-slate-950">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
+          style={{
+            flex: 1, minWidth: 0,
+            display: 'flex', flexDirection: 'column', overflow: 'hidden',
+            position: 'relative'
+          }} className="bg-slate-950 z-10">
           <div className="panel-head !bg-slate-900/40 !backdrop-blur-sm !border-slate-800/60">
             <span className="drill-path">
               <span>Bangladesh</span>
@@ -88,14 +97,18 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* RIGHT — Telemetry + AI advisory + chat */}
-        <div style={{
-          width: 400, flexShrink: 0,
-          display: 'flex', flexDirection: 'column',
-          overflow: 'hidden',
-        }} className="border-l border-slate-800/60 bg-slate-950/80 backdrop-blur-md z-10">
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
+          style={{
+            width: 400, flexShrink: 0,
+            display: 'flex', flexDirection: 'column',
+            overflow: 'hidden',
+          }} className="border-l border-slate-800/60 bg-slate-950/80 backdrop-blur-md z-20">
           {/* Section label strip */}
           <div className="panel-head !bg-slate-900/40 !backdrop-blur-sm !border-slate-800/60">
             <span>Intelligence panel</span>
@@ -156,7 +169,7 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {selectedDistrict && chatOpen && (
