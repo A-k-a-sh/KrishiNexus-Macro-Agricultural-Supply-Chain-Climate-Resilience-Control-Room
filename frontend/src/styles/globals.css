@@ -540,3 +540,8 @@ textarea:focus {
   color: #00ff88;
   text-shadow: 0 0 20px rgba(0, 255, 136, 0.25);
 }
+
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
