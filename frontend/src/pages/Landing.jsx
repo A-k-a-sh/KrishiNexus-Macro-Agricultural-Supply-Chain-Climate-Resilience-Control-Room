@@ -83,7 +83,35 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-slate-950 text-slate-300 font-sans">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#020617] text-slate-300 font-sans relative">
+      
+      {/* Premium Animated Background */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        {/* Deep dark base */}
+        <div className="absolute inset-0 bg-[#020617]"></div>
+        
+        {/* Animated glowing orbs */}
+        <motion.div 
+          animate={{ x: [0, 50, 0], y: [0, -30, 0] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] rounded-full bg-emerald-900/15 blur-[120px]" 
+        />
+        <motion.div 
+          animate={{ x: [0, -60, 0], y: [0, 50, 0] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[20%] -right-[10%] w-[40%] h-[60%] rounded-full bg-teal-900/10 blur-[150px]" 
+        />
+        <motion.div 
+          animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-[-10%] left-[20%] w-[60%] h-[40%] rounded-full bg-indigo-900/10 blur-[130px]" 
+        />
+        
+        {/* Subtle noise/grid overlay */}
+        <div className="absolute inset-0 opacity-[0.015]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+      </div>
+
+      <div className="relative z-10 flex flex-col flex-1">
 
       {/* Top Banner: Status Bar */}
       <div className="bg-slate-950/90 border-b border-slate-800/60 px-5 py-1.5 flex justify-between items-center text-[10px] font-mono text-slate-500 backdrop-blur-md z-50 sticky top-0">
@@ -104,7 +132,7 @@ export default function Landing() {
       </div>
 
       {/* Nav */}
-      <div className="px-6 py-4 flex items-center justify-between border-b border-slate-800/40 bg-slate-950/50 backdrop-blur-md z-40">
+      <div className="px-6 py-4 flex items-center justify-between border-b border-white/5 bg-white/[0.02] backdrop-blur-xl z-40 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
         <div className="flex items-center gap-2.5">
           <span className="text-[14px] font-mono font-bold tracking-[0.1em] text-slate-200">
             [ KRISHINEXUS CONTROL ]
@@ -124,7 +152,7 @@ export default function Landing() {
       </div>
 
       {/* Hero */}
-      <section className="flex-1 flex flex-col items-center justify-center px-6 py-16 lg:py-24 relative overflow-hidden bg-slate-950">
+      <section className="flex-1 flex flex-col items-center justify-center px-6 py-16 lg:py-24 relative overflow-hidden">
         {/* Dynamic scanning grid lines */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
           style={{
@@ -198,7 +226,7 @@ export default function Landing() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.4 }}
-            className="bg-slate-900/40 border border-slate-800/60 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.05)] overflow-hidden backdrop-blur-md max-w-4xl mx-auto w-full"
+            className="bg-white/[0.02] border border-white/10 rounded-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] overflow-hidden backdrop-blur-2xl max-w-4xl mx-auto w-full relative before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/5 before:to-transparent before:pointer-events-none hover:shadow-[0_8px_32px_0_rgba(16,185,129,0.1)] transition-shadow duration-500"
           >
             {/* Terminal Top bar */}
             <div className="bg-slate-950/80 border-b border-slate-800/60 px-4 py-3 flex justify-between items-center backdrop-blur-md">
@@ -215,7 +243,7 @@ export default function Landing() {
             </div>
 
             {/* Terminal Body */}
-            <div className="p-6 min-h-[240px] font-mono text-[13px] leading-[1.8] bg-slate-950/50 text-left">
+            <div className="p-6 min-h-[240px] font-mono text-[13px] leading-[1.8] bg-transparent text-left relative z-10">
               <AnimatePresence mode="popLayout">
                 {consoleDialogue.slice(0, activeConsoleStep + 1).map((line, idx) => (
                   <motion.div
@@ -240,7 +268,7 @@ export default function Landing() {
       </section>
 
       {/* WHY KRISHINEXUS IS DIFFERENT (COMPARISON TABLE) */}
-      <section id="comparison" className="px-6 py-24 bg-slate-950 border-t border-slate-800/40 relative">
+      <section id="comparison" className="px-6 py-24 border-t border-white/5 relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent"></div>
         <div className="max-w-5xl mx-auto w-full relative z-10">
           <div className="text-center mb-16">
@@ -248,7 +276,7 @@ export default function Landing() {
             <p className="text-slate-400 text-sm mt-3 font-light">Moving past static micro-tips into centralized macro supply chain intelligence</p>
           </div>
 
-          <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl overflow-hidden backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.4)]">
+          <div className="bg-white/[0.02] border border-white/10 rounded-2xl overflow-hidden backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] hover:border-white/20 transition-all duration-500">
             <div className="grid grid-cols-[1.2fr_1.4fr_1.8fr] bg-slate-950/80 border-b border-slate-800/60 p-5 text-[11px] font-mono font-bold tracking-widest text-slate-400">
               <span>CAPABILITY</span>
               <span>TRADITIONAL AGRI APPS</span>
@@ -274,8 +302,8 @@ export default function Landing() {
       </section>
 
       {/* RAG PIPELINE TIMELINE TRACE */}
-      <section id="pipeline" className="px-6 py-24 bg-slate-950 relative border-t border-slate-800/40">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-teal-900/10 via-slate-950 to-slate-950 pointer-events-none"></div>
+      <section id="pipeline" className="px-6 py-24 relative border-t border-white/5">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-teal-900/10 via-transparent to-transparent pointer-events-none"></div>
         <div className="max-w-5xl mx-auto w-full relative z-10">
           <div className="text-center mb-16">
             <div className="inline-block px-3 py-1 bg-teal-950/50 border border-teal-800/50 rounded text-[10px] font-bold font-mono tracking-widest text-teal-400 mb-4 uppercase">
@@ -285,7 +313,7 @@ export default function Landing() {
             <p className="text-slate-400 text-sm mt-3 font-light">Vector ingestion pipeline converting raw government data to structured intelligence</p>
           </div>
 
-          <div className="flex flex-col bg-slate-900/40 border border-slate-800/60 rounded-2xl font-mono backdrop-blur-md shadow-xl overflow-hidden">
+          <div className="flex flex-col bg-white/[0.02] border border-white/10 rounded-2xl font-mono backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] overflow-hidden hover:border-white/20 transition-all duration-500">
             {[
               { step: '01', title: 'RAW DATA INGESTION', detail: 'Scrapes BAMIS bulletins, Open-Meteo forecasts, and WFP/DAM market prices.', badge: <a href='https://www.bamis.gov.bd/bulletin/district/current/0' target='__blank' className="hover:text-emerald-300">SOURCE</a> },
               { step: '02', title: 'HYBRID EMBEDDING', detail: 'Generates 3072-dim vectors via Gemini AND tokenizes full-text for Lucene indexes.', badge: <a href='https://ai.google.dev/gemini-api/docs/embeddings' target='__blank' className="hover:text-emerald-300">AI MODEL</a>  },
@@ -295,8 +323,8 @@ export default function Landing() {
             ].map((node, i) => (
               <div
                 key={i}
-                className={`flex items-center gap-6 p-6 relative hover:bg-slate-800/30 transition-colors ${
-                  i < 4 ? 'border-b border-slate-800/40' : ''
+                className={`flex items-center gap-6 p-6 relative hover:bg-white/[0.03] transition-colors ${
+                  i < 4 ? 'border-b border-white/5' : ''
                 }`}
               >
                 <span className="text-xl font-extrabold text-teal-500/80">{node.step}</span>
@@ -322,7 +350,7 @@ export default function Landing() {
           <h2 className="text-[28px] font-bold font-mono text-slate-100">Macro Yield Vulnerability Indices</h2>
         </div>
 
-        <div className="flex flex-col gap-3 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-8 mb-12 font-mono backdrop-blur-md shadow-xl">
+        <div className="flex flex-col gap-3 bg-white/[0.02] border border-white/10 rounded-2xl p-8 mb-12 font-mono backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] hover:border-white/20 transition-all duration-500">
           <div className="grid grid-cols-[1.8fr_1.2fr_2fr] border-b border-dashed border-slate-700/60 pb-3 text-[11px] font-bold tracking-widest text-slate-500">
             <span>VULNERABILITY PARAMETER</span>
             <span>CRITICAL VALUE</span>
@@ -350,7 +378,7 @@ export default function Landing() {
       </section>
 
       {/* FULL-WIDTH FEATURE LAUNCH TRACKS */}
-      <section id="features" className="px-6 py-24 bg-slate-950 border-t border-slate-800/40 relative">
+      <section id="features" className="px-6 py-24 border-t border-white/5 relative">
         <div className="max-w-5xl mx-auto w-full relative z-10">
           <div className="text-center mb-16">
             <div className="inline-block px-3 py-1 bg-purple-950/40 border border-purple-800/40 rounded text-[10px] font-bold font-mono tracking-widest text-purple-400 mb-4 uppercase">
@@ -396,7 +424,7 @@ export default function Landing() {
             ].map((feat, i) => (
               <div
                 key={i}
-                className="bg-slate-900/40 border border-slate-800/60 p-8 flex items-center gap-8 flex-wrap rounded-2xl backdrop-blur-md hover:bg-slate-900/60 transition-colors shadow-lg"
+                className="bg-white/[0.02] border border-white/10 p-8 flex items-center gap-8 flex-wrap rounded-2xl backdrop-blur-xl hover:bg-white/[0.04] hover:border-white/20 hover:shadow-[0_8px_32px_0_rgba(16,185,129,0.15)] transition-all duration-500 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] relative before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/5 before:to-transparent before:pointer-events-none before:rounded-2xl"
               >
                 <div className="font-mono text-4xl font-extrabold text-slate-700/50">{feat.num}</div>
                 <div className="flex-1 min-w-[260px]">
@@ -421,13 +449,14 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/40 py-10 px-6 text-center text-slate-500 text-xs font-mono bg-slate-950">
+      <footer className="border-t border-white/5 py-10 px-6 text-center text-slate-500 text-xs font-mono backdrop-blur-md">
         Data Pipeline Ingestions: BAMIS Weather Portal · BBS Production Archive · Open-Meteo API · bdapi Admin Coordinates
         <br />
         <span className="mt-3 block opacity-60">
           @All Rights Reserved | Developed By <a href='https://www.github.com/A-k-a-sh' target='__blank' className="text-emerald-500 hover:text-emerald-400 hover:underline">Akash</a>
         </span>
       </footer>
+      </div>
     </div>
   );
 }
@@ -435,7 +464,7 @@ export default function Landing() {
 function StatCard({ value, suffix, label, animate }) {
   const count = useCountUp(value, 1600, animate);
   return (
-    <div className="bg-slate-900/40 border border-slate-800/60 p-8 rounded-2xl relative overflow-hidden backdrop-blur-md shadow-lg group hover:border-emerald-500/50 transition-colors">
+    <div className="bg-white/[0.02] border border-white/10 p-8 rounded-2xl relative overflow-hidden backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] group hover:border-emerald-500/50 hover:shadow-[0_8px_32px_0_rgba(16,185,129,0.15)] transition-all duration-500">
       <div className="absolute top-0 left-0 w-[3px] h-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] group-hover:bg-emerald-400 transition-colors" />
       <div className="font-mono text-[42px] font-extrabold text-emerald-400 leading-none mb-3 tracking-tight">
         {animate ? count.toLocaleString() : value}{suffix}
