@@ -108,7 +108,7 @@ export default function Landing() {
         />
         
         {/* Subtle noise/grid overlay */}
-        <div className="absolute inset-0 opacity-[0.015]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+        <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
       </div>
 
       <div className="relative z-10 flex flex-col flex-1">
@@ -134,9 +134,9 @@ export default function Landing() {
       {/* Nav */}
       <div className="px-6 py-4 flex items-center justify-between border-b border-white/5 bg-white/[0.02] backdrop-blur-xl z-40 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
         <div className="flex items-center gap-2.5">
-          <span className="text-[14px] font-mono font-bold tracking-[0.1em] text-slate-200">
+          <button onClick={() => navigate('/')} className="text-[14px] font-mono font-bold tracking-[0.1em] text-slate-200 hover:text-emerald-400 transition-colors">
             [ KRISHINEXUS CONTROL ]
-          </span>
+          </button>
         </div>
         <nav className="flex gap-8 text-[11px] font-mono font-semibold tracking-widest text-slate-400">
           <a href="#comparison" className="hover:text-emerald-400 transition-colors">WHY KRISHINEXUS</a>
