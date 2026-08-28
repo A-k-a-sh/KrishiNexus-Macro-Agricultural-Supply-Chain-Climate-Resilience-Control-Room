@@ -119,10 +119,10 @@ Respond in the same language as the question.`;
     ok: true,
     answer,
     queryType: 'general',
-    sourceImages: pathology.flatMap(d => d.images || []).slice(0, 4),
+    sourceImages: pathology.filter(d => d.searchScore >= 0.78).flatMap(d => d.images || []).slice(0, 4),
     sourceLinks: [
-      ...pathology.map(d => ({ label: `BAMIS — ${d.diseaseName || d.cropName}`, url: d.sourceUrl })),
-      ...thresholds.map(d => ({ label: `BAMIS — ${d.cropName}`, url: d.sourceUrl })),
+      ...pathology.filter(d => d.searchScore >= 0.78).map(d => ({ label: `BAMIS — ${d.diseaseName || d.cropName}`, url: d.sourceUrl })),
+      ...thresholds.filter(d => d.searchScore >= 0.78).map(d => ({ label: `BAMIS — ${d.cropName}`, url: d.sourceUrl })),
     ].filter((v, i, a) => a.findIndex(x => x.url === v.url) === i),
     meta: { pathologyChunks: pathology.length, thresholdChunks: thresholds.length }
   });
@@ -236,11 +236,11 @@ ${question}
       answer,
       queryType: 'advisory',
       sourceImages: [
-        ...pathology.flatMap(d => d.images || []),
+        ...pathology.filter(d => d.searchScore >= 0.78).flatMap(d => d.images || []),
       ].slice(0, 4),
       sourceLinks: [
         ...advisories.map(d => ({ label: `BAMIS Bulletin — ${d.crop || ''}`, url: d.sourceUrl })),
-        ...pathology.map(d => ({ label: `BAMIS Disease — ${d.diseaseName || ''}`, url: d.sourceUrl })),
+        ...pathology.filter(d => d.searchScore >= 0.78).map(d => ({ label: `BAMIS Disease — ${d.diseaseName || ''}`, url: d.sourceUrl })),
       ].filter((v, i, a) => a.findIndex(x => x.url === v.url) === i),
       meta: {
         districtId,
