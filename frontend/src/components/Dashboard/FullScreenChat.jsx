@@ -276,7 +276,7 @@ function formatTime(date) {
 // Inline styles — matching globals.css dark theme variables
 const styles = {
   container: {
-    display: 'flex', flexDirection: 'column', height: '100vh',
+    display: 'flex', flexDirection: 'column', height: 'calc(100vh - 48px)',
     background: 'var(--bg-primary)', borderTop: '1px solid var(--border)',
   },
   header: {
