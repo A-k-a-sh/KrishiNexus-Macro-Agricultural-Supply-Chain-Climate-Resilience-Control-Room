@@ -3,6 +3,7 @@ const { runWeatherRefresh } = require('./weatherRefresh');
 const { runMarketPriceRefresh } = require('./marketPriceRefresh');
 const { runAlertAggregation } = require('./alertAggregation');
 const { runAnalyticsSnapshot } = require('./analyticsSnapshot');
+const { bulletinReIngestion } = require('./bulletinReIngestion');
 
 // /**
 //  * Start all cron jobs.
@@ -62,6 +63,15 @@ function startCronJobs() {
   console.log('[cron] Market price refresh scheduled every 12 hours.');
   console.log('[cron] Alert aggregation scheduled daily at 01:00.');
   console.log('[cron] Analytics snapshot scheduled daily at 23:55.');
+
+  // Weekly bulletin re-ingestion — Sunday at 02:30 BDT
+  cron.schedule('30 2 * * 0', () => {
+    console.log('[cron] Running weekly bulletin re-ingestion...');
+    bulletinReIngestion().catch((err) =>
+      console.error('[cron] bulletinReIngestion failed:', err.message)
+    );
+  }, { timezone: 'Asia/Dhaka' });
+  console.log('[cron] Bulletin re-ingestion scheduled weekly on Sunday at 02:30.');
 }
 
 module.exports = { startCronJobs };
