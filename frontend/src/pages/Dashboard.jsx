@@ -31,27 +31,24 @@ export default function Dashboard() {
   }
 
   return (
-    <div style={{ width: '100%', height: '100%', overflowX: 'hidden' }}>
+    <div style={{ width: '100%', height: '100%', overflowX: 'hidden' }} className="bg-slate-950 text-slate-200">
       <div style={{ height: '100%', display: 'flex', overflow: 'hidden', width: '100%' }}>
 
         {/* LEFT — Region selector + alert badges */}
         <div style={{
           width: 240, flexShrink: 0,
-          borderRight: '1px solid var(--border)',
-          background: 'var(--bg-surface)',
           overflow: 'hidden', display: 'flex', flexDirection: 'column',
-        }}>
+        }} className="border-r border-slate-800/60 bg-slate-950/80 backdrop-blur-md">
           <LeftNav />
         </div>
 
         {/* CENTER — Interactive map, under a drill-path rail */}
         <div style={{
           flex: 1, minWidth: 0,
-          background: 'var(--bg-primary)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
           position: 'relative'
-        }}>
-          <div className="panel-head">
+        }} className="bg-slate-950">
+          <div className="panel-head !bg-slate-900/40 !backdrop-blur-sm !border-slate-800/60">
             <span className="drill-path">
               <span>Bangladesh</span>
               {selectedDistrict && (
@@ -96,13 +93,11 @@ export default function Dashboard() {
         {/* RIGHT — Telemetry + AI advisory + chat */}
         <div style={{
           width: 400, flexShrink: 0,
-          borderLeft: '1px solid var(--border)',
-          background: 'var(--bg-surface)',
           display: 'flex', flexDirection: 'column',
           overflow: 'hidden',
-        }}>
+        }} className="border-l border-slate-800/60 bg-slate-950/80 backdrop-blur-md z-10">
           {/* Section label strip */}
-          <div className="panel-head">
+          <div className="panel-head !bg-slate-900/40 !backdrop-blur-sm !border-slate-800/60">
             <span>Intelligence panel</span>
             {selectedDistrict && (
               <span className={`panel-head-value${selectedUpazila ? ' is-upazila' : ''}`}>
@@ -114,11 +109,9 @@ export default function Dashboard() {
           {/* Tab Navigation */}
           <div style={{
             display: 'flex',
-            background: '#0c111d',
-            borderBottom: '1px solid var(--border)',
             fontFamily: 'var(--font-mono)',
             fontSize: 10,
-          }}>
+          }} className="bg-slate-900/60 border-b border-slate-800/60 backdrop-blur-md">
             {[
               { id: 'telemetry', label: 'TELEMETRY' },
               { id: 'advisory', label: 'AI ADVISORY' }
@@ -128,17 +121,18 @@ export default function Dashboard() {
                 onClick={() => setActiveTab(tab.id)}
                 style={{
                   flex: 1,
-                  padding: '10px 0',
-                  background: activeTab === tab.id ? 'var(--bg-surface)' : 'transparent',
-                  color: activeTab === tab.id ? 'var(--accent-blue)' : 'var(--text-muted)',
-                  borderRight: '1px solid var(--border)',
+                  padding: '12px 0',
                   fontWeight: 600,
                   fontSize: 10,
                   letterSpacing: '0.05em',
                   transition: 'all 0.2s',
-                  cursor: 'pointer',
                   outline: 'none'
                 }}
+                className={`border-r border-slate-800/60 last:border-r-0 ${
+                  activeTab === tab.id 
+                    ? 'bg-slate-800/60 text-emerald-400 shadow-[inset_0_-2px_0_0_#34d399]' 
+                    : 'bg-transparent text-slate-400 hover:bg-slate-800/40 hover:text-slate-300'
+                }`}
               >
                 {tab.label}
               </button>
