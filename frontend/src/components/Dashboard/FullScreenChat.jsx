@@ -63,29 +63,21 @@ export default function FullScreenChat({ district }) {
   }
 
   return (
-    <div style={styles.container}>
+    <div className="flex flex-col h-[calc(100vh-48px)] bg-slate-950 border-t border-slate-800/60 relative z-10">
       {/* Header */}
-      <div style={styles.header}>
-        <div style={styles.headerLeft}>
-          <span style={styles.aiDot} />
-          <span style={styles.headerTitle}>KrishiNexus AI</span>
-          <span style={styles.headerDistrict}>{district?.name}</span>
+      <div className="flex items-center justify-between px-6 py-3 border-b border-slate-800/60 bg-slate-900/80 backdrop-blur-md shrink-0 shadow-sm z-20">
+        <div className="flex items-center gap-3">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981] animate-pulse" />
+          <span className="font-semibold text-slate-200">KrishiNexus AI</span>
+          <span className="text-xs text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">{district?.name}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span style={styles.headerSub}>
+        <div className="flex items-center gap-4">
+          <span className="text-[10px] text-slate-500 font-mono hidden sm:inline-block">
             Grounded in BAMIS official data
           </span>
           <button 
             onClick={handleCloseChat} 
-            style={{
-              background: 'var(--bg-card)', border: '1px solid var(--border)',
-              color: 'var(--text-secondary)', padding: '4px 10px',
-              borderRadius: 'var(--radius-sm)', fontSize: 11,
-              fontFamily: 'var(--font-mono)', cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={e => { e.target.style.background = 'var(--bg-danger)'; e.target.style.color = '#fff'; }}
-            onMouseLeave={e => { e.target.style.background = 'var(--bg-card)'; e.target.style.color = 'var(--text-secondary)'; }}
+            className="bg-slate-800/50 border border-slate-700 text-slate-400 px-3 py-1.5 rounded-lg text-xs font-mono hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30 transition-all cursor-pointer"
           >
             ↩ Close Chat
           </button>
@@ -93,11 +85,14 @@ export default function FullScreenChat({ district }) {
       </div>
 
       {/* Message list */}
-      <div style={styles.messageList}>
+      <div className="flex-1 overflow-y-auto px-6 py-8 flex flex-col gap-6 scroll-smooth bg-slate-950">
         {messages.length === 0 && (
-          <div style={styles.emptyState}>
-            <p style={styles.emptyText}>
-              Ask anything about agriculture in {district?.name} —
+          <div className="text-center py-12 flex flex-col items-center justify-center h-full opacity-50">
+            <div className="w-16 h-16 rounded-full bg-slate-800/50 flex items-center justify-center mb-4">
+              <span className="text-2xl">🌱</span>
+            </div>
+            <p className="text-slate-400 text-sm max-w-sm leading-relaxed">
+              Ask anything about agriculture in <strong className="text-slate-300">{district?.name}</strong> —
               crop advisories, disease treatments, or market prices.
             </p>
           </div>
@@ -112,35 +107,41 @@ export default function FullScreenChat({ district }) {
       </div>
 
       {/* Suggested chips */}
-      <div style={styles.chips}>
+      <div className="flex gap-2.5 px-6 py-3 flex-wrap shrink-0 bg-slate-950 border-t border-slate-900">
         {chips.map((chip, i) => (
-          <button key={i} style={styles.chip} onClick={() => sendMessage(chip)}>
+          <button 
+            key={i} 
+            className="text-xs px-4 py-1.5 rounded-full bg-slate-800/40 border border-slate-700/60 text-slate-300 hover:bg-slate-800 hover:border-slate-600 hover:text-slate-200 transition-all shadow-sm"
+            onClick={() => sendMessage(chip)}
+          >
             {chip}
           </button>
         ))}
       </div>
 
       {/* Input bar */}
-      <div style={styles.inputBar}>
-        <input
-          type="text"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-          placeholder={`Ask about ${district?.name || 'this district'}...`}
-          disabled={loading}
-          style={styles.input}
-        />
+      <div className="flex gap-3 px-6 pt-2 pb-4 bg-slate-950 shrink-0">
+        <div className="relative flex-1 group">
+          <input
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+            placeholder={`Ask about ${district?.name || 'this district'}...`}
+            disabled={loading}
+            className="w-full text-sm px-5 py-3.5 rounded-2xl border border-slate-700/60 bg-slate-900/80 text-slate-200 outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all placeholder:text-slate-500 shadow-inner"
+          />
+        </div>
         <button
           onClick={() => sendMessage()}
           disabled={loading || !input.trim()}
-          style={{ ...styles.sendBtn, opacity: (loading || !input.trim()) ? 0.4 : 1 }}
+          className={`bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-2xl px-6 font-semibold text-sm shadow-[0_2px_10px_rgba(16,185,129,0.2)] transition-all hover:shadow-[0_4px_15px_rgba(16,185,129,0.3)] disabled:opacity-50 disabled:pointer-events-none`}
         >
           Send
         </button>
       </div>
 
-      <div style={styles.disclaimer}>
+      <div className="text-center text-[10px] text-slate-500 pb-4 bg-slate-950 shrink-0 tracking-wider">
         Generated from BAMIS bulletins + Gemini 2.5 Flash · Not a substitute for official DAE guidance
       </div>
     </div>
@@ -153,10 +154,10 @@ function MessageBubble({ msg }) {
 
   if (isUser) {
     return (
-      <div style={styles.userBubbleRow}>
-        <div style={styles.userBubble}>
-          <span style={styles.bubbleText}>{msg.text}</span>
-          <span style={styles.timestamp}>{formatTime(msg.ts)}</span>
+      <div className="flex justify-end w-full">
+        <div className="bg-gradient-to-br from-slate-700 to-slate-800 text-slate-100 rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[75%] flex flex-col gap-1 shadow-md border border-slate-700/50">
+          <span className="text-[13px] leading-relaxed">{msg.text}</span>
+          <span className="text-[9px] text-slate-400 self-end font-mono mt-1">{formatTime(msg.ts)}</span>
         </div>
       </div>
     );
@@ -164,31 +165,31 @@ function MessageBubble({ msg }) {
 
   if (isError) {
     return (
-      <div style={styles.aiBubbleRow}>
-        <div style={styles.errorBubble}>
-          <span style={{ color: 'var(--text-danger)', fontSize: 12 }}>Error: {msg.text}</span>
+      <div className="flex gap-3 items-start">
+        <div className="bg-red-950/40 border border-red-500/30 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[75%] shadow-sm">
+          <span className="text-red-400 text-xs font-mono">Error: {msg.text}</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={styles.aiBubbleRow}>
-      <div style={styles.aiAvatar}>
-        <span style={styles.aiDot} />
+    <div className="flex gap-3 items-start w-full">
+      <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-700/60 flex items-center justify-center shrink-0 mt-1 shadow-sm">
+        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxWidth: '78%' }}>
+      <div className="flex flex-col gap-2 max-w-[80%]">
         {/* Query type badge */}
         {msg.queryType && <QueryTypeBadge type={msg.queryType} />}
 
         {/* AI bubble with markdown */}
-        <div style={styles.aiBubble}>
+        <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800/80 rounded-2xl rounded-tl-sm px-5 py-4 text-slate-300 leading-relaxed text-[13px] shadow-sm">
           <ReactMarkdown
             components={{
-              p: ({ children }) => <p style={{ margin: '0 0 8px', lineHeight: 1.7, fontSize: 13 }}>{children}</p>,
-              strong: ({ children }) => <strong style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{children}</strong>,
-              li: ({ children }) => <li style={{ fontSize: 13, lineHeight: 1.7, marginLeft: 16 }}>{children}</li>,
-              ul: ({ children }) => <ul style={{ margin: '4px 0' }}>{children}</ul>,
+              p: ({ children }) => <p className="m-0 mb-2 leading-relaxed text-[13px]">{children}</p>,
+              strong: ({ children }) => <strong className="font-semibold text-slate-100">{children}</strong>,
+              li: ({ children }) => <li className="text-[13px] leading-relaxed ml-4 list-disc">{children}</li>,
+              ul: ({ children }) => <ul className="my-1.5">{children}</ul>,
             }}
           >
             {msg.text}
@@ -197,13 +198,13 @@ function MessageBubble({ msg }) {
 
         {/* Image thumbnails */}
         {msg.sourceImages?.length > 0 && (
-          <div style={styles.imageRow}>
+          <div className="flex gap-2 flex-wrap mt-1">
             {msg.sourceImages.map((url, i) => (
-              <a key={i} href={url} target="_blank" rel="noreferrer">
+              <a key={i} href={url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg border border-slate-700/60 hover:border-emerald-500/50 transition-colors">
                 <img
                   src={url}
                   alt="BAMIS disease reference"
-                  style={styles.thumbnail}
+                  className="w-20 h-20 object-cover"
                   onError={e => { e.target.style.display = 'none'; }}
                 />
               </a>
@@ -213,16 +214,16 @@ function MessageBubble({ msg }) {
 
         {/* Source links */}
         {msg.sourceLinks?.length > 0 && (
-          <div style={styles.sourceLinks}>
+          <div className="flex flex-wrap gap-1.5 mt-1">
             {msg.sourceLinks.slice(0, 3).map((link, i) => (
-              <a key={i} href={link.url} target="_blank" rel="noreferrer" style={styles.sourceLink}>
+              <a key={i} href={link.url} target="_blank" rel="noreferrer" className="text-[10px] text-slate-400 no-underline bg-slate-800/40 border border-slate-700/60 rounded px-2 py-0.5 hover:bg-slate-800 hover:text-emerald-400 transition-colors">
                 {link.label} ↗
               </a>
             ))}
           </div>
         )}
 
-        <span style={styles.timestamp}>{formatTime(msg.ts)}</span>
+        <span className="text-[10px] text-slate-500 font-mono mt-1">{formatTime(msg.ts)}</span>
       </div>
     </div>
   );
@@ -230,12 +231,14 @@ function MessageBubble({ msg }) {
 
 function TypingIndicator() {
   return (
-    <div style={styles.aiBubbleRow}>
-      <div style={styles.aiAvatar}><span style={styles.aiDot} /></div>
-      <div style={{ ...styles.aiBubble, padding: '12px 16px' }}>
-        <div style={styles.typingDots}>
+    <div className="flex gap-3 items-start w-full">
+      <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-700/60 flex items-center justify-center shrink-0 mt-1 shadow-sm">
+        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981] animate-pulse" />
+      </div>
+      <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800/80 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+        <div className="flex gap-1.5 items-center h-4">
           {[0, 1, 2].map(i => (
-            <span key={i} style={{ ...styles.dot, animationDelay: `${i * 0.2}s` }} />
+            <span key={i} className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
           ))}
         </div>
       </div>
@@ -244,14 +247,14 @@ function TypingIndicator() {
 }
 
 function QueryTypeBadge({ type }) {
-  const labels = {
-    advisory: { label: 'District Advisory', color: '#00e676', bg: 'rgba(0, 230, 118, 0.15)', border: '1px solid rgba(0, 230, 118, 0.4)' },
-    general:  { label: 'General Knowledge', color: '#ffd54f', bg: 'rgba(255, 213, 79, 0.15)', border: '1px solid rgba(255, 213, 79, 0.4)' },
-    market:   { label: 'Market Price', color: '#4fc3f7', bg: 'rgba(79, 195, 247, 0.15)', border: '1px solid rgba(79, 195, 247, 0.4)' },
+  const configs = {
+    advisory: { label: 'District Advisory', classes: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' },
+    general:  { label: 'General Knowledge', classes: 'text-amber-400 bg-amber-500/10 border-amber-500/30' },
+    market:   { label: 'Market Price', classes: 'text-sky-400 bg-sky-500/10 border-sky-500/30' },
   };
-  const { label, color, bg, border } = labels[type] || labels.advisory;
+  const { label, classes } = configs[type] || configs.advisory;
   return (
-    <span style={{ fontSize: 10, padding: '4px 8px', borderRadius: 6, background: bg, color, border, alignSelf: 'flex-start', fontWeight: 600, letterSpacing: '0.5px' }}>
+    <span className={`text-[10px] px-2 py-0.5 rounded-md border self-start font-semibold tracking-wide ${classes}`}>
       {label}
     </span>
   );
@@ -273,91 +276,3 @@ function formatTime(date) {
   return date?.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) || '';
 }
 
-// Inline styles — matching globals.css dark theme variables
-const styles = {
-  container: {
-    display: 'flex', flexDirection: 'column', height: 'calc(100vh - 48px)',
-    background: 'var(--bg-primary)', borderTop: '1px solid var(--border)',
-  },
-  header: {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '14px 24px', borderBottom: '1px solid var(--border)',
-    background: 'var(--bg-surface)', flexShrink: 0,
-  },
-  headerLeft: { display: 'flex', alignItems: 'center', gap: 10 },
-  aiDot: { width: 8, height: 8, borderRadius: '50%', background: '#00ff88', display: 'inline-block',
-            boxShadow: '0 0 6px #00ff88' },
-  headerTitle: { fontWeight: 500, fontSize: 14, color: 'var(--text-primary)' },
-  headerDistrict: { fontSize: 12, color: 'var(--text-accent)', fontFamily: 'var(--font-mono)' },
-  headerSub: { fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' },
-  messageList: {
-    flex: 1, overflowY: 'auto', padding: '20px 24px',
-    display: 'flex', flexDirection: 'column', gap: 16,
-  },
-  emptyState: { textAlign: 'center', padding: '40px 0' },
-  emptyText: { color: 'var(--text-muted)', fontSize: 13, lineHeight: 1.7 },
-  userBubbleRow: { display: 'flex', justifyContent: 'flex-end' },
-  userBubble: {
-    background: 'var(--accent-blue, #2563eb)', color: '#ffffff',
-    borderRadius: '16px 16px 4px 16px', padding: '10px 14px',
-    maxWidth: '72%', display: 'flex', flexDirection: 'column', gap: 4,
-    boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-  },
-  aiBubbleRow: { display: 'flex', gap: 10, alignItems: 'flex-start' },
-  aiAvatar: { width: 28, height: 28, borderRadius: '50%', background: 'var(--bg-card)',
-               border: '1px solid var(--border)', display: 'flex', alignItems: 'center',
-               justifyContent: 'center', flexShrink: 0, marginTop: 2 },
-  aiBubble: {
-    background: 'var(--bg-card)', border: '1px solid var(--border)',
-    borderRadius: '4px 16px 16px 16px', padding: '12px 16px',
-    color: 'var(--text-primary)', lineHeight: 1.7,
-  },
-  errorBubble: {
-    background: 'var(--bg-danger)', border: '1px solid var(--border-danger)',
-    borderRadius: '4px 16px 16px 16px', padding: '10px 14px',
-  },
-  bubbleText: { fontSize: 13, lineHeight: 1.6 },
-  timestamp: { fontSize: 10, color: 'var(--text-muted)', alignSelf: 'flex-end' },
-  imageRow: { display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 },
-  thumbnail: {
-    width: 80, height: 80, objectFit: 'cover', borderRadius: 6,
-    border: '1px solid var(--border)', cursor: 'pointer',
-    transition: 'opacity 0.2s',
-  },
-  sourceLinks: { display: 'flex', flexWrap: 'wrap', gap: 6 },
-  sourceLink: {
-    fontSize: 10, color: 'var(--text-muted)', textDecoration: 'none',
-    background: 'var(--bg-surface)', border: '1px solid var(--border)',
-    borderRadius: 4, padding: '2px 7px',
-  },
-  typingDots: { display: 'flex', gap: 4, alignItems: 'center' },
-  dot: {
-    width: 6, height: 6, borderRadius: '50%', background: 'var(--text-muted)',
-    animation: 'bounce 1.2s infinite',
-  },
-  chips: { display: 'flex', gap: 8, padding: '10px 24px', flexWrap: 'wrap', flexShrink: 0 },
-  chip: {
-    fontSize: 11, padding: '5px 12px', borderRadius: 99,
-    background: 'var(--bg-card)', border: '1px solid var(--border)',
-    color: 'var(--text-secondary)', cursor: 'pointer', transition: 'all 0.15s',
-  },
-  inputBar: {
-    display: 'flex', gap: 12, padding: '16px 24px',
-    borderTop: '1px solid var(--border)', background: 'var(--bg-surface)', flexShrink: 0,
-  },
-  input: { 
-    flex: 1, fontSize: 14, padding: '12px 16px', borderRadius: 8, 
-    border: '1px solid var(--border)', background: 'var(--bg-primary)', 
-    color: 'var(--text-primary)', outline: 'none',
-    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)',
-  },
-  sendBtn: {
-    background: 'var(--accent-blue, #2563eb)', color: '#ffffff', border: 'none',
-    borderRadius: 8, padding: '0 24px', fontWeight: 600, fontSize: 14, cursor: 'pointer',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.2)', transition: 'opacity 0.2s',
-  },
-  disclaimer: {
-    textAlign: 'center', fontSize: 10, color: 'var(--text-muted)',
-    padding: '6px 0 10px', flexShrink: 0,
-  },
-};
