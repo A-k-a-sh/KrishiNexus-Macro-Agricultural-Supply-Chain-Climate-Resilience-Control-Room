@@ -5,9 +5,9 @@ import { useAppContext } from '../context/AppContext';
 import '../styles/globals.css'
 
 const STATS = [
-  { value: 64, suffix: '', label: 'Districts Monitored' },
-  { value: 3, suffix: ' Live', label: 'Data Pipelines' },
-  { value: 2900, suffix: '+', label: 'Advisory Vectors Indexed' },
+  { value: 487, suffix: '', label: 'Upazilas Monitored' },
+  { value: 48, suffix: ' Hrs', label: 'Market Price Latency' },
+  { value: 4600, suffix: '+', label: 'Hybrid RAG Vectors' },
 ];
 
 const COMPARISONS = [
@@ -18,9 +18,9 @@ const COMPARISONS = [
     highlight: true
   },
   {
-    feature: 'Salinity & Soil Dynamics',
-    apps: 'None. Only generic static regional weather summaries.',
-    nexus: 'Deterministic soil chemistry mapping (pH, NPK saturation) and coastal salinity intrusion alerts.',
+    feature: 'Market Intelligence',
+    apps: 'No real-time market data or commodity tracking.',
+    nexus: 'Live integration with WFP HDX and DAM for real-time commodity price tracking and pressure alerts.',
     highlight: false
   },
   {
@@ -30,9 +30,9 @@ const COMPARISONS = [
     highlight: false
   },
   {
-    feature: 'AI Advisory Grounding',
-    apps: 'Basic rule-based logic or generic LLM prompts prone to hallucination.',
-    nexus: 'District-scoped multi-vector RAG indexing official government bulletins and disease matrices.',
+    feature: 'AI Advisory Engine',
+    apps: 'Basic rule-based chatbots or generic LLM prompts prone to hallucination.',
+    nexus: 'Intelligent 3-way Query Router + Atlas $rankFusion Hybrid RAG (Semantic Vector + Full-Text).',
     highlight: true
   }
 ];
@@ -47,11 +47,12 @@ export default function Landing() {
 
   // Live typing effect strings for the demo console
   const consoleDialogue = [
-    { text: "> SELECT * FROM regional_advisories WHERE district='Mymensingh';", type: 'input' },
-    { text: "[SYSTEM]: Running $vectorSearch on 3072-float query embedding...", type: 'system' },
-    { text: "[DATABASE]: Matches found: 3 advisories (Cosine Similarity >= 0.88)", type: 'system' },
-    { text: "> GENERATE ADVISORY --context --weather --temp=30.6°C --humidity=96%", type: 'input' },
-    { text: "[AI ADVISORY]: Aman Rice in Mymensingh is currently at high risk for Blast disease due to elevated humidity (96%) at 30°C. Actions recommended: Maintain a 5cm water level, spray urea at 9kg/bigha, and apply fungicide if spots appear.", type: 'response' }
+    { text: "> ANALYZE QUERY: 'What is the current price of rice in Sylhet and what are the blast disease risks?'", type: 'input' },
+    { text: "[ROUTER]: Multi-intent detected. Spawning parallel threads...", type: 'system' },
+    { text: "[THREAD 1]: Routing to Market DB -> WFP/HDX index -> Sylhet -> Rice: ৳ 68/kg", type: 'system' },
+    { text: "[THREAD 2]: Routing to Hybrid RAG -> $rankFusion (Vector + Text) -> crop_pathology -> Blast", type: 'system' },
+    { text: "> GENERATE REPORT --combine-threads", type: 'input' },
+    { text: "[AI INTELLIGENCE]: Coarse Rice in Sylhet is currently trading at ৳ 68/kg (Real market data · WFP). Due to current humidity (94%), Aman rice faces extreme Blast risk. Apply Nativo 75 WG immediately.", type: 'response' }
   ];
 
   useEffect(() => {
@@ -286,11 +287,11 @@ export default function Landing() {
 
           <div className="flex flex-col bg-slate-900/40 border border-slate-800/60 rounded-2xl font-mono backdrop-blur-md shadow-xl overflow-hidden">
             {[
-              { step: '01', title: 'RAW DATA INGESTION', detail: 'Scrapes BAMIS district bulletins, Open-Meteo forecasts, and BBS yields.', badge: <a href='https://www.bamis.gov.bd/bulletin/district/current/0' target='__blank' className="hover:text-emerald-300">SOURCE</a> },
-              { step: '02', title: 'VECTOR EMBEDDING', detail: 'Calls gemini-embedding-001 to generate 3072-dimensional semantic indices.', badge: <a href='https://ai.google.dev/gemini-api/docs/embeddings' target='__blank' className="hover:text-emerald-300">AI MODEL</a>  },
-              { step: '03', title: 'ATLAS STORAGE', detail: 'Stores vectorized document chunks and configures $vectorSearch index fields.', badge: 'DATABASE' },
-              { step: '04', title: 'CONTEXT RETRIEVAL', detail: 'Runs parallel vector queries to retrieve district advisories & disease thresholds.', badge: 'RAG STACK' },
-              { step: '05', title: 'GROUNDED RESPONSE', detail: 'Feeds live telemetry + matched database records to Gemini 2.5 Flash for final advisory.', badge: 'SYNTHESIS' }
+              { step: '01', title: 'RAW DATA INGESTION', detail: 'Scrapes BAMIS bulletins, Open-Meteo forecasts, and WFP/DAM market prices.', badge: <a href='https://www.bamis.gov.bd/bulletin/district/current/0' target='__blank' className="hover:text-emerald-300">SOURCE</a> },
+              { step: '02', title: 'HYBRID EMBEDDING', detail: 'Generates 3072-dim vectors via Gemini AND tokenizes full-text for Lucene indexes.', badge: <a href='https://ai.google.dev/gemini-api/docs/embeddings' target='__blank' className="hover:text-emerald-300">AI MODEL</a>  },
+              { step: '03', title: 'QUERY ROUTER', detail: 'Determines user intent: District Advisory vs General Knowledge vs Market Price lookup.', badge: 'NODE.JS' },
+              { step: '04', title: '$rankFusion SEARCH', detail: 'Combines vector semantic search with text keyword search using Reciprocal Rank Fusion.', badge: 'ATLAS SEARCH' },
+              { step: '05', title: 'GROUNDED RESPONSE', detail: 'Feeds live telemetry + fused database records to Gemini 2.5 Flash for hallucination-free advisory.', badge: 'SYNTHESIS' }
             ].map((node, i) => (
               <div
                 key={i}
@@ -362,25 +363,33 @@ export default function Landing() {
             {[
               {
                 num: '01',
-                title: 'District Operations Center',
-                desc: 'Full-scale interactive coordinate map of all 64 districts. Hover to inspect alert statuses, live open-meteo temperatures, salinity values, and crop stage arrays. Zoom and sync coordinates in real time.',
+                title: 'District & Upazila Operations Center',
+                desc: 'Full-scale interactive coordinate map of all 64 districts and 487 upazilas. Drill down to inspect localized alerts and live open-meteo temperatures. Zoom and sync coordinates in real time.',
                 badge: 'LIVE MAP STATUS',
                 badgeColor: 'text-emerald-400 border-emerald-800/60 bg-emerald-950/40',
                 action: () => navigate('/dashboard')
               },
               {
                 num: '02',
+                title: 'Market Intelligence & Price Tracking',
+                desc: 'Live commodity price feeds from WFP HDX and DAM (Department of Agricultural Marketing). Track 30-day historical trends and receive automated alerts for >15% price deviations.',
+                badge: 'WFP / DAM SYNCED',
+                badgeColor: 'text-purple-400 border-purple-800/60 bg-purple-950/40',
+                action: () => navigate('/market')
+              },
+              {
+                num: '03',
                 title: 'Supply Chain Routing & Silo Dispatch Optimizer',
-                desc: 'Simulate weather catastrophes by shifting severity parameters. Calculate projected yield shortfalls based on district baselines, identify the closest surplus silo, and generate AI dispatch manifests.',
+                desc: 'Simulate weather catastrophes by shifting severity parameters. Calculate projected yield shortfalls based on district baselines and real market data to generate AI dispatch manifests.',
                 badge: 'SIMULATOR ACTIVE',
                 badgeColor: 'text-amber-400 border-amber-800/60 bg-amber-950/40',
                 action: () => navigate('/logistics')
               },
               {
-                num: '03',
-                title: 'RAG Knowledge Base & Contextual Interrogator',
-                desc: 'Vector-search district bulletins, crop disease libraries, and weather projections to feed the Gemini API for highly localized crop and disaster advisory suggestions.',
-                badge: 'RAG PIPELINE ONLINE',
+                num: '04',
+                title: 'Hybrid RAG Knowledge Base & Router',
+                desc: 'Vector and text search district bulletins and crop disease libraries using MongoDB $rankFusion. A smart Query Router automatically directs requests to market DBs or RAG indices.',
+                badge: 'HYBRID PIPELINE ONLINE',
                 badgeColor: 'text-blue-400 border-blue-800/60 bg-blue-950/40',
                 action: () => navigate('/dashboard')
               }
