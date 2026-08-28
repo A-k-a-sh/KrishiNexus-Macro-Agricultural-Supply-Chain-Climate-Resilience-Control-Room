@@ -1,21 +1,39 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import LeftNav       from '../components/Dashboard/LeftNav';
 import BangladeshMap from '../components/Map/BangladeshMap';
 import TelemetryPanel from '../components/Dashboard/TelemetryPanel';
 import RagAdvisory   from '../components/Dashboard/RagAdvisory';
 import ChatTerminal  from '../components/Dashboard/ChatTerminal';
+import FullScreenChat from '../components/Dashboard/FullScreenChat';
 
 export default function Dashboard() {
   const { selectedDistrict, selectedUpazila, isDrilledIn } = useAppContext();
   const [activeTab, setActiveTab] = useState('telemetry'); // 'telemetry' | 'advisory' | 'chat'
+  const chatSectionRef = useRef(null);
+  const [chatOpen, setChatOpen] = useState(false);
+
+  // Reset when district changes
+  useEffect(() => {
+    setChatOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [selectedDistrict?._id]);
+
+  function handleOpenChat() {
+    setChatOpen(true);
+    // Small delay to let React render the section before scrolling
+    setTimeout(() => {
+      chatSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
+
+  function handleBackToMap() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   return (
-    // 100% of the space App leaves below TopNav, not 100vh — the page is one
-    // fixed frame with its own scrolling panels, so nothing here may overflow.
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      {/* Three-column layout */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+    <>
+      <div style={{ height: '100vh', display: 'flex', overflow: 'hidden' }}>
 
         {/* LEFT — Region selector + alert badges */}
         <div style={{
@@ -134,8 +152,47 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+
+          {selectedDistrict && (
+            <div style={{ padding: '12px 14px', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+              {!chatOpen ? (
+                <button
+                  onClick={handleOpenChat}
+                  style={{
+                    width: '100%', padding: '10px', borderRadius: 8,
+                    background: 'var(--bg-card)', border: '1px solid var(--border)',
+                    color: 'var(--text-secondary)', fontSize: 12,
+                    fontFamily: 'var(--font-mono)', cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={e => e.target.style.borderColor = 'var(--border-accent)'}
+                  onMouseLeave={e => e.target.style.borderColor = 'var(--border)'}
+                >
+                  ↓ Open AI Chat — {selectedDistrict.name}
+                </button>
+              ) : (
+                <button
+                  onClick={handleBackToMap}
+                  style={{
+                    width: '100%', padding: '10px', borderRadius: 8,
+                    background: 'transparent', border: '1px solid var(--border)',
+                    color: 'var(--text-muted)', fontSize: 12,
+                    fontFamily: 'var(--font-mono)', cursor: 'pointer',
+                  }}
+                >
+                  ↑ Back to Map
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
-    </div>
+
+      {selectedDistrict && chatOpen && (
+        <div ref={chatSectionRef}>
+          <FullScreenChat district={selectedDistrict} />
+        </div>
+      )}
+    </>
   );
 }
