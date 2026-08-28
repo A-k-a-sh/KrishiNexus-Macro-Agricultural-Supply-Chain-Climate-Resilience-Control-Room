@@ -70,18 +70,18 @@ async function handleMarketQuery(req, res, question, districtId) {
     ? prices.map(p => `${p.marketName || p.districtId}: ${p.commodity} — ৳${p.pricePerKg}/kg (${p.date}, source: ${p.source})`).join('\n')
     : 'No price data found for the requested commodity/district.';
 
-  const prompt = \`
+  const prompt = `
 You are an agricultural price information assistant for Bangladesh.
 Answer the following question based ONLY on the price data below.
 If data is missing, say so clearly. Do not invent prices.
 Respond in the same language as the question.
 
 PRICE DATA:
-\${dataContext}
-\${nationalAvg ? \`National average for \${commodity}: ৳\${nationalAvg.toFixed(2)}/kg\` : ''}
+${dataContext}
+${nationalAvg ? `National average for ${commodity}: ৳${nationalAvg.toFixed(2)}/kg` : ''}
 
-QUESTION: \${question}
-  \`.trim();
+QUESTION: ${question}
+  `.trim();
 
   const answer = await generateText('', prompt);
 
@@ -102,17 +102,17 @@ async function handleGeneralQuery(req, res, question, queryVector) {
   ]);
 
   const contextBlocks = [
-    ...pathology.map((d, i) => \`--- Disease Info \${i + 1} ---\n\${d.ragContextChunk}\`),
-    ...thresholds.map((d, i) => \`--- Crop Info \${i + 1} ---\n\${d.ragContextChunk}\`),
+    ...pathology.map((d, i) => `--- Disease Info ${i + 1} ---\n${d.ragContextChunk}`),
+    ...thresholds.map((d, i) => `--- Crop Info ${i + 1} ---\n${d.ragContextChunk}`),
   ].join('\n\n');
 
-  const systemPrompt = \`You are an agricultural knowledge assistant for Bangladesh.
+  const systemPrompt = `You are an agricultural knowledge assistant for Bangladesh.
 Answer the user's question using ONLY the provided context documents.
 If the answer is not in the context, say "তথ্য পাওয়া যায়নি" (Information not available).
 Never invent chemical names, dosages, or variety codes.
-Respond in the same language as the question.\`;
+Respond in the same language as the question.`;
 
-  const userPrompt = \`CONTEXT:\n\${contextBlocks}\n\nQUESTION: \${question}\`;
+  const userPrompt = `CONTEXT:\n${contextBlocks}\n\nQUESTION: ${question}`;
   const answer = await generateText(systemPrompt, userPrompt);
 
   return res.json({
@@ -121,8 +121,8 @@ Respond in the same language as the question.\`;
     queryType: 'general',
     sourceImages: pathology.flatMap(d => d.images || []).slice(0, 4),
     sourceLinks: [
-      ...pathology.map(d => ({ label: \`BAMIS — \${d.diseaseName || d.cropName}\`, url: d.sourceUrl })),
-      ...thresholds.map(d => ({ label: \`BAMIS — \${d.cropName}\`, url: d.sourceUrl })),
+      ...pathology.map(d => ({ label: `BAMIS — ${d.diseaseName || d.cropName}`, url: d.sourceUrl })),
+      ...thresholds.map(d => ({ label: `BAMIS — ${d.cropName}`, url: d.sourceUrl })),
     ].filter((v, i, a) => a.findIndex(x => x.url === v.url) === i),
     meta: { pathologyChunks: pathology.length, thresholdChunks: thresholds.length }
   });
