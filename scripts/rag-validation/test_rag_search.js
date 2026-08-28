@@ -49,7 +49,7 @@ async function runTests() {
     // Note: districtId '22' is Comilla based on typical BD maps, or we can just run without filter to test
     console.log(`\nEmbedding Query 3: "${q3}"`);
     const vec3 = await embedText(q3);
-    const res3 = await searchAdvisories(vec3, q3, 3, null, true);
+    const res3 = await searchAdvisories(vec3, q3, 3, { districtId: "22" }, true);
     printResults('TEST 3: regional_advisories (Hybrid Vector + BM25 Text)', res3);
 
   } catch (err) {
