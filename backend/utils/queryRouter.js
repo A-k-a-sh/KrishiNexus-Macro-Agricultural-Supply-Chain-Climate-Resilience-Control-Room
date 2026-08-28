@@ -18,8 +18,7 @@ function classifyQuery(question, districtId) {
   }
 
   // Type 2: general agricultural knowledge keywords
-  // AND no district-specific framing in the question
-  if (GENERAL_KEYWORDS.some(kw => lower.includes(kw)) && !districtId) {
+  if (GENERAL_KEYWORDS.some(kw => lower.includes(kw))) {
     return 'general';
   }
 
