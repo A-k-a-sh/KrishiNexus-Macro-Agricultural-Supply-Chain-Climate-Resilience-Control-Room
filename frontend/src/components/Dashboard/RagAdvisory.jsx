@@ -1,38 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
 import { postRagQuery } from '../../api';
+import ReactMarkdown from 'react-markdown';
 
 const AUTO_QUERY = 'Summarize the current agricultural risk situation and key advisories for this district based on current weather conditions. and বর্তমান আবহাওয়ায় কোন ফসলে কোন রোগ বা পোকার আক্রমণ হতে পারে এবং তার প্রতিকার কী? কোন ফসল চাষ করা যাবে?';
 
 export default function RagAdvisory({ district }) {
   const [text, setText]       = useState('');
-  const [displayed, setDisplayed] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState(null);
-  const intervalRef = useRef(null);
   const prevDistrictId = useRef(null);
 
-  // Auto-fire whenever selected district changes
+  // Clear text when district changes
   useEffect(() => {
     if (!district) return;
     if (district._id === prevDistrictId.current) return;
     prevDistrictId.current = district._id;
-
-    fetchAdvisory();
+    setText('');
+    setError(null);
   }, [district]);
-
-  // Typewriter effect
-  useEffect(() => {
-    if (!text) { setDisplayed(''); return; }
-    setDisplayed('');
-    let i = 0;
-    clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      i++;
-      setDisplayed(text.slice(0, i));
-      if (i >= text.length) clearInterval(intervalRef.current);
-    }, 8); // ~8ms per character ≈ fast typewriter
-    return () => clearInterval(intervalRef.current);
-  }, [text]);
 
   async function fetchAdvisory() {
     setLoading(true);
@@ -90,11 +75,36 @@ export default function RagAdvisory({ district }) {
           </span>
         )}
 
-        {district && !loading && !error && displayed && (
-          <>
-            <span style={{ whiteSpace: 'pre-wrap' }}>{displayed}</span>
-            {displayed.length < text.length && <span className="cursor" />}
-          </>
+        {district && !loading && !error && !text && (
+          <div className="flex flex-col items-center justify-center h-[120px] gap-3">
+            <span className="text-slate-400 text-xs font-mono text-center px-4">
+              Ready to generate intelligence report based on latest weather & pest data.
+            </span>
+            <button 
+              onClick={fetchAdvisory}
+              className="bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white px-5 py-2 rounded-xl text-xs font-semibold shadow-[0_4px_12px_rgba(16,185,129,0.2)] transition-all transform hover:scale-105"
+            >
+              Generate AI Advisory ✨
+            </button>
+          </div>
+        )}
+
+        {district && !loading && !error && text && (
+          <div className="text-[12.5px]">
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <p className="m-0 mb-2.5 leading-[1.8]">{children}</p>,
+                strong: ({ children }) => <strong className="font-semibold text-emerald-400">{children}</strong>,
+                li: ({ children }) => <li className="leading-[1.7] ml-4 list-disc mb-1">{children}</li>,
+                ul: ({ children }) => <ul className="my-2">{children}</ul>,
+                h1: ({ children }) => <h1 className="text-sm font-bold text-slate-100 mb-2 mt-4">{children}</h1>,
+                h2: ({ children }) => <h2 className="text-sm font-bold text-slate-100 mb-2 mt-4">{children}</h2>,
+                h3: ({ children }) => <h3 className="text-xs font-bold text-slate-200 mb-2 mt-3">{children}</h3>,
+              }}
+            >
+              {text}
+            </ReactMarkdown>
+          </div>
         )}
       </div>
 
