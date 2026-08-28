@@ -34,13 +34,13 @@ function RegionRow({ region, level, state, indent, onSelect, caret, onToggleCare
       data-region-row={rowId}
       style={{
         display: 'flex', alignItems: 'center',
-        borderRadius: 'var(--radius-sm)', marginBottom: 1,
+        borderRadius: '8px', marginBottom: 2,
         background: baseBg,
         border: `1px solid ${isActive ? accent : 'transparent'}`,
         boxShadow: isAncestor ? 'inset 2px 0 0 var(--scope-district)' : undefined,
-        transition: 'background 0.15s',
+        transition: 'all 0.2s ease',
       }}
-      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--bg-card)'; }}
+      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'rgba(30, 41, 59, 0.4)'; }}
       onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = baseBg; }}
     >
       {caret !== undefined ? (
@@ -67,9 +67,10 @@ function RegionRow({ region, level, state, indent, onSelect, caret, onToggleCare
           flex: 1, minWidth: 0, display: 'flex', alignItems: 'center',
           justifyContent: 'space-between', gap: 6,
           padding: '5px 8px 5px 4px', background: 'transparent',
-          color: isActive || isAncestor ? 'var(--text-primary)' : 'var(--text-secondary)',
           fontSize: 12, textAlign: 'left',
+          transition: 'color 0.15s',
         }}
+        className={isActive || isAncestor ? "text-slate-200" : "text-slate-400 hover:text-slate-300"}
       >
         <span style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
           <span style={{
@@ -184,7 +185,7 @@ export default function LeftNav() {
   if (districtsLoading) {
     return (
       <>
-        <div className="panel-head"><span>Region selector</span></div>
+        <div className="panel-head !bg-slate-900/40 !backdrop-blur-sm !border-slate-800/60"><span>Region selector</span></div>
         <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[...Array(6)].map((_, i) => (
             <div key={i} className="skeleton" style={{ height: 28, borderRadius: 4 }} />
@@ -196,21 +197,26 @@ export default function LeftNav() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      <div className="panel-head">
+      <div className="panel-head !bg-slate-900/40 !backdrop-blur-sm !border-slate-800/60">
         <span>Region selector</span>
-        <span className="panel-head-note">
+        <span className="panel-head-note !text-slate-500">
           {query ? `${shownDistricts} of ${allDistricts.length}` : `${allDistricts.length} districts`}
         </span>
       </div>
 
-      <div style={{ padding: '10px 12px 8px' }}>
-        <input
-          type="text"
-          placeholder="Search division, district, upazila..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ width: '100%', fontSize: 12 }}
-        />
+      <div className="px-3 pt-3 pb-2">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search division, district, upazila..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-slate-950 border border-slate-700/60 text-slate-200 rounded-full py-1.5 pl-3 pr-8 text-xs focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all placeholder:text-slate-600"
+          />
+          <svg className="w-3.5 h-3.5 text-slate-600 absolute right-3 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
         {query.length >= 2 && !allUpazilasLoaded && (
           <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginTop: 5 }}>
             Loading upazilas…
@@ -222,11 +228,7 @@ export default function LeftNav() {
         {isDrilledIn && (
           <button
             onClick={() => setIsDrilledIn(false)}
-            style={{
-              width: '100%', textAlign: 'left', background: 'transparent',
-              color: 'var(--accent-blue)', fontSize: 11, fontFamily: 'var(--font-mono)',
-              padding: '5px 8px', marginBottom: 4,
-            }}
+            className="w-full text-left bg-emerald-500/10 text-emerald-400 text-xs font-mono px-2.5 py-1.5 mb-2 rounded-lg hover:bg-emerald-500/20 transition-colors"
           >
             ← All districts
           </button>
@@ -246,16 +248,7 @@ export default function LeftNav() {
               <button
                 onClick={() => toggleDivision(division.id)}
                 aria-expanded={isOpen}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '6px 8px', borderRadius: 'var(--radius-sm)',
-                  background: 'transparent', color: 'var(--text-secondary)',
-                  fontSize: 11, fontFamily: 'var(--font-mono)',
-                  letterSpacing: '0.06em', transition: 'background 0.15s',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-card)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-slate-400 text-[11px] font-mono tracking-wider transition-colors hover:bg-slate-800/40 hover:text-slate-300"
               >
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ fontSize: 9 }}>{isOpen ? '▼' : '▶'}</span>
@@ -315,7 +308,7 @@ export default function LeftNav() {
       </div>
 
       {/* National status badges */}
-      <div style={{ padding: 12, borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+      <div className="px-3 py-3 border-t border-slate-800/60 bg-slate-900/20 shrink-0">
         <AlertBadges />
       </div>
     </div>
