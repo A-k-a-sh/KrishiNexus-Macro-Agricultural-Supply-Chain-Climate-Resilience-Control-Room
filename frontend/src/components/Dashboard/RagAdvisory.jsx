@@ -30,7 +30,8 @@ export default function RagAdvisory({ district }) {
       });
       setText(data.answer);
     } catch (err) {
-      setError(err.response?.data?.message || err.message);
+      console.error('Advisory error:', err);
+      setError('মডেল/সার্ভার ব্যস্ত। দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।');
     } finally {
       setLoading(false);
     }
