@@ -108,38 +108,7 @@ export default function Dashboard() {
             </span>
           </div>
           <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-            {/* Animated Sweeping Light Grid Overlay */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none mix-blend-screen opacity-70 z-0">
-              <defs>
-                <pattern id="grid-pattern-dash" width="64" height="64" patternUnits="userSpaceOnUse">
-                  <path d="M 64 0 L 0 0 0 64" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="1"/>
-                </pattern>
-                <pattern id="grid-pattern-glow-dash" width="64" height="64" patternUnits="userSpaceOnUse">
-                  <path d="M 64 0 L 0 0 0 64" fill="none" stroke="rgba(16,185,129,0.7)" strokeWidth="1"/>
-                </pattern>
-                <radialGradient id="soft-glow-dash" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="white" stopOpacity="1" />
-                  <stop offset="100%" stopColor="white" stopOpacity="0" />
-                </radialGradient>
-                <mask id="glow-mask-dash">
-                  <motion.circle 
-                    r="500"
-                    fill="url(#soft-glow-dash)"
-                    animate={{ 
-                      cx: ['-10%', '110%', '50%', '-10%'], 
-                      cy: ['-10%', '50%', '110%', '-10%'] 
-                    }}
-                    transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
-                  />
-                </mask>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#grid-pattern-dash)" />
-              <rect width="100%" height="100%" fill="url(#grid-pattern-glow-dash)" mask="url(#glow-mask-dash)" />
-            </svg>
-
-            <div className="relative z-10 w-full h-full">
-              <BangladeshMap />
-            </div>
+            <BangladeshMap />
             {selectedDistrict && !chatOpen && (
               <div style={{ position: 'absolute', bottom: 30, left: '50%', transform: 'translateX(-50%)', zIndex: 20 }}>
                 <button

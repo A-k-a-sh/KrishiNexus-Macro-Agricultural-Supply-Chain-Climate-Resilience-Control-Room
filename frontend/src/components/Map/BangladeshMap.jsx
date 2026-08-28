@@ -6,6 +6,7 @@ import {
   ZoomableGroup,
 } from 'react-simple-maps';
 import { useAppContext } from '../../context/AppContext';
+import { motion } from 'framer-motion';
 import DistrictTooltip from './DistrictTooltip';
 import RiskLegend from './RiskLegend';
 import SHAPE_NAME_TO_ID from '../../data/geoNameMap.json';
@@ -588,6 +589,35 @@ export default function BangladeshMap() {
         background: 'radial-gradient(115% 85% at 50% 40%, #12203a 0%, #0a0e1a 46%, #06090f 100%)',
       }}
     >
+      {/* Animated Sweeping Light Grid Overlay */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none mix-blend-screen opacity-70 z-0">
+        <defs>
+          <pattern id="grid-pattern-map" width="64" height="64" patternUnits="userSpaceOnUse">
+            <path d="M 64 0 L 0 0 0 64" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="1"/>
+          </pattern>
+          <pattern id="grid-pattern-glow-map" width="64" height="64" patternUnits="userSpaceOnUse">
+            <path d="M 64 0 L 0 0 0 64" fill="none" stroke="rgba(16,185,129,0.7)" strokeWidth="1"/>
+          </pattern>
+          <radialGradient id="soft-glow-map" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="white" stopOpacity="1" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
+          </radialGradient>
+          <mask id="glow-mask-map">
+            <motion.circle 
+              r="500"
+              fill="url(#soft-glow-map)"
+              animate={{ 
+                cx: ['-10%', '110%', '50%', '-10%'], 
+                cy: ['-10%', '50%', '110%', '-10%'] 
+              }}
+              transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          </mask>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid-pattern-map)" />
+        <rect width="100%" height="100%" fill="url(#grid-pattern-glow-map)" mask="url(#glow-mask-map)" />
+      </svg>
+
       <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 10, display: 'flex', gap: 8 }}>
         {isDrilledIn && (
           <button
