@@ -49,22 +49,26 @@ export default function TelemetryPanel({ district, upazila }) {
   return (
     <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* District header */}
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: riskColor, boxShadow: `0 0 6px ${riskColor}`, flexShrink: 0 }} />
-          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{target.name} {upazila && <span style={{fontSize: 10, color: 'var(--text-muted)'}}>(Upazila)</span>}</span>
-          <span className={`badge badge-${target.riskStatus || 'green'}`} style={{ fontSize: 9 }}>
+      <div className="mb-2">
+        <div className="flex items-center gap-2 mb-1">
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: riskColor, boxShadow: `0 0 8px ${riskColor}`, flexShrink: 0 }} />
+          <span className="text-lg font-bold text-slate-100 tracking-tight">{target.name} {upazila && <span className="text-xs font-normal text-slate-500 ml-1 tracking-normal">(Upazila)</span>}</span>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+            target.riskStatus === 'red' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
+            target.riskStatus === 'yellow' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+            'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+          }`}>
             {(target.riskStatus || 'stable').toUpperCase()}
           </span>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', paddingLeft: 16 }}>
+        <div className="text-xs text-slate-500 font-mono pl-4">
           {target.bnName} {district && !upazila && `· Division ${district.divisionId}`}
         </div>
       </div>
 
       {/* Live climate metric cards */}
       <div>
-        <div className="panel-label">CLIMATE TELEMETRY</div>
+        <div className="text-[10px] font-bold tracking-[0.12em] text-slate-500 uppercase mb-2 mt-2">CLIMATE TELEMETRY</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <MetricCard
             label="MAX TEMP"
@@ -96,8 +100,8 @@ export default function TelemetryPanel({ district, upazila }) {
       <WeatherChart liveWeather={w} />
 
       {/* Soil Composition Dynamics */}
-      <div>
-        <div className="panel-label">SOIL COMPOSITION DYNAMICS</div>
+      <div className="mt-2">
+        <div className="text-[10px] font-bold tracking-[0.12em] text-slate-500 uppercase mb-2">SOIL COMPOSITION DYNAMICS</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
           <MetricCard 
             label="SOIL PH" 
@@ -114,12 +118,8 @@ export default function TelemetryPanel({ district, upazila }) {
         </div>
         
         {/* N-P-K Nutrient Bar Graphs */}
-        <div style={{
-          background: 'var(--bg-surface)', border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-sm)', padding: '10px 12px',
-          display: 'flex', flexDirection: 'column', gap: 8
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
+        <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden mt-1">
+          <div className="flex justify-between text-[10px] font-mono text-slate-500 font-semibold tracking-wider uppercase mb-1">
             <span>PRIMARY NUTRIENTS</span>
             <span>TARGET OPTIMAL</span>
           </div>
@@ -130,8 +130,8 @@ export default function TelemetryPanel({ district, upazila }) {
       </div>
 
       {/* Agricultural Economic Indices */}
-      <div>
-        <div className="panel-label">AGRICULTURAL ECONOMIC INDICES</div>
+      <div className="mt-2">
+        <div className="text-[10px] font-bold tracking-[0.12em] text-slate-500 uppercase mb-2">AGRICULTURAL ECONOMIC INDICES</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <MetricCard 
             label="CROP MARKET INDEX" 
@@ -154,28 +154,22 @@ export default function TelemetryPanel({ district, upazila }) {
 
       {/* Active alerts */}
       {target.activeAlerts?.length > 0 && (
-        <div>
-          <div className="panel-label">ACTIVE ECO-HAZARD ALERTS</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+        <div className="mt-2">
+          <div className="text-[10px] font-bold tracking-[0.12em] text-slate-500 uppercase mb-2">ACTIVE ECO-HAZARD ALERTS</div>
+          <div className="flex flex-col gap-2">
             {target.activeAlerts.map((alert, i) => (
               <div
                 key={i}
-                style={{
-                  background: 'var(--accent-red-bg)',
-                  border: '1px solid var(--accent-red)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '6px 10px',
-                  fontSize: 11,
-                }}
+                className="bg-red-950/40 border border-red-500/30 rounded-xl p-3 backdrop-blur-sm"
               >
-                <div style={{ color: 'var(--accent-red)', fontWeight: 600, marginBottom: 2 }}>
-                  ⚠ {alert.label}
+                <div className="text-red-400 font-semibold text-xs mb-1 flex items-center gap-1.5">
+                  <span className="animate-pulse">⚠</span> {alert.label}
                 </div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: 10 }}>
+                <div className="text-slate-300 text-[11px] font-medium">
                   {alert.cropAffected} · {alert.severity?.toUpperCase()}
                 </div>
                 {alert.triggerReason && (
-                  <div style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 3 }}>
+                  <div className="text-slate-500 text-[10px] mt-1.5 leading-relaxed">
                     {alert.triggerReason}
                   </div>
                 )}
@@ -187,11 +181,11 @@ export default function TelemetryPanel({ district, upazila }) {
 
       {/* Active crops */}
       {target.activeCrops?.length > 0 && (
-        <div>
-          <div className="panel-label">ACTIVE CROPS</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+        <div className="mt-2">
+          <div className="text-[10px] font-bold tracking-[0.12em] text-slate-500 uppercase mb-2">ACTIVE CROPS</div>
+          <div className="flex flex-wrap gap-2">
             {target.activeCrops.map((c, i) => (
-              <span key={i} className="badge badge-blue" style={{ fontSize: 10 }}>
+              <span key={i} className="bg-blue-900/20 text-blue-400 border border-blue-500/30 px-2.5 py-1 rounded-lg text-[10px] font-bold shadow-sm">
                 {c.crop}{c.stage ? ` · ${c.stage}` : ''}
               </span>
             ))}
@@ -239,25 +233,26 @@ function Sparkline({ series, color, width = 96, height = 22 }) {
 
 function MetricCard({ label, value, color, subText, series }) {
   return (
-    <div style={{
-      background: 'var(--bg-surface)', border: '1px solid var(--border)',
-      borderRadius: 'var(--radius-sm)', padding: '8px 10px',
-      display: 'flex', flexDirection: 'column', gap: 4,
-    }}>
-      <div style={{ fontSize: 8, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>
+    <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-800/80 rounded-2xl p-3 flex flex-col gap-2 relative overflow-hidden group hover:bg-slate-800/40 transition-colors">
+      <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 opacity-10 rounded-full blur-xl" style={{ background: color }}></div>
+      <div className="text-[9px] font-mono tracking-widest text-slate-400 font-semibold uppercase">
         {label}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <span style={{ fontSize: 16, fontFamily: 'var(--font-mono)', fontWeight: 700, color }}>
+      <div className="flex justify-between items-baseline z-10">
+        <span className="text-lg font-mono font-extrabold tracking-tight" style={{ color }}>
           {value}
         </span>
         {subText && (
-          <span style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
+          <span className="text-[10px] font-mono text-slate-500 font-medium">
             {subText}
           </span>
         )}
       </div>
-      {series && <Sparkline series={series} color={color} />}
+      {series && (
+        <div className="mt-1 z-10">
+          <Sparkline series={series} color={color} />
+        </div>
+      )}
     </div>
   );
 }
@@ -265,13 +260,13 @@ function MetricCard({ label, value, color, subText, series }) {
 function NutrientRow({ label, value, max, color }) {
   const pct = Math.min(100, Math.round((value / max) * 100));
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, fontFamily: 'var(--font-mono)' }}>
-        <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
-        <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{value} ppm</span>
+    <div className="flex flex-col gap-1.5">
+      <div className="flex justify-between text-xs font-mono">
+        <span className="text-slate-400">{label}</span>
+        <span className="text-slate-200 font-bold">{value} ppm</span>
       </div>
-      <div style={{ height: 4, background: '#0e1726', borderRadius: 2, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 2 }} />
+      <div className="h-1.5 bg-slate-950 rounded-full overflow-hidden shadow-inner">
+        <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%`, background: color, boxShadow: `0 0 8px ${color}80` }} />
       </div>
     </div>
   );
