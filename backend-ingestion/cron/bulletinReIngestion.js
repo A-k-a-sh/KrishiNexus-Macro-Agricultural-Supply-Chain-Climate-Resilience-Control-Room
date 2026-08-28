@@ -11,7 +11,7 @@ for (const [zilaId, districtId] of Object.entries(zilaIdMap)) {
   zilaToDistrict[zilaId] = districtId;
 }
 
-const DELAY_MS = 600; // Updated to 600ms for safety with Gemini quotas
+const DELAY_MS = 2000; // Updated to 2000ms for safety with Gemini quotas
 
 async function bulletinReIngestion() {
   const db = getDb();
