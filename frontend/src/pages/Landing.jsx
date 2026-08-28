@@ -82,69 +82,68 @@ export default function Landing() {
   }, []);
 
   return (
-    <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', overflowX: 'hidden', background: 'var(--bg-primary)' }}>
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-slate-950 text-slate-300 font-sans">
 
       {/* Top Banner: Status Bar */}
-      <div style={{
-        background: '#070a13', borderBottom: '1px solid var(--border)', padding: '6px 20px',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10,
-        fontFamily: 'var(--font-mono)', color: 'var(--text-muted)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ color: 'var(--accent-green)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-green)', display: 'inline-block', animation: 'pulse-green 1.5s infinite' }} />
+      <div className="bg-slate-950/90 border-b border-slate-800/60 px-5 py-1.5 flex justify-between items-center text-[10px] font-mono text-slate-500 backdrop-blur-md z-50 sticky top-0">
+        <div className="flex items-center gap-3">
+          <span className="text-emerald-500 flex items-center gap-1.5 font-bold tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             SYSTEM STABILITY: NOMINAL
           </span>
           <span>·</span>
           <span>ACTIVE PIPELINES: 3/3 ONLINE</span>
         </div>
-        <div style={{ display: 'flex', gap: 16 }}>
-          <span>DHAKA BST: <span style={{ color: 'var(--text-primary)' }}>{currentTime || 'Loading...'}</span></span>
-          <span style={{ color: alertCounts.red > 0 ? 'var(--accent-red)' : 'var(--accent-yellow)' }}>
+        <div className="flex gap-4 tracking-widest">
+          <span>DHAKA BST: <span className="text-slate-300">{currentTime || 'Loading...'}</span></span>
+          <span className={alertCounts.red > 0 ? 'text-red-400' : 'text-amber-400'}>
             [ {alertCounts.red + alertCounts.yellow} REGIONS UNDER WEATHER ALERT ]
           </span>
         </div>
       </div>
 
       {/* Nav */}
-      <div className="topbar" style={{ padding: '0 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span className="topbar-brand" style={{ fontSize: 14 }}>[ KRISHINEXUS CONTROL ]</span>
+      <div className="px-6 py-4 flex items-center justify-between border-b border-slate-800/40 bg-slate-950/50 backdrop-blur-md z-40">
+        <div className="flex items-center gap-2.5">
+          <span className="text-[14px] font-mono font-bold tracking-[0.1em] text-slate-200">
+            [ KRISHINEXUS CONTROL ]
+          </span>
         </div>
-        <nav className="topbar-nav" style={{ display: 'flex', gap: 8 }}>
-          <a href="#comparison" style={{ textDecoration: 'none' }}>WHY KRISHINEXUS</a>
-          <a href="#pipeline" style={{ textDecoration: 'none' }}>PIPELINE</a>
-          <a href="#stats" style={{ textDecoration: 'none' }}>RISK MATRIX</a>
+        <nav className="flex gap-8 text-[11px] font-mono font-semibold tracking-widest text-slate-400">
+          <a href="#comparison" className="hover:text-emerald-400 transition-colors">WHY KRISHINEXUS</a>
+          <a href="#pipeline" className="hover:text-emerald-400 transition-colors">PIPELINE</a>
+          <a href="#stats" className="hover:text-emerald-400 transition-colors">RISK MATRIX</a>
         </nav>
-        <button className="btn btn-primary" style={{ padding: '6px 16px', fontSize: 11, fontFamily: 'var(--font-mono)' }} onClick={() => navigate('/dashboard')}>
+        <button 
+          onClick={() => navigate('/dashboard')}
+          className="bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white px-5 py-2 rounded-lg text-xs font-mono font-semibold shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all transform hover:-translate-y-0.5"
+        >
           LAUNCH MISSION DASHBOARD →
         </button>
       </div>
 
       {/* Hero */}
-      <section style={{
-        flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: '60px 24px 80px',
-        background: 'radial-gradient(circle at 50% 30%, #0d1e38 0%, var(--bg-primary) 80%)',
-        position: 'relative', overflow: 'hidden'
-      }}>
+      <section className="flex-1 flex flex-col items-center justify-center px-6 py-16 lg:py-24 relative overflow-hidden bg-slate-950">
         {/* Dynamic scanning grid lines */}
-        <div style={{
-          position: 'absolute', inset: 0, opacity: 0.03,
-          backgroundImage: 'linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)',
-          backgroundSize: '30px 30px', pointerEvents: 'none'
-        }} />
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+            backgroundSize: '40px 40px'
+          }} />
+        
+        {/* Subtle radial glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-900/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-        <div style={{ maxWidth: 1100, width: '100%', display: 'grid', gridTemplateColumns: '1fr', gap: 40, position: 'relative', zIndex: 2 }}>
+        <div className="max-w-5xl w-full flex flex-col gap-14 relative z-10">
           {/* Main Hero Header */}
-          <div style={{ textAlign: 'center', maxWidth: 800, margin: '0 auto' }}>
+          <div className="text-center max-w-3xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              style={{ display: 'inline-block', padding: '4px 10px', background: 'var(--accent-blue-bg)', border: '1px solid var(--accent-blue)', borderRadius: 'var(--radius-sm)', marginBottom: 20 }}
+              className="inline-block px-5 py-1.5 bg-emerald-950/40 border border-emerald-800/60 rounded-full mb-8 backdrop-blur-sm shadow-[0_0_15px_rgba(16,185,129,0.05)]"
             >
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#60a5fa', fontWeight: 600, letterSpacing: '0.1em' }}>
+              <span className="font-mono text-[11px] text-emerald-400 font-bold tracking-widest uppercase">
                 BANGLADESH MACRO-AGRICULTURE & CLIMATE ADVISORY
               </span>
             </motion.div>
@@ -153,14 +152,13 @@ export default function Landing() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              style={{ fontSize: 'clamp(36px, 6vw, 64px)', fontWeight: 800, lineHeight: 1.1, marginBottom: 20, fontFamily: 'var(--font-mono)', letterSpacing: '-0.02em' }}
+              className="text-[clamp(40px,6vw,68px)] font-extrabold leading-[1.1] mb-6 tracking-tight text-slate-100"
             >
-
-              <div className="krishi-titleee">
-                <span>KrishiNexus</span>
-                <br /><br />
-                Control Room for <br />
-                <span className='highlight'>Resilient Supply Chains</span>
+              <div className="font-sans">
+                <span className="block mb-2">KrishiNexus</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">
+                  Control Room for Resilient Supply Chains
+                </span>
               </div>
             </motion.h1>
 
@@ -168,22 +166,27 @@ export default function Landing() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 36, maxWidth: 680, margin: '0 auto 36px' }}
+              className="text-lg text-slate-400 leading-[1.7] mb-10 max-w-2xl mx-auto font-light"
             >
-              A Gemini-powered RAG advisory system grounded in real-time Open-Meteo forecasts, BBS historical baselines, and official BAMIS crop thresholds. Built for extension offices, policymakers, and logistics managers.
-
+              A Gemini-powered Hybrid RAG advisory system grounded in real-time forecasts and official BAMIS crop data. Built for extension offices, policymakers, and logistics managers.
             </motion.p>
 
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              style={{ display: 'flex', gap: 16, justifyContent: 'center' }}
+              className="flex gap-5 justify-center"
             >
-              <button className="btn btn-primary" style={{ fontSize: 14, padding: '12px 28px', fontFamily: 'var(--font-mono)' }} onClick={() => navigate('/dashboard')}>
+              <button 
+                onClick={() => navigate('/dashboard')}
+                className="bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white px-8 py-3.5 rounded-xl text-sm font-mono font-bold shadow-[0_8px_25px_rgba(16,185,129,0.25)] transition-all transform hover:-translate-y-1"
+              >
                 LAUNCH CONTROL CENTER
               </button>
-              <button className="btn btn-outline" style={{ fontSize: 14, padding: '12px 28px', fontFamily: 'var(--font-mono)', border: '1px solid var(--border)' }} onClick={() => navigate('/logistics')}>
+              <button 
+                onClick={() => navigate('/logistics')}
+                className="bg-slate-900/50 hover:bg-slate-800/80 border border-slate-700/60 text-slate-300 px-8 py-3.5 rounded-xl text-sm font-mono font-semibold transition-all backdrop-blur-sm"
+              >
                 LOGISTICS RUNTIME
               </button>
             </motion.div>
@@ -194,28 +197,24 @@ export default function Landing() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.4 }}
-            className="card"
-            style={{
-              background: '#0b111e', border: '1px solid var(--border)', padding: 0, borderRadius: 'var(--radius-lg)',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.6), 0 0 24px rgba(59,130,246,0.05)', overflow: 'hidden'
-            }}
+            className="bg-slate-900/40 border border-slate-800/60 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.05)] overflow-hidden backdrop-blur-md max-w-4xl mx-auto w-full"
           >
             {/* Terminal Top bar */}
-            <div style={{ background: '#0e1726', borderBottom: '1px solid var(--border)', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
-                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
-                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', marginLeft: 8 }}>terminal@krishinexus-rag</span>
+            <div className="bg-slate-950/80 border-b border-slate-800/60 px-4 py-3 flex justify-between items-center backdrop-blur-md">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+                <span className="font-mono text-[11px] text-slate-500 ml-3">terminal@krishinexus-rag</span>
               </div>
-              <div style={{ display: 'flex', gap: 12, fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+              <div className="flex gap-4 text-[10px] text-slate-500 font-mono tracking-widest font-semibold">
                 <span>EN/BN SELECTOR</span>
                 <span>SECURE HOST: L4</span>
               </div>
             </div>
 
             {/* Terminal Body */}
-            <div style={{ padding: 24, minHeight: 220, fontFamily: 'var(--font-mono)', fontSize: 12, lineHeight: 1.8, background: '#080d17', textAlign: 'left' }}>
+            <div className="p-6 min-h-[240px] font-mono text-[13px] leading-[1.8] bg-slate-950/50 text-left">
               <AnimatePresence mode="popLayout">
                 {consoleDialogue.slice(0, activeConsoleStep + 1).map((line, idx) => (
                   <motion.div
@@ -223,55 +222,50 @@ export default function Landing() {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3 }}
-                    style={{
-                      color: line.type === 'input' ? 'var(--accent-green)' : line.type === 'system' ? 'var(--text-muted)' : 'var(--text-primary)',
-                      marginBottom: 10,
-                      paddingLeft: line.type === 'response' ? 12 : 0,
-                      borderLeft: line.type === 'response' ? '2px solid var(--accent-blue)' : 'none'
-                    }}
+                    className={`mb-3 ${
+                      line.type === 'input' ? 'text-emerald-400 font-medium' : 
+                      line.type === 'system' ? 'text-slate-500' : 
+                      'text-slate-300 pl-4 border-l-2 border-emerald-500/50'
+                    }`}
                   >
                     {line.text}
                   </motion.div>
                 ))}
               </AnimatePresence>
-              <span className="cursor" />
+              <span className="inline-block w-2.5 h-[15px] bg-emerald-400/80 ml-1 animate-pulse align-middle" />
             </div>
           </motion.div>
         </div>
       </section>
 
       {/* WHY KRISHINEXUS IS DIFFERENT (COMPARISON TABLE) */}
-      <section id="comparison" style={{ padding: '80px 24px', background: 'var(--bg-surface)', borderTop: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-
-            <h2 style={{ fontSize: 28, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>How We Differ From Consumer Apps</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 8 }}>Moving past static micro-tips into centralized macro supply chain intelligence</p>
+      <section id="comparison" className="px-6 py-24 bg-slate-950 border-t border-slate-800/40 relative">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent"></div>
+        <div className="max-w-5xl mx-auto w-full relative z-10">
+          <div className="text-center mb-16">
+            <h2 className="text-[28px] font-bold font-mono text-slate-100">How We Differ From Consumer Apps</h2>
+            <p className="text-slate-400 text-sm mt-3 font-light">Moving past static micro-tips into centralized macro supply chain intelligence</p>
           </div>
 
-          <div style={{
-            background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
-            overflow: 'hidden', boxShadow: 'var(--shadow-card)'
-          }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.4fr 1.8fr', background: '#0c111e', borderBottom: '1px solid var(--border)', padding: '14px 20px', fontSize: 11, fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text-muted)' }}>
+          <div className="bg-slate-900/40 border border-slate-800/60 rounded-2xl overflow-hidden backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.4)]">
+            <div className="grid grid-cols-[1.2fr_1.4fr_1.8fr] bg-slate-950/80 border-b border-slate-800/60 p-5 text-[11px] font-mono font-bold tracking-widest text-slate-400">
               <span>CAPABILITY</span>
               <span>TRADITIONAL AGRI APPS</span>
-              <span style={{ color: 'var(--accent-green)' }}>KRISHINEXUS CONTROL ROOM</span>
+              <span className="text-emerald-400">KRISHINEXUS CONTROL ROOM</span>
             </div>
 
             {COMPARISONS.map((row, i) => (
               <div
                 key={i}
-                style={{
-                  display: 'grid', gridTemplateColumns: '1.2fr 1.4fr 1.8fr',
-                  padding: '18px 20px', borderBottom: i < COMPARISONS.length - 1 ? '1px solid var(--border)' : 'none',
-                  fontSize: 12, lineHeight: 1.6,
-                  background: row.highlight ? '#0a1420' : 'transparent'
-                }}
+                className={`grid grid-cols-[1.2fr_1.4fr_1.8fr] p-6 text-sm leading-[1.7] transition-colors ${
+                  i < COMPARISONS.length - 1 ? 'border-b border-slate-800/40' : ''
+                } ${row.highlight ? 'bg-emerald-950/20' : 'hover:bg-slate-900/50'}`}
               >
-                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: row.highlight ? 'var(--accent-blue)' : 'var(--text-primary)' }}>{row.feature}</span>
-                <span style={{ color: 'var(--text-muted)', paddingRight: 15 }}>{row.apps}</span>
-                <span style={{ color: 'var(--text-primary)', borderLeft: '1px dashed var(--border)', paddingLeft: 20 }}>{row.nexus}</span>
+                <span className={`font-mono font-semibold pr-4 ${row.highlight ? 'text-emerald-400' : 'text-slate-200'}`}>
+                  {row.feature}
+                </span>
+                <span className="text-slate-400 pr-6">{row.apps}</span>
+                <span className="text-slate-300 border-l border-dashed border-slate-700/60 pl-8">{row.nexus}</span>
               </div>
             ))}
           </div>
@@ -279,40 +273,39 @@ export default function Landing() {
       </section>
 
       {/* RAG PIPELINE TIMELINE TRACE */}
-      <section id="pipeline" style={{ padding: '80px 24px', background: '#080d16', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <div className="panel-label">INTEGRATED RAG PIPELINE FLOW</div>
-            <h2 style={{ fontSize: 28, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>Automated Knowledge Aggregation Trace</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 8 }}>Vector ingestion pipeline converting raw government data to structured intelligence</p>
+      <section id="pipeline" className="px-6 py-24 bg-slate-950 relative border-t border-slate-800/40">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-teal-900/10 via-slate-950 to-slate-950 pointer-events-none"></div>
+        <div className="max-w-5xl mx-auto w-full relative z-10">
+          <div className="text-center mb-16">
+            <div className="inline-block px-3 py-1 bg-teal-950/50 border border-teal-800/50 rounded text-[10px] font-bold font-mono tracking-widest text-teal-400 mb-4 uppercase">
+              INTEGRATED RAG PIPELINE FLOW
+            </div>
+            <h2 className="text-[28px] font-bold font-mono text-slate-100">Automated Knowledge Aggregation Trace</h2>
+            <p className="text-slate-400 text-sm mt-3 font-light">Vector ingestion pipeline converting raw government data to structured intelligence</p>
           </div>
 
-          <div style={{
-            display: 'flex', flexDirection: 'column', gap: 0,
-            background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
-            fontFamily: 'var(--font-mono)'
-          }}>
+          <div className="flex flex-col bg-slate-900/40 border border-slate-800/60 rounded-2xl font-mono backdrop-blur-md shadow-xl overflow-hidden">
             {[
-              { step: '01', title: 'RAW DATA INGESTION', detail: 'Scrapes BAMIS district bulletins, Open-Meteo forecasts, and BBS yields.', badge: <a href='https://www.bamis.gov.bd/bulletin/district/current/0' target='__blank'>SOURCE</a> },
-              { step: '02', title: 'VECTOR EMBEDDING', detail: 'Calls gemini-embedding-001 to generate 3072-dimensional semantic indices.', badge: <a href='https://ai.google.dev/gemini-api/docs/embeddings' target='__blank'>AI MODEL</a>  },
+              { step: '01', title: 'RAW DATA INGESTION', detail: 'Scrapes BAMIS district bulletins, Open-Meteo forecasts, and BBS yields.', badge: <a href='https://www.bamis.gov.bd/bulletin/district/current/0' target='__blank' className="hover:text-emerald-300">SOURCE</a> },
+              { step: '02', title: 'VECTOR EMBEDDING', detail: 'Calls gemini-embedding-001 to generate 3072-dimensional semantic indices.', badge: <a href='https://ai.google.dev/gemini-api/docs/embeddings' target='__blank' className="hover:text-emerald-300">AI MODEL</a>  },
               { step: '03', title: 'ATLAS STORAGE', detail: 'Stores vectorized document chunks and configures $vectorSearch index fields.', badge: 'DATABASE' },
               { step: '04', title: 'CONTEXT RETRIEVAL', detail: 'Runs parallel vector queries to retrieve district advisories & disease thresholds.', badge: 'RAG STACK' },
               { step: '05', title: 'GROUNDED RESPONSE', detail: 'Feeds live telemetry + matched database records to Gemini 2.5 Flash for final advisory.', badge: 'SYNTHESIS' }
             ].map((node, i) => (
               <div
                 key={i}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 20, padding: '20px 24px',
-                  borderBottom: i < 4 ? '1px solid var(--border)' : 'none',
-                  position: 'relative'
-                }}
+                className={`flex items-center gap-6 p-6 relative hover:bg-slate-800/30 transition-colors ${
+                  i < 4 ? 'border-b border-slate-800/40' : ''
+                }`}
               >
-                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--accent-blue)' }}>{node.step}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>{node.title}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-body)' }}>{node.detail}</div>
+                <span className="text-xl font-extrabold text-teal-500/80">{node.step}</span>
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-slate-200 mb-1">{node.title}</div>
+                  <div className="text-xs text-slate-400 font-sans leading-relaxed">{node.detail}</div>
                 </div>
-                <span className="badge badge-blue" style={{ fontSize: 8 }}>{node.badge}</span>
+                <span className="px-2 py-1 bg-teal-950/60 border border-teal-800/60 rounded text-[9px] font-bold text-teal-400 tracking-wider">
+                  {node.badge}
+                </span>
               </div>
             ))}
           </div>
@@ -320,18 +313,16 @@ export default function Landing() {
       </section>
 
       {/* CLIMATE RISK MATRIX TELEMETRY LIST */}
-      <section id="stats" ref={statsRef} style={{ padding: '80px 24px', maxWidth: 1100, margin: '0 auto', width: '100%' }}>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div className="panel-label">BANGLADESH CLIMATE RISK MATRIX</div>
-          <h2 style={{ fontSize: 28, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>Macro Yield Vulnerability Indices</h2>
+      <section id="stats" ref={statsRef} className="px-6 py-24 max-w-5xl mx-auto w-full">
+        <div className="text-center mb-16">
+          <div className="inline-block px-3 py-1 bg-blue-950/50 border border-blue-800/50 rounded text-[10px] font-bold font-mono tracking-widest text-blue-400 mb-4 uppercase">
+            BANGLADESH CLIMATE RISK MATRIX
+          </div>
+          <h2 className="text-[28px] font-bold font-mono text-slate-100">Macro Yield Vulnerability Indices</h2>
         </div>
 
-        <div style={{
-          display: 'flex', flexDirection: 'column', gap: 12,
-          background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
-          padding: 24, marginBottom: 40, fontFamily: 'var(--font-mono)'
-        }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr 2fr', borderBottom: '1px dashed var(--border)', paddingBottom: 10, fontSize: 10, color: 'var(--text-muted)' }}>
+        <div className="flex flex-col gap-3 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-8 mb-12 font-mono backdrop-blur-md shadow-xl">
+          <div className="grid grid-cols-[1.8fr_1.2fr_2fr] border-b border-dashed border-slate-700/60 pb-3 text-[11px] font-bold tracking-widest text-slate-500">
             <span>VULNERABILITY PARAMETER</span>
             <span>CRITICAL VALUE</span>
             <span>BBS CRITICAL DETAILS</span>
@@ -342,37 +333,39 @@ export default function Landing() {
             { label: 'Annual Average Flood Asset Loss', value: '৳ 12,000 Crore', desc: 'Sudden flash floods in north-eastern haor and central delta wash away local reserve reserves.', status: 'yellow' },
             { label: 'Pest Fungal Outbreak Window', value: 'Humidity >= 96% @ 28°C', desc: 'Blast disease & Red-Pumpkin Beetle spreads exponentially when humidity triggers exceed thresholds.', status: 'blue' }
           ].map((item, idx) => (
-            <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr 2fr', fontSize: 12, alignItems: 'center', padding: '6px 0' }}>
-              <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{item.label}</span>
-              <span style={{ color: item.status === 'red' ? 'var(--accent-red)' : item.status === 'yellow' ? 'var(--accent-yellow)' : 'var(--accent-blue)', fontWeight: 700 }}>
+            <div key={idx} className="grid grid-cols-[1.8fr_1.2fr_2fr] text-[13px] items-center py-2.5 group hover:bg-slate-800/20 rounded px-2 -mx-2 transition-colors">
+              <span className="text-slate-300 font-semibold pr-4">{item.label}</span>
+              <span className={`font-bold ${item.status === 'red' ? 'text-red-400' : item.status === 'yellow' ? 'text-amber-400' : 'text-blue-400'}`}>
                 {item.value}
               </span>
-              <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', fontSize: 11 }}>{item.desc}</span>
+              <span className="text-slate-400 font-sans text-xs leading-relaxed">{item.desc}</span>
             </div>
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-6">
           {STATS.map((s) => <StatCard key={s.label} {...s} animate={statsVisible} />)}
         </div>
       </section>
 
       {/* FULL-WIDTH FEATURE LAUNCH TRACKS */}
-      <section id="features" style={{ padding: '80px 24px', background: '#080d16', borderTop: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <div className="panel-label">OPERATIONS SUITE</div>
-            <h2 style={{ fontSize: 28, fontWeight: 700, fontFamily: 'var(--font-mono)' }}>Control Room Dashboards</h2>
+      <section id="features" className="px-6 py-24 bg-slate-950 border-t border-slate-800/40 relative">
+        <div className="max-w-5xl mx-auto w-full relative z-10">
+          <div className="text-center mb-16">
+            <div className="inline-block px-3 py-1 bg-purple-950/40 border border-purple-800/40 rounded text-[10px] font-bold font-mono tracking-widest text-purple-400 mb-4 uppercase">
+              OPERATIONS SUITE
+            </div>
+            <h2 className="text-[28px] font-bold font-mono text-slate-100">Control Room Dashboards</h2>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="flex flex-col gap-6">
             {[
               {
                 num: '01',
                 title: 'District Operations Center',
                 desc: 'Full-scale interactive coordinate map of all 64 districts. Hover to inspect alert statuses, live open-meteo temperatures, salinity values, and crop stage arrays. Zoom and sync coordinates in real time.',
                 badge: 'LIVE MAP STATUS',
-                badgeColor: 'badge-green',
+                badgeColor: 'text-emerald-400 border-emerald-800/60 bg-emerald-950/40',
                 action: () => navigate('/dashboard')
               },
               {
@@ -380,7 +373,7 @@ export default function Landing() {
                 title: 'Supply Chain Routing & Silo Dispatch Optimizer',
                 desc: 'Simulate weather catastrophes by shifting severity parameters. Calculate projected yield shortfalls based on district baselines, identify the closest surplus silo, and generate AI dispatch manifests.',
                 badge: 'SIMULATOR ACTIVE',
-                badgeColor: 'badge-yellow',
+                badgeColor: 'text-amber-400 border-amber-800/60 bg-amber-950/40',
                 action: () => navigate('/logistics')
               },
               {
@@ -388,27 +381,28 @@ export default function Landing() {
                 title: 'RAG Knowledge Base & Contextual Interrogator',
                 desc: 'Vector-search district bulletins, crop disease libraries, and weather projections to feed the Gemini API for highly localized crop and disaster advisory suggestions.',
                 badge: 'RAG PIPELINE ONLINE',
-                badgeColor: 'badge-blue',
+                badgeColor: 'text-blue-400 border-blue-800/60 bg-blue-950/40',
                 action: () => navigate('/dashboard')
               }
             ].map((feat, i) => (
               <div
                 key={i}
-                className="card"
-                style={{
-                  background: 'var(--bg-surface)', border: '1px solid var(--border)', padding: 28,
-                  display: 'flex', alignItems: 'center', gap: 30, flexWrap: 'wrap'
-                }}
+                className="bg-slate-900/40 border border-slate-800/60 p-8 flex items-center gap-8 flex-wrap rounded-2xl backdrop-blur-md hover:bg-slate-900/60 transition-colors shadow-lg"
               >
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 32, fontWeight: 700, color: 'var(--border-light)' }}>{feat.num}</div>
-                <div style={{ flex: 1, minWidth: 260 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                    <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{feat.title}</h3>
-                    <span className={`badge ${feat.badgeColor}`} style={{ fontSize: 8 }}>{feat.badge}</span>
+                <div className="font-mono text-4xl font-extrabold text-slate-700/50">{feat.num}</div>
+                <div className="flex-1 min-w-[260px]">
+                  <div className="flex items-center gap-3 mb-3">
+                    <h3 className="text-lg font-bold text-slate-200">{feat.title}</h3>
+                    <span className={`px-2 py-1 rounded border text-[9px] font-bold font-mono tracking-wider ${feat.badgeColor}`}>
+                      {feat.badge}
+                    </span>
                   </div>
-                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7 }}>{feat.desc}</p>
+                  <p className="text-sm text-slate-400 leading-[1.8] font-light">{feat.desc}</p>
                 </div>
-                <button className="btn btn-outline" style={{ fontFamily: 'var(--font-mono)', padding: '10px 20px', fontSize: 12 }} onClick={feat.action}>
+                <button 
+                  onClick={feat.action}
+                  className="px-6 py-2.5 rounded-lg border border-slate-700/60 text-slate-300 font-mono text-xs font-semibold hover:bg-slate-800 transition-colors"
+                >
                   LAUNCH RUNTIME →
                 </button>
               </div>
@@ -418,11 +412,11 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer style={{ borderTop: '1px solid var(--border)', padding: '30px 24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 11, fontFamily: 'var(--font-mono)' }}>
+      <footer className="border-t border-slate-800/40 py-10 px-6 text-center text-slate-500 text-xs font-mono bg-slate-950">
         Data Pipeline Ingestions: BAMIS Weather Portal · BBS Production Archive · Open-Meteo API · bdapi Admin Coordinates
         <br />
-        <span style={{ marginTop: 8, display: 'block', opacity: 0.6 }}>
-          @All Rights Reserved | Developed By <span > <a href='https://www.github.com/A-k-a-sh' target='__blank' style={{ textDecoration: 'none', color: 'var(--accent-green)' }}>Akash</a> </span>
+        <span className="mt-3 block opacity-60">
+          @All Rights Reserved | Developed By <a href='https://www.github.com/A-k-a-sh' target='__blank' className="text-emerald-500 hover:text-emerald-400 hover:underline">Akash</a>
         </span>
       </footer>
     </div>
@@ -432,12 +426,12 @@ export default function Landing() {
 function StatCard({ value, suffix, label, animate }) {
   const count = useCountUp(value, 1600, animate);
   return (
-    <div className="card" style={{ border: '1px solid var(--border)', background: 'var(--bg-surface)', padding: '24px 32px', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: 0, left: 0, width: 2, height: '100%', background: 'var(--accent-green)' }} />
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 40, fontWeight: 700, color: 'var(--accent-green)', lineHeight: 1 }}>
+    <div className="bg-slate-900/40 border border-slate-800/60 p-8 rounded-2xl relative overflow-hidden backdrop-blur-md shadow-lg group hover:border-emerald-500/50 transition-colors">
+      <div className="absolute top-0 left-0 w-[3px] h-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] group-hover:bg-emerald-400 transition-colors" />
+      <div className="font-mono text-[42px] font-extrabold text-emerald-400 leading-none mb-3 tracking-tight">
         {animate ? count.toLocaleString() : value}{suffix}
       </div>
-      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+      <div className="text-[11px] text-slate-400 font-mono font-bold uppercase tracking-[0.1em]">{label}</div>
     </div>
   );
 }
